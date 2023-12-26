@@ -3,6 +3,7 @@
 #include <fstream>
 #include <LuaBridge/LuaBridge.h>
 #include <functional>
+#include "Project/Component.hpp"
 
 lua_State* s_lua;
 std::vector<std::shared_ptr<Component>> s_components;
@@ -131,32 +132,48 @@ void Project::initialize_lua() {
     bridge.addFunction<void, const std::string&>("set_linker", TO_FUNCTION(bind_set_linker));
     bridge.addFunction<void, const std::string&>("set_linkerscript", TO_FUNCTION(bind_set_linkerscript));
 
-    bridge.addFunction<void, const std::string&>("create_executable", TO_FUNCTION(bind_create_executable));
-    bridge.addFunction<void, const std::string&>("create_library", TO_FUNCTION(bind_create_library));
-    bridge.addFunction<void, const std::string&>("create_module", TO_FUNCTION(bind_create_module));
+    bridge.addFunction<Component&, const std::string&>("create_executable", TO_FUNCTION(bind_create_executable));
+    bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(bind_create_library));
+    bridge.addFunction<Component&, const std::string&>("create_module", TO_FUNCTION(bind_create_module));
+
+    bridge.beginClass<Component>("__Component").addFunction("add_sources", &Component::add_sources).endClass();
 }
 
 // Compiler config
 void Project::bind_set_c_compiler(const std::string& compiler, const std::string& standard) {
-    s_c_compiler = std::make_shared<Compiler>(Compiler::Type::C, compiler, standard); //
+    s_c_compiler = std::make_shared<Compiler>(Compiler::Language::C, compiler, standard); //
 }
 
 void Project::bind_set_cpp_compiler(const std::string& compiler, const std::string& standard) {
-    s_cpp_compiler = std::make_shared<Compiler>(Compiler::Type::CPP, compiler, standard); //
+    s_cpp_compiler = std::make_shared<Compiler>(Compiler::Language::CPP, compiler, standard); //
 }
 
 void Project::bind_set_asm_compiler(const std::string& compiler) {
-    s_asm_compiler = std::make_shared<Compiler>(Compiler::Type::ASM, compiler, ""); //
+    s_asm_compiler = std::make_shared<Compiler>(Compiler::Language::ASM, compiler, "ASM"); //
 }
 
 // Linker config
-void Project::bind_set_linker(const std::string& linker) {}
+void Project::bind_set_linker(const std::string& linker) {
+    s_linker = std::make_shared<Linker>(linker); //
+}
 
 void Project::bind_set_linkerscript(const std::string& path) {}
 
 // Component creation
-void Project::bind_create_executable(const std::string& name) {}
+Component& Project::bind_create_executable(const std::string& name) {
+    auto comp = std::make_shared<Component>(Component::Type::EXECUTABLE, name);
+    s_components.push_back(comp);
+    return *comp.get();
+}
 
-void Project::bind_create_library(const std::string& name) {}
+Component& Project::bind_create_library(const std::string& name) {
+    auto comp = std::make_shared<Component>(Component::Type::LIBRARY, name);
+    s_components.push_back(comp);
+    return *comp.get();
+}
 
-void Project::bind_create_module(const std::string& name) {}
+Component& Project::bind_create_module(const std::string& name) {
+    auto comp = std::make_shared<Component>(Component::Type::MODULE, name);
+    s_components.push_back(comp);
+    return *comp.get();
+}

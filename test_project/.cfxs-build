@@ -13,4 +13,4 @@ local sources = {
     "!makefsdata.c", -- exclude
 }
 
-test_project.add_sources(sources)
+test_project:add_sources(sources)

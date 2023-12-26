@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.28)
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 include(FetchContent)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(CFXS_Build C CXX)
@@ -29,6 +29,10 @@ target_precompile_headers(CFXS_Build PRIVATE
 add_compile_definitions("CFXS_BUILD_VERSION_MAJOR=1")
 add_compile_definitions("CFXS_BUILD_VERSION_MINOR=0")
 
+if(WIN32)
+add_compile_definitions("WINDOWS_BUILD=1")
+endif()
+
 FetchContent_Declare(
     Lua
     GIT_REPOSITORY
@@ -50,6 +54,14 @@ FetchContent_Declare(
     https://github.com/p-ranav/argparse.git
 )
 FetchContent_MakeAvailable(argparse)
+
+FetchContent_Declare(
+    lib_re2
+    GIT_REPOSITORY
+    https://github.com/google/re2.git
+    GIT_TAG "main"
+)
+FetchContent_MakeAvailable(lib_re2)
 
 # find package spdlog, if not found then do fetchcontent
 find_package(spdlog QUIET)
@@ -73,5 +85,6 @@ target_link_libraries(CFXS_Build PRIVATE
     lua_static
     LuaBridge
     argparse
+    re2
     spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
 )

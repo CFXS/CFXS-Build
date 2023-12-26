@@ -1,3 +1,5 @@
+#pragma once
+
 #include <filesystem>
 #include <lua.hpp>
 #include "Component.hpp"
@@ -25,8 +27,7 @@ private: // .cfxs-build Lua bindings
     static void bind_set_linker(const std::string& linker);
     static void bind_set_linkerscript(const std::string& path);
 
-    // Component creation
-    static void bind_create_executable(const std::string& name);
-    static void bind_create_library(const std::string& name);
-    static void bind_create_module(const std::string& name);
+    static Component& bind_create_executable(const std::string& name);
+    static Component& bind_create_library(const std::string& name);
+    static Component& bind_create_module(const std::string& name);
 };
