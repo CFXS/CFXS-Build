@@ -9,8 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(CFXS_Build C CXX)
 
-find_package(spdlog REQUIRED)
-
 set(sources
     "src/main.cpp"
     "src/Log.cpp"
@@ -33,6 +31,34 @@ FetchContent_Declare(
     https://github.com/CFXS/Lua-CMake.git
 )
 FetchContent_MakeAvailable(Lua)
-target_link_libraries(CFXS_Build PRIVATE lua_static)
 
-target_link_libraries(CFXS_Build PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>)
+FetchContent_Declare(
+    argparse
+    GIT_REPOSITORY
+    https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
+
+# find package spdlog, if not found then do fetchcontent
+find_package(spdlog QUIET)
+if(NOT spdlog_FOUND)
+    message(STATUS "spdlog not found, fetching from github")
+    set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "Build shared library" FORCE)
+    set(SPDLOG_BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
+    set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
+    set(SPDLOG_INSTALL OFF CACHE BOOL "Generate installation target" FORCE)
+
+    FetchContent_Declare(
+        lib_spdlog
+        GIT_REPOSITORY
+        https://github.com/gabime/spdlog.git
+        GIT_TAG "v2.x"
+    )
+    FetchContent_MakeAvailable(lib_spdlog)
+endif()
+
+target_link_libraries(CFXS_Build PRIVATE
+    lua_static
+    argparse
+    spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
+)

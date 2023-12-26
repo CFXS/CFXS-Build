@@ -1,0 +1,15 @@
+set_compiler("arm-none-eabi-gcc")
+set_linker("arm-none-eabi-ld")
+
+local LINKER_SCRIPT = "LinkerScript.ld"
+set_linkerscript("./${LINKER_SCRIPT}")
+
+test_project = create_project("CFXS Build Test Project")
+
+sources = [
+    "./src/*.c",
+    "./src/*.cpp",
+    "!makefsdata.c", -- exclude
+]
+
+test_project.add_sources(sources)

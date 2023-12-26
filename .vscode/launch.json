@@ -6,9 +6,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/CFXS_Build",
-            "args": [],
+            "args": ["./test_project"],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build",
+            "cwd": "${workspaceFolder}",
             "environment": [],
         }
     ]
