@@ -12,9 +12,9 @@ AllowAllConstructorInitializersOnNextLine: "true"
 AllowAllParametersOfDeclarationOnNextLine: "false"
 AllowShortBlocksOnASingleLine: "false"
 AllowShortCaseLabelsOnASingleLine: "true"
-AllowShortFunctionsOnASingleLine: "false"
+AllowShortFunctionsOnASingleLine: "true"
 AllowShortIfStatementsOnASingleLine: Never
-AllowShortLambdasOnASingleLine: "true"
+AllowShortLambdasOnASingleLine: "false"
 AllowShortLoopsOnASingleLine: "false"
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None

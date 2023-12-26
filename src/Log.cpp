@@ -9,7 +9,7 @@ std::shared_ptr<spdlog::logger> e_FileLogger;
 
 void initialize_logging() {
     e_ConsoleLogger = spdlog::default_logger();
-    e_FileLogger    = spdlog::basic_logger_mt("log file", "cfxs-build-log.txt");
+    // e_FileLogger    = spdlog::basic_logger_mt("log file", "cfxs-build-log.txt");
 
 #ifndef PRODUCTION_BUILD
     spdlog::set_level(spdlog::level::trace);

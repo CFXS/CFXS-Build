@@ -12,6 +12,10 @@ project(CFXS_Build C CXX)
 set(sources
     "src/main.cpp"
     "src/Log.cpp"
+    "src/Project/Project.cpp"
+    "src/Project/Component.cpp"
+    "src/Project/Linker.cpp"
+    "src/Project/Compiler.cpp"
 )
 
 add_executable(CFXS_Build ${sources})
@@ -31,6 +35,14 @@ FetchContent_Declare(
     https://github.com/CFXS/Lua-CMake.git
 )
 FetchContent_MakeAvailable(Lua)
+
+set(LUABRIDGE_TESTING OFF CACHE BOOL "LuaBridge tests" FORCE)
+FetchContent_Declare(
+    lib_LuaBridge
+    GIT_REPOSITORY
+    https://github.com/vinniefalco/LuaBridge.git
+)
+FetchContent_MakeAvailable(lib_LuaBridge)
 
 FetchContent_Declare(
     argparse
@@ -59,6 +71,7 @@ endif()
 
 target_link_libraries(CFXS_Build PRIVATE
     lua_static
+    LuaBridge
     argparse
     spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
 )

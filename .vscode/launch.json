@@ -6,7 +6,12 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/CFXS_Build",
-            "args": ["./test_project"],
+            "args": [
+                "./test_project",
+                "--configure",
+                "--clean",
+                "--build",
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
