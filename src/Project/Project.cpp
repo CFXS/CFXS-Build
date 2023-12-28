@@ -1,9 +1,10 @@
 #include "Project.hpp"
 #include <filesystem>
 #include <fstream>
-#include <LuaBridge/LuaBridge.h>
 #include <functional>
+#include <LuaBridge/LuaBridge.h>
 #include "Project/Component.hpp"
+#include <lua.hpp>
 
 lua_State* s_lua;
 std::vector<std::shared_ptr<Component>> s_components;
@@ -63,8 +64,6 @@ void Project::configure() {
 }
 
 void Project::build(const std::vector<std::string>& components) {
-    Log.info("Building...");
-
     if (std::find(components.begin(), components.end(), "*") != components.end()) {
         for (auto& comp : s_components) {
             comp->build();
@@ -85,8 +84,6 @@ void Project::build(const std::vector<std::string>& components) {
 }
 
 void Project::clean(const std::vector<std::string>& components) {
-    Log.info("Cleaning...");
-
     if (std::find(components.begin(), components.end(), "*") != components.end()) {
         for (auto& comp : s_components) {
             comp->clean();

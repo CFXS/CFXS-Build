@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef WINDOWS_BUILD
+#define _HAS_CXX17 1
+#endif
 #include <filesystem>
 #include <subprocess.h>
 
@@ -9,7 +12,7 @@ inline bool is_valid_file_path(const std::string& str) {
 
 inline bool is_valid_program(const std::string& str) {
 #if WINDOWS_BUILD == 1
-    auto s = "where " + str;
+    auto s = "where " + str + " > nul 2>&1";
     return system(s.c_str()) == 0;
 #else
     auto s = "type " + str + " &> /dev/null";
@@ -37,7 +40,7 @@ inline std::string get_program_version_string(const std::string& location) {
         throw std::runtime_error("Failed to get program version string");
     }
 
-    if (process_ret != 0) {
+    if (process_ret < 0) {
         Log.error("[execute {}] Failed to get program version string of \"{}\"", process_ret, location);
         throw std::runtime_error("Failed to get program version string");
     }

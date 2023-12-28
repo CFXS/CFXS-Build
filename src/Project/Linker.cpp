@@ -23,13 +23,13 @@ Linker::Linker(const std::string& linker) : m_location(linker) {
 
     if (linker_version_string.contains("GNU")) {
         m_type = Type::GNU;
-    }
-    // else if (linker_version_string.contains("clang")) {
-    //     m_type = Type::CLANG;
-    // } else if (linker_version_string.contains("Microsoft")) {
-    //     m_type = Type::MSVC;
-    // }
-    else {
+    } else if (linker_version_string.contains("clang")) {
+        m_type = Type::CLANG;
+    } else if (linker_version_string.contains("Microsoft")) {
+        m_type = Type::MSVC;
+    } else if (linker_version_string.contains("IAR")) {
+        m_type = Type::IAR;
+    } else {
         Log.error("Linker \"{}\" is not supported", get_location());
         throw std::runtime_error("Linker not supported");
     }

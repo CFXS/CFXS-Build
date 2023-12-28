@@ -15,6 +15,24 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
+        },
+        {
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/CFXS_Build.exe",
+            "args": [
+                "./test_project",
+                "--configure",
+                "--clean",
+                "--build",
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "internalConsoleOptions": "openOnSessionStart",
+            "console": "integratedTerminal",
+            "environment": [],
         }
     ]
 }

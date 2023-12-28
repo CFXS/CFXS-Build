@@ -3,6 +3,11 @@ set_cpp_compiler("arm-none-eabi-gcc", "20")
 set_asm_compiler("arm-none-eabi-gcc")
 set_linker("arm-none-eabi-ld")
 
+set_c_compiler("iccarm", "11")
+set_cpp_compiler("iccarm", "14")
+set_asm_compiler("iasmarm")
+set_linker("ilinkarm")
+
 local LINKER_SCRIPT = "LinkerScript.ld"
 set_linkerscript("./${LINKER_SCRIPT}")
 

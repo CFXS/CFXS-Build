@@ -1,6 +1,5 @@
 #pragma once
-
-class lua_State;
+#include <lua.hpp>
 
 class Component {
 public:

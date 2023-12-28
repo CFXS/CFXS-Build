@@ -1,6 +1,5 @@
 #include "Component.hpp"
 #include <lua.hpp>
-#include "lauxlib.h"
 
 Component::Component(Type type, const std::string& name) : m_type(type), m_name(name) {}
 

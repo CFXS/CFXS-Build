@@ -30,8 +30,11 @@ add_compile_definitions("CFXS_BUILD_VERSION_MAJOR=1")
 add_compile_definitions("CFXS_BUILD_VERSION_MINOR=0")
 
 if(WIN32)
-add_compile_definitions("WINDOWS_BUILD=1")
+    add_compile_definitions("WINDOWS_BUILD=1")
+    add_compile_definitions("_HAS_CXX17=1")
 endif()
+
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # required for re2 ABSL
 
 FetchContent_Declare(
     Lua
@@ -55,16 +58,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
+set(CTRE_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
+set(CTRE_BUILD_PACKAGE_RPM OFF CACHE BOOL "Build tests" FORCE)
+set(CTRE_BUILD_PACKAGE_DEB OFF CACHE BOOL "Build tests" FORCE)
 FetchContent_Declare(
-    lib_re2
+    lib_ctre
     GIT_REPOSITORY
-    https://github.com/google/re2.git
-    GIT_TAG "main"
+    https://github.com/hanickadot/compile-time-regular-expressions.git
 )
-FetchContent_MakeAvailable(lib_re2)
+FetchContent_MakeAvailable(lib_ctre)
 
 # find package spdlog, if not found then do fetchcontent
 find_package(spdlog QUIET)
+
 if(NOT spdlog_FOUND)
     message(STATUS "spdlog not found, fetching from github")
     set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "Build shared library" FORCE)
@@ -85,6 +91,6 @@ target_link_libraries(CFXS_Build PRIVATE
     lua_static
     LuaBridge
     argparse
-    re2
+    ctre
     spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
 )
