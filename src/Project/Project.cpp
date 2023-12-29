@@ -184,14 +184,13 @@ void Project::bind_set_linkerscript(const std::string& path) {}
 
 // Component creation
 Component& Project::bind_create_executable(const std::string& name) {
-    auto comp =
-        std::make_shared<Component>(Component::Type::EXECUTABLE, name, "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/test_project/");
+    auto comp = std::make_shared<Component>(Component::Type::EXECUTABLE, name, s_project_path);
     s_components.push_back(comp);
     return *comp.get();
 }
 
 Component& Project::bind_create_library(const std::string& name) {
-    auto comp = std::make_shared<Component>(Component::Type::LIBRARY, name, "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/test_project/");
+    auto comp = std::make_shared<Component>(Component::Type::LIBRARY, name, s_project_path);
     s_components.push_back(comp);
     return *comp.get();
 }

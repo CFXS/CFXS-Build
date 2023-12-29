@@ -827,9 +827,9 @@ inline int subprocess_create_ex(const char *const commandLine[],
 #pragma clang diagnostic ignored "-Wold-style-cast"
 #endif
     if (subprocess_option_search_user_path == (options & subprocess_option_search_user_path)) {
-        if (0 != posix_spawnp(&child, commandLine[0], &actions, SUBPROCESS_NULL, (char *const *)commandLine, used_environment)) {
+        if (int ret = posix_spawnp(&child, commandLine[0], &actions, SUBPROCESS_NULL, (char *const *)commandLine, used_environment)) {
             posix_spawn_file_actions_destroy(&actions);
-            return -1;
+            return ret;
         }
     } else {
         if (0 != posix_spawn(&child, commandLine[0], &actions, SUBPROCESS_NULL, (char *const *)commandLine, used_environment)) {

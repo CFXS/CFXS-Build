@@ -15,7 +15,7 @@ inline bool is_valid_program(const std::string& str) {
     auto s = "where " + str + " > nul 2>&1";
     return system(s.c_str()) == 0;
 #else
-    auto s = "type " + str + " &> /dev/null";
+    auto s = "type " + str + " > /dev/null";
     return system(s.c_str()) == 0;
 #endif
 }

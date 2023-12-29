@@ -99,7 +99,7 @@ Compiler::Compiler(Language language, const std::string& location, const std::st
 
     const auto compiler_version_string = get_program_version_string(get_location());
 
-    if (compiler_version_string.contains("GNU")) {
+    if (compiler_version_string.contains("GNU") || compiler_version_string.contains("gcc")) {
         m_type = Type::GNU;
     } else if (compiler_version_string.contains("clang")) {
         m_type = Type::CLANG;
@@ -109,6 +109,7 @@ Compiler::Compiler(Language language, const std::string& location, const std::st
         m_type = Type::IAR;
     } else {
         Log.error("{} Compiler \"{}\" is not supported", to_string(get_language()), get_location());
+        Log.info("Version:\n{}", compiler_version_string);
         throw std::runtime_error("Compiler not supported");
     }
 

@@ -12,10 +12,15 @@ local LINKER_SCRIPT = "LinkerScript.ld"
 set_linkerscript("./${LINKER_SCRIPT}")
 
 local test_project = create_executable("CFXS Build Test Project")
+-- local sources = {
+--     "./src/*.c",
+--     "./src/*.cpp",
+--     "../src/*.cpp",
+--     "!makefsdata.c", -- exclude
+-- }
 local sources = {
-    "./src/*.c",
-    "./src/*.cpp",
-    "../src/*.cpp",
+    "./src/main.cpp",
+    "./src/main.cpp",
     "!makefsdata.c", -- exclude
 }
 

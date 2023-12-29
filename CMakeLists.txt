@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.22)
 
 # Enable fetch content and disable updates
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
@@ -16,6 +16,7 @@ set(sources
     "src/Project/Component.cpp"
     "src/Project/Linker.cpp"
     "src/Project/Compiler.cpp"
+    "src/Project/SourceEntry.cpp"
 )
 
 add_executable(CFXS_Build ${sources})
@@ -60,9 +61,9 @@ FetchContent_MakeAvailable(argparse)
 # set(CTRE_BUILD_PACKAGE_RPM OFF CACHE BOOL "Build tests" FORCE)
 # set(CTRE_BUILD_PACKAGE_DEB OFF CACHE BOOL "Build tests" FORCE)
 # FetchContent_Declare(
-#     lib_ctre
-#     GIT_REPOSITORY
-#     https://github.com/hanickadot/compile-time-regular-expressions.git
+# lib_ctre
+# GIT_REPOSITORY
+# https://github.com/hanickadot/compile-time-regular-expressions.git
 # )
 # FetchContent_MakeAvailable(lib_ctre)
 
@@ -89,6 +90,7 @@ target_link_libraries(CFXS_Build PRIVATE
     lua_static
     LuaBridge
     argparse
+
     # ctre
     spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
 )
