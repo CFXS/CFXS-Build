@@ -5,8 +5,9 @@
 #include <LuaBridge/LuaBridge.h>
 #include "Project/Component.hpp"
 #include <lua.hpp>
+#include <regex>
 
-lua_State* s_lua;
+lua_State* s_MainLuaState;
 std::vector<std::shared_ptr<Component>> s_components;
 
 std::filesystem::path s_project_path;
@@ -24,6 +25,10 @@ std::vector<std::string> s_global_asm_compile_flags;
 std::vector<std::string> s_global_link_flags;
 
 std::filesystem::file_time_type get_last_modified_time(const std::filesystem::path& path) { return std::filesystem::last_write_time(path); }
+
+#define LuaLog(...)   Log.info("[\033[1;36mLua\033[0m] " __VA_ARGS__)
+#define LuaError(...) Log.error("[\033[1;36mLua\033[0m] " __VA_ARGS__)
+#define LuaWarn(...)  Log.warn("[\033[1;36mLua\033[0m] " __VA_ARGS__)
 
 std::string read_source(const std::filesystem::path& path) {
     std::ifstream fs(path.string());
@@ -49,17 +54,29 @@ void Project::initialize(const std::filesystem::path& project_path, const std::f
 
     initialize_lua();
 }
-
 void Project::configure() {
     Log.info("Configure project");
 
-    const auto root_buildfile = read_source(s_project_path / ".cfxs-build");
+    const auto source_location = s_project_path / ".cfxs-build";
+    const auto root_buildfile  = read_source(source_location);
     // execute root_buildfile into lua state
-    if (luaL_dostring(s_lua, root_buildfile.c_str())) {
+    if (luaL_dostring(s_MainLuaState, root_buildfile.c_str())) {
         // get and log lua error callstack
-        const auto error = lua_tostring(s_lua, -1);
-        Log.error("{}", error);
+        std::string error = lua_tostring(s_MainLuaState, -1);
+
+        std::regex error_regex(R"(\[string\s\"(.*)\"\]:(\d+):)");
+        std::smatch match;
+        if (std::regex_search(error, match, error_regex)) {
+            if (match.size() == 3) {
+                error = fmt::format("\"{}:{}\"{}", source_location.string(), match[2].str(), error.substr(match[0].str().length()));
+            }
+        }
+
+        LuaError("{}", error);
         throw std::runtime_error("Failed to configure");
+    } else {
+        auto comp = s_components[0];
+        comp->configure();
     }
 }
 
@@ -110,17 +127,27 @@ void Project::clean(const std::vector<std::string>& components) {
 
 void Project::initialize_lua() {
     Log.trace("Initialize Lua");
+
+    auto& L = s_MainLuaState;
+
     // initialize Lua state
-    s_lua = luaL_newstate();
-    if (!s_lua) {
+    L = luaL_newstate();
+    if (!L) {
         Log.error("Failed to create Lua state");
         throw std::runtime_error("Failed to create Lua state");
     }
 
     // load Lua libraries
-    luaL_openlibs(s_lua);
+    luaL_openlibs(L);
 
-    auto bridge = luabridge::getGlobalNamespace(s_lua);
+// Set _G.OS to Windows or Unix
+#if WINDOWS_BUILD == 1
+    luaL_loadstring(L, "_G.OS = \"Windows\"");
+#else
+    luaL_loadstring(L, "_G.OS = \"Unix\"");
+#endif
+
+    auto bridge = luabridge::getGlobalNamespace(L);
 
     bridge.addFunction<void, const std::string&, const std::string&>("set_c_compiler", TO_FUNCTION(bind_set_c_compiler));
     bridge.addFunction<void, const std::string&, const std::string&>("set_cpp_compiler", TO_FUNCTION(bind_set_cpp_compiler));
@@ -131,9 +158,8 @@ void Project::initialize_lua() {
 
     bridge.addFunction<Component&, const std::string&>("create_executable", TO_FUNCTION(bind_create_executable));
     bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(bind_create_library));
-    bridge.addFunction<Component&, const std::string&>("create_module", TO_FUNCTION(bind_create_module));
 
-    bridge.beginClass<Component>("__Component").addFunction("add_sources", &Component::add_sources).endClass();
+    bridge.beginClass<Component>("$Component").addFunction("add_sources", &Component::add_sources).endClass();
 }
 
 // Compiler config
@@ -158,19 +184,14 @@ void Project::bind_set_linkerscript(const std::string& path) {}
 
 // Component creation
 Component& Project::bind_create_executable(const std::string& name) {
-    auto comp = std::make_shared<Component>(Component::Type::EXECUTABLE, name);
+    auto comp =
+        std::make_shared<Component>(Component::Type::EXECUTABLE, name, "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/test_project/");
     s_components.push_back(comp);
     return *comp.get();
 }
 
 Component& Project::bind_create_library(const std::string& name) {
-    auto comp = std::make_shared<Component>(Component::Type::LIBRARY, name);
-    s_components.push_back(comp);
-    return *comp.get();
-}
-
-Component& Project::bind_create_module(const std::string& name) {
-    auto comp = std::make_shared<Component>(Component::Type::MODULE, name);
+    auto comp = std::make_shared<Component>(Component::Type::LIBRARY, name, "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/test_project/");
     s_components.push_back(comp);
     return *comp.get();
 }

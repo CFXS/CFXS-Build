@@ -34,8 +34,6 @@ if(WIN32)
     add_compile_definitions("_HAS_CXX17=1")
 endif()
 
-set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # required for re2 ABSL
-
 FetchContent_Declare(
     Lua
     GIT_REPOSITORY
@@ -58,15 +56,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
-set(CTRE_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
-set(CTRE_BUILD_PACKAGE_RPM OFF CACHE BOOL "Build tests" FORCE)
-set(CTRE_BUILD_PACKAGE_DEB OFF CACHE BOOL "Build tests" FORCE)
-FetchContent_Declare(
-    lib_ctre
-    GIT_REPOSITORY
-    https://github.com/hanickadot/compile-time-regular-expressions.git
-)
-FetchContent_MakeAvailable(lib_ctre)
+# set(CTRE_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
+# set(CTRE_BUILD_PACKAGE_RPM OFF CACHE BOOL "Build tests" FORCE)
+# set(CTRE_BUILD_PACKAGE_DEB OFF CACHE BOOL "Build tests" FORCE)
+# FetchContent_Declare(
+#     lib_ctre
+#     GIT_REPOSITORY
+#     https://github.com/hanickadot/compile-time-regular-expressions.git
+# )
+# FetchContent_MakeAvailable(lib_ctre)
 
 # find package spdlog, if not found then do fetchcontent
 find_package(spdlog QUIET)
@@ -91,6 +89,6 @@ target_link_libraries(CFXS_Build PRIVATE
     lua_static
     LuaBridge
     argparse
-    ctre
+    # ctre
     spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
 )

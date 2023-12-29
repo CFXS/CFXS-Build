@@ -1,13 +1,28 @@
 #include "Component.hpp"
 #include <lua.hpp>
+#include <filesystem>
+#include <regex>
 
-Component::Component(Type type, const std::string& name) : m_type(type), m_name(name) {}
+Component::Component(Type type, const std::string& name, const std::string& root_path) :
+    m_type(type), m_name(name), m_root_path(root_path) {}
 
 Component::~Component() {}
 
 void Component::build() { Log.info("Build {}", get_name()); }
 
 void Component::clean() { Log.info("Clean {}", get_name()); }
+
+void Component::configure() {
+    Log.info("Configure {}", get_name());
+
+    // recursively iterate all files in path and get filenames
+    // for (const auto& entry : std::filesystem::recursive_directory_iterator(root_path)) {
+    //     if (entry.is_regular_file()) {
+    //         auto filename = entry.path().filename();
+    //         // get absolute path of file
+    //     }
+    // }
+}
 
 void Component::add_sources(lua_State* L) {
     int add_count = 0;
@@ -26,7 +41,7 @@ void Component::add_sources(lua_State* L) {
                     std::string src(lua_tostring(L, -1));
                     if (src.length() && src[0] == '!') {
                         Log.trace("[{}] Add filter: {}", get_name(), src);
-                        m_source_filters.push_back(src);
+                        m_sources.push_back(src.substr(1)); // remove ! prefix
                     } else {
                         Log.trace("[{}] Add source: {}", get_name(), src);
                         m_sources.push_back(src);

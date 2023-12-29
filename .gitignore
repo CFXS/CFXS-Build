@@ -1,3 +1,5 @@
 .cfxs/build
 build
 .cache
+compile_commands.json
+cfxs-build.log-txt
