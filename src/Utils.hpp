@@ -64,7 +64,7 @@ inline std::string execute_with_args(const std::string& cmd, const std::vector<s
     }
     command_line.push_back(NULL);
 
-    Log.debug("[Execute] {} {}", cmd, args);
+    // Log.debug("[Execute] {} {}", cmd, args);
 
     struct subprocess_s process;
     int res = subprocess_create(command_line.data(),

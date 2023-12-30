@@ -21,6 +21,7 @@ public:
     void bind_add_sources(lua_State* L);
     void bind_add_include_directories(lua_State* L);
     void bind_add_compile_definitions(lua_State* L);
+    void bind_add_compile_options(lua_State* L);
 
     void configure();
     void build(std::shared_ptr<Compiler> c_compiler, std::shared_ptr<Compiler> cpp_compiler, std::shared_ptr<Compiler> asm_compiler);
@@ -46,4 +47,5 @@ private:
 
     std::vector<std::filesystem::path> m_include_directories;
     std::vector<std::string> m_compile_definitions;
+    std::vector<std::string> m_compile_options;
 };

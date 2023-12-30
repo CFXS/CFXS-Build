@@ -161,7 +161,7 @@ void Component::build(std::shared_ptr<Compiler> c_compiler,
         const auto obj_path        = se.get_output_directory() / se.get_source_file_path().filename().string().append(".o");
         const auto dependency_path = se.get_output_directory() / se.get_source_file_path().filename().string().append(".dep");
 
-        Log.trace("Compile {}", se.get_source_file_path().filename().string());
+        Log.info("Compile {}", se.get_source_file_path().filename().string());
 
         std::vector<std::string> args = cpp_compiler->get_flags();
         args.push_back("-c"); // Compile without linking
@@ -182,8 +182,15 @@ void Component::build(std::shared_ptr<Compiler> c_compiler,
             args.push_back("-D" + def);
         }
 
+        for (const auto& opt : m_compile_options) {
+            args.push_back(opt);
+        }
+
         auto compile_ret = execute_with_args(cpp_compiler->get_location(), args);
-        Log.warn(compile_ret);
+
+        if (compile_ret.length()) {
+            Log.warn(compile_ret);
+        }
     };
 
     for (const auto& se : m_source_entries) {
@@ -278,4 +285,28 @@ void Component::bind_add_compile_definitions(lua_State* L) {
     // remove duplicates
     // std::sort(m_compile_definitions.begin(), m_compile_definitions.end());
     // m_compile_definitions.erase(std::unique(m_compile_definitions.begin(), m_compile_definitions.end()), m_compile_definitions.end());
+}
+
+void Component::bind_add_compile_options(lua_State* L) {
+    auto arg_sources = luabridge::LuaRef::fromStack(L, 2); // offset 2 is sources list
+    if (arg_sources.isTable()) {
+        for (int i = 1; i <= arg_sources.length(); i++) {
+            auto src = arg_sources.rawget(i);
+            if (src.isString()) {
+                m_compile_options.push_back(src.tostring());
+            } else {
+                luaL_error(L, "Compile option #%d is not a string [%s]", i, lua_typename(L, src.type()));
+                throw std::runtime_error("Compile option is not a string");
+            }
+        }
+    } else if (arg_sources.isString()) {
+        m_compile_options.push_back(arg_sources.tostring());
+    } else {
+        luaL_error(L, "Invalid compile options argument - {}", lua_typename(L, arg_sources.type()));
+        throw std::runtime_error("Invalid compile options argument");
+    }
+
+    // remove duplicates
+    // std::sort(m_compile_options.begin(), m_compile_options.end());
+    // m_compile_options.erase(std::unique(m_compile_options.begin(), m_compile_options.end()), m_compile_options.end());
 }

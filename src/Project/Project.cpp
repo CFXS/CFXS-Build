@@ -165,6 +165,7 @@ void Project::initialize_lua() {
         .addFunction("add_sources", &Component::bind_add_sources)
         .addFunction("add_include_directories", &Component::bind_add_include_directories)
         .addFunction("add_compile_definitions", &Component::bind_add_compile_definitions)
+        .addFunction("add_compile_options", &Component::bind_add_compile_options)
         .endClass();
 }
 

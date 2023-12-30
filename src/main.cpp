@@ -28,8 +28,8 @@ int main(int argc, char **argv) {
         .nargs(argparse::nargs_pattern::any);
 
     args.add_argument("--clean")
-        .help("Clean project")                          //
-        .default_value(std::vector<std::string>({"*"})) //
+        .help("Clean project")                     //
+        .default_value(std::vector<std::string>()) //
         .nargs(argparse::nargs_pattern::any);
 
     try {

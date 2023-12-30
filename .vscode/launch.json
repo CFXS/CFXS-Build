@@ -9,8 +9,8 @@
             "args": [
                 "./test_project",
                 "--configure",
-                "--clean",
-                "--build",
+                 "--clean",
+                 "--build",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
