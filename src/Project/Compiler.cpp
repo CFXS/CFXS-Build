@@ -101,8 +101,10 @@ Compiler::Compiler(Language language, const std::string& location, const std::st
 
     if (compiler_version_string.contains("GNU") || compiler_version_string.contains("gcc")) {
         m_type = Type::GNU;
+        m_flags.push_back("-fdiagnostics-color=always");
     } else if (compiler_version_string.contains("clang")) {
         m_type = Type::CLANG;
+        m_flags.push_back("-fdiagnostics-color=always");
     } else if (compiler_version_string.contains("Microsoft")) {
         m_type = Type::MSVC;
     } else if (compiler_version_string.contains("IAR")) {

@@ -57,6 +57,50 @@ inline std::string get_program_version_string(const std::string& location) {
     return result;
 }
 
+inline std::string execute_with_args(const std::string& cmd, const std::vector<std::string>& args) {
+    std::vector<const char*> command_line = {cmd.c_str()};
+    for (const auto& a : args) {
+        command_line.push_back(a.c_str());
+    }
+    command_line.push_back(NULL);
+
+    Log.debug("[Execute] {} {}", cmd, args);
+
+    struct subprocess_s process;
+    int res = subprocess_create(command_line.data(),
+                                subprocess_option_combined_stdout_stderr |                                      //
+                                    subprocess_option_enable_async |                                            //
+                                    subprocess_option_search_user_path | subprocess_option_inherit_environment, //
+                                &process);
+    if (res != 0) {
+        Log.error("[create {}] Failed to execute with args", res);
+        throw std::runtime_error("Failed to execute");
+    }
+
+    int process_ret = -1;
+    res             = subprocess_join(&process, &process_ret);
+    if (res != 0) {
+        Log.error("[join {}] Failed to execute with args", res);
+        throw std::runtime_error("Failed to execute");
+    }
+
+    if (process_ret < 0) {
+        Log.error("[execute {}] Result", process_ret);
+        throw std::runtime_error("Failed to execute");
+    }
+
+    FILE* p_stdout = subprocess_stdout(&process);
+
+    // read all contents of p_stdout to std::string
+    std::string result;
+    char buf[256];
+    while (fgets(buf, sizeof(buf), p_stdout) != NULL) {
+        result += buf;
+    }
+
+    return result;
+}
+
 template<typename T>
 concept ContainerObject = requires(T x) {
     x.begin();

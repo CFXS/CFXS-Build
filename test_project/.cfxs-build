@@ -1,5 +1,5 @@
 set_c_compiler("arm-none-eabi-gcc", "11")
-set_cpp_compiler("arm-none-eabi-gcc", "20")
+set_cpp_compiler("arm-none-eabi-g++", "20")
 set_asm_compiler("arm-none-eabi-gcc")
 set_linker("arm-none-eabi-ld")
 
@@ -11,15 +11,16 @@ set_linker("arm-none-eabi-ld")
 local LINKER_SCRIPT = "LinkerScript.ld"
 set_linkerscript("./${LINKER_SCRIPT}")
 
-local test_project = create_executable("CFXS Build Test")
+local test_project = create_executable("CFXS-Build-Test")
 
 local sources = {
     "./src/**.c",            -- current dir + recursive search
-    "./src/Module_A/**.cpp", -- current dir search
-    "./src/Module_B/**.cpp", -- current dir search
+    "./src/Module_A/**.cpp", -- current dir + recursive search
+    "./src/Module_B/**.cpp", -- current dir + recursive search
     "./src/Module_C/*.cpp",  -- current dir search
     "./src/main.cpp",        -- single file
     "!makefsdata.c",         -- exclude
 }
 
 test_project:add_sources(sources)
+test_project:add_include_directories("./src")

@@ -5,8 +5,11 @@
 #include <bits/fs_path.h>
 #include <re2/re2.h>
 #include <Utils.hpp>
-#include <stdexcept>
+#include <fstream>
+#include <thread>
 #include <vector>
+#include <execution>
+#include "Project/SourceEntry.hpp"
 #include <LuaBridge/LuaBridge.h>
 
 Component::Component(Type type,
@@ -20,30 +23,11 @@ Component::Component(Type type,
 
 Component::~Component() {}
 
-void Component::build() { Log.info("Build Component [{}]", get_name()); }
-
 // TODO: move to better location
 std::vector<std::string> s_TempFileExtensions = {
     ".o",
     ".dep",
 };
-
-void Component::clean() {
-    Log.info("Clean Component [{}]", get_name());
-
-    // recursively remove all temp files from get_local_output_directory()
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(get_local_output_directory())) {
-        if (std::find(s_TempFileExtensions.begin(), s_TempFileExtensions.end(), entry.path().extension()) != s_TempFileExtensions.end()) {
-            const bool removed = std::filesystem::remove(entry.path());
-            if (!removed) {
-                Log.error("Failed to delete {}", entry.path());
-                throw std::runtime_error("Failed to delete file");
-            } else {
-                Log.trace(" - Delete {}", entry.path());
-            }
-        }
-    }
-}
 
 void Component::configure() {
     Log.info("Configure {}", get_name());
@@ -138,7 +122,72 @@ void Component::configure() {
     }
 }
 
-void Component::add_sources(lua_State* L) {
+void Component::clean() {
+    Log.info("Clean Component [{}] @ {}", get_name(), get_local_output_directory());
+
+    if (!std::filesystem::exists(get_local_output_directory()))
+        return;
+
+    // recursively remove all temp files from get_local_output_directory()
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(get_local_output_directory())) {
+        if (std::find(s_TempFileExtensions.begin(), s_TempFileExtensions.end(), entry.path().extension()) != s_TempFileExtensions.end()) {
+            const bool removed = std::filesystem::remove(entry.path());
+            if (!removed) {
+                Log.error("Failed to delete {}", entry.path());
+                throw std::runtime_error("Failed to delete file");
+            } else {
+                Log.trace(" - Delete {}", entry.path());
+            }
+        }
+    }
+}
+
+void Component::build(std::shared_ptr<Compiler> c_compiler,
+                      std::shared_ptr<Compiler> cpp_compiler,
+                      std::shared_ptr<Compiler> asm_compiler) {
+    Log.info("Build Component [{}]", get_name());
+
+    const auto compile_source = [&](const SourceEntry& se) {
+        // Generate output_directory if it does not exist
+        if (!std::filesystem::exists(se.get_output_directory())) {
+            try {
+                std::filesystem::create_directories(se.get_output_directory());
+            } catch (const std::exception& e) {
+                Log.error("Failed to create output dir [{}]: {}", se.get_output_directory(), e.what());
+            }
+        }
+
+        // Create empty file se.get_output_directory() / se.get_source_file_path().filename()
+        const auto obj_path        = se.get_output_directory() / se.get_source_file_path().filename().string().append(".o");
+        const auto dependency_path = se.get_output_directory() / se.get_source_file_path().filename().string().append(".dep");
+
+        Log.trace("Compile {}", se.get_source_file_path().filename().string());
+
+        std::vector<std::string> args = cpp_compiler->get_flags();
+        args.push_back("-c"); // Compile without linking
+        args.push_back(se.get_source_file_path());
+
+        args.push_back("-o"); // Write output to specific file
+        args.push_back(obj_path);
+
+        args.push_back("-MMD"); // Generate header dependency list (ignore system headers, but allow user angle brackets)
+        args.push_back("-MF");  // Write to specific file
+        args.push_back(dependency_path);
+
+        for (const auto& inc_dir : m_include_directories) {
+            args.push_back("-I" + inc_dir.string());
+        }
+
+        auto compile_ret = execute_with_args(cpp_compiler->get_location(), args);
+        Log.warn(compile_ret);
+    };
+
+    for (const auto& se : m_source_entries) {
+        compile_source(se);
+    }
+}
+
+void Component::bind_add_sources(lua_State* L) {
     const auto push_source = [&](const std::string& src) {
         if (src.length() && src[0] == '!') {
             Log.trace("[{}] Add filter: {}", get_name(), src);
@@ -166,4 +215,39 @@ void Component::add_sources(lua_State* L) {
         luaL_error(L, "Invalid sources argument - {}", lua_typename(L, arg_sources.type()));
         throw std::runtime_error("Invalid sources argument");
     }
+}
+
+void Component::bind_add_include_directories(lua_State* L) {
+    auto arg_sources = luabridge::LuaRef::fromStack(L, 2); // offset 2 is sources list
+    if (arg_sources.isTable()) {
+        for (int i = 1; i <= arg_sources.length(); i++) {
+            auto src = arg_sources.rawget(i);
+            if (src.isString()) {
+                m_include_directories.push_back(src.tostring());
+            } else {
+                luaL_error(L, "Include directory #%d is not a string [%s]", i, lua_typename(L, src.type()));
+                throw std::runtime_error("Include directory is not a string");
+            }
+        }
+    } else if (arg_sources.isString()) {
+        m_include_directories.push_back(arg_sources.tostring());
+    } else {
+        luaL_error(L, "Invalid include directories argument - {}", lua_typename(L, arg_sources.type()));
+        throw std::runtime_error("Invalid include directories argument");
+    }
+
+    for (std::filesystem::path& dir : m_include_directories) {
+        // check if dir is relative path
+        if (dir.is_relative()) {
+            // if relative path, make it absolute and canonical
+            dir = std::filesystem::weakly_canonical(get_root_path() / dir);
+        } else {
+            // make canonical
+            dir = std::filesystem::weakly_canonical(dir);
+        }
+    }
+
+    // remove duplicates
+    // std::sort(m_include_directories.begin(), m_include_directories.end());
+    // m_include_directories.erase(std::unique(m_include_directories.begin(), m_include_directories.end()), m_include_directories.end());
 }

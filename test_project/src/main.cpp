@@ -1,3 +1,3 @@
-int main() {
-    return 0;
-}
+#include <Common.hpp>
+
+int main() { return 0; }

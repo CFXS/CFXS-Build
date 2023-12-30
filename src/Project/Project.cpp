@@ -85,7 +85,7 @@ void Project::configure() {
 void Project::build(const std::vector<std::string>& components) {
     if (std::find(components.begin(), components.end(), "*") != components.end()) {
         for (auto& comp : s_components) {
-            comp->build();
+            comp->build(s_c_compiler, s_cpp_compiler, s_asm_compiler);
         }
     } else {
         for (auto& c : components) {
@@ -93,7 +93,7 @@ void Project::build(const std::vector<std::string>& components) {
                 return comp->get_name() == c;
             });
             if (comp != s_components.end()) {
-                (*comp)->build();
+                (*comp)->build(s_c_compiler, s_cpp_compiler, s_asm_compiler);
             } else {
                 Log.error("Component \"{}\" does not exist", c);
                 throw std::runtime_error("Component does not exist");
@@ -161,7 +161,10 @@ void Project::initialize_lua() {
     bridge.addFunction<Component&, const std::string&>("create_executable", TO_FUNCTION(bind_create_executable));
     bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(bind_create_library));
 
-    bridge.beginClass<Component>("$Component").addFunction("add_sources", &Component::add_sources).endClass();
+    bridge.beginClass<Component>("$Component")
+        .addFunction("add_sources", &Component::bind_add_sources)
+        .addFunction("add_include_directories", &Component::bind_add_include_directories)
+        .endClass();
 }
 
 // Compiler config
@@ -187,9 +190,9 @@ void Project::bind_set_linkerscript(const std::string& path) {}
 // Component creation
 Component& Project::bind_create_executable(const std::string& name) {
     // valid filename match
-    if (!RE2::FullMatch(name, R"(^[a-zA-Z0-9_\-\. ]+$)")) {
+    if (!RE2::FullMatch(name, R"(^[a-zA-Z0-9_\- ]+$)")) {
         luaL_error(s_MainLuaState,
-                   "Invalid executable name [%s] - name can only contain alphanumeric characters, dashes, underscores and spaces",
+                   "Invalid executable name [%s] - name can only contain alphanumeric characters, dashes and underscores",
                    name.c_str());
         throw std::runtime_error("Invalid executable name");
     }
@@ -201,9 +204,9 @@ Component& Project::bind_create_executable(const std::string& name) {
 
 Component& Project::bind_create_library(const std::string& name) {
     // valid filename match
-    if (!RE2::FullMatch(name, R"(^[a-zA-Z0-9_\-\. ]+$)")) {
+    if (!RE2::FullMatch(name, R"(^[a-zA-Z0-9_\- ]+$)")) {
         luaL_error(s_MainLuaState,
-                   "Invalid library name [%s] - name can only contain alphanumeric characters, dashes, underscores and spaces",
+                   "Invalid library name [%s] - name can only contain alphanumeric characters, dashes and underscores",
                    name.c_str());
         throw std::runtime_error("Invalid library name");
     }

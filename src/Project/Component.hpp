@@ -2,6 +2,7 @@
 #include <filesystem>
 #include "SourceEntry.hpp"
 #include <lua.hpp>
+#include "Compiler.hpp"
 
 class Component {
 public:
@@ -17,10 +18,11 @@ public:
               const std::filesystem::path& local_output_directory);
     ~Component();
 
-    void add_sources(lua_State* L);
+    void bind_add_sources(lua_State* L);
+    void bind_add_include_directories(lua_State* L);
 
     void configure();
-    void build();
+    void build(std::shared_ptr<Compiler> c_compiler, std::shared_ptr<Compiler> cpp_compiler, std::shared_ptr<Compiler> asm_compiler);
     void clean();
 
     Type get_type() const { return m_type; }
@@ -40,4 +42,6 @@ private:
 
     // Actual selected source files to build
     std::vector<SourceEntry> m_source_entries;
+
+    std::vector<std::filesystem::path> m_include_directories;
 };
