@@ -164,6 +164,7 @@ void Project::initialize_lua() {
     bridge.beginClass<Component>("$Component")
         .addFunction("add_sources", &Component::bind_add_sources)
         .addFunction("add_include_directories", &Component::bind_add_include_directories)
+        .addFunction("add_compile_definitions", &Component::bind_add_compile_definitions)
         .endClass();
 }
 

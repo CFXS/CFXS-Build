@@ -178,6 +178,10 @@ void Component::build(std::shared_ptr<Compiler> c_compiler,
             args.push_back("-I" + inc_dir.string());
         }
 
+        for (const auto& def : m_compile_definitions) {
+            args.push_back("-D" + def);
+        }
+
         auto compile_ret = execute_with_args(cpp_compiler->get_location(), args);
         Log.warn(compile_ret);
     };
@@ -250,4 +254,28 @@ void Component::bind_add_include_directories(lua_State* L) {
     // remove duplicates
     // std::sort(m_include_directories.begin(), m_include_directories.end());
     // m_include_directories.erase(std::unique(m_include_directories.begin(), m_include_directories.end()), m_include_directories.end());
+}
+
+void Component::bind_add_compile_definitions(lua_State* L) {
+    auto arg_sources = luabridge::LuaRef::fromStack(L, 2); // offset 2 is sources list
+    if (arg_sources.isTable()) {
+        for (int i = 1; i <= arg_sources.length(); i++) {
+            auto src = arg_sources.rawget(i);
+            if (src.isString()) {
+                m_compile_definitions.push_back(src.tostring());
+            } else {
+                luaL_error(L, "Compile definition #%d is not a string [%s]", i, lua_typename(L, src.type()));
+                throw std::runtime_error("Compile definition is not a string");
+            }
+        }
+    } else if (arg_sources.isString()) {
+        m_compile_definitions.push_back(arg_sources.tostring());
+    } else {
+        luaL_error(L, "Invalid compile definitions argument - {}", lua_typename(L, arg_sources.type()));
+        throw std::runtime_error("Invalid compile definitions argument");
+    }
+
+    // remove duplicates
+    // std::sort(m_compile_definitions.begin(), m_compile_definitions.end());
+    // m_compile_definitions.erase(std::unique(m_compile_definitions.begin(), m_compile_definitions.end()), m_compile_definitions.end());
 }

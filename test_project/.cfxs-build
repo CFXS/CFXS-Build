@@ -24,3 +24,6 @@ local sources = {
 
 test_project:add_sources(sources)
 test_project:add_include_directories("./src")
+test_project:add_compile_definitions({
+    "CFXS"
+})
