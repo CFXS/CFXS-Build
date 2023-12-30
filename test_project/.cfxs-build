@@ -11,17 +11,15 @@ set_linker("arm-none-eabi-ld")
 local LINKER_SCRIPT = "LinkerScript.ld"
 set_linkerscript("./${LINKER_SCRIPT}")
 
-local test_project = create_executable("CFXS Build Test Project")
--- local sources = {
---     "./src/*.c",
---     "./src/*.cpp",
---     "../src/*.cpp",
---     "!makefsdata.c", -- exclude
--- }
+local test_project = create_executable("CFXS Build Test")
+
 local sources = {
-    "./src/main.cpp",
-    "./src/main.cpp",
-    "!makefsdata.c", -- exclude
+    "./src/**.c",            -- current dir + recursive search
+    "./src/Module_A/**.cpp", -- current dir search
+    "./src/Module_B/**.cpp", -- current dir search
+    "./src/Module_C/*.cpp",  -- current dir search
+    "./src/main.cpp",        -- single file
+    "!makefsdata.c",         -- exclude
 }
 
 test_project:add_sources(sources)

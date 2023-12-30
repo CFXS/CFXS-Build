@@ -7,13 +7,13 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/CFXS_Build",
             "args": [
-                "/home/na/CFXS-Build/test_project",
+                "./test_project",
                 "--configure",
                 "--clean",
                 "--build",
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build",
+            "cwd": "${workspaceFolder}",
             "environment": [],
         },
         {

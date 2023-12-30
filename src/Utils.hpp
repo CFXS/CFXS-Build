@@ -56,3 +56,14 @@ inline std::string get_program_version_string(const std::string& location) {
 
     return result;
 }
+
+template<typename T>
+concept ContainerObject = requires(T x) {
+    x.begin();
+    x.end();
+};
+
+template<ContainerObject T, typename U>
+auto container_count(const T& cont, const U& val) {
+    return std::count(cont.begin(), cont.end(), val);
+}

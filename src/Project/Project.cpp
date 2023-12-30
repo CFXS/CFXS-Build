@@ -4,7 +4,9 @@
 #include <functional>
 #include <LuaBridge/LuaBridge.h>
 #include "Project/Component.hpp"
+#include "lauxlib.h"
 #include <lua.hpp>
+#include <re2/re2.h>
 #include <regex>
 
 lua_State* s_MainLuaState;
@@ -184,13 +186,29 @@ void Project::bind_set_linkerscript(const std::string& path) {}
 
 // Component creation
 Component& Project::bind_create_executable(const std::string& name) {
-    auto comp = std::make_shared<Component>(Component::Type::EXECUTABLE, name, s_project_path);
+    // valid filename match
+    if (!RE2::FullMatch(name, R"(^[a-zA-Z0-9_\-\. ]+$)")) {
+        luaL_error(s_MainLuaState,
+                   "Invalid executable name [%s] - name can only contain alphanumeric characters, dashes, underscores and spaces",
+                   name.c_str());
+        throw std::runtime_error("Invalid executable name");
+    }
+
+    auto comp = std::make_shared<Component>(Component::Type::EXECUTABLE, name, s_project_path, s_output_path / "cb" / name);
     s_components.push_back(comp);
     return *comp.get();
 }
 
 Component& Project::bind_create_library(const std::string& name) {
-    auto comp = std::make_shared<Component>(Component::Type::LIBRARY, name, s_project_path);
+    // valid filename match
+    if (!RE2::FullMatch(name, R"(^[a-zA-Z0-9_\-\. ]+$)")) {
+        luaL_error(s_MainLuaState,
+                   "Invalid library name [%s] - name can only contain alphanumeric characters, dashes, underscores and spaces",
+                   name.c_str());
+        throw std::runtime_error("Invalid library name");
+    }
+
+    auto comp = std::make_shared<Component>(Component::Type::LIBRARY, name, s_project_path, s_output_path / "cb" / name);
     s_components.push_back(comp);
     return *comp.get();
 }

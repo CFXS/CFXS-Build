@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 
     args.add_argument("--out")
         .help("Build output directory") //
-        .default_value(".cfxs/build")   //
+        .default_value("./.cfxs/build") //
         .required();                    //
 
     args.add_argument("--configure")

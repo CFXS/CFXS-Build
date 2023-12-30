@@ -57,6 +57,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
+FetchContent_Declare(
+    lib_re2
+    GIT_REPOSITORY
+    https://github.com/google/re2.git
+    GIT_TAG "main"
+)
+FetchContent_MakeAvailable(lib_re2)
+
 # set(CTRE_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
 # set(CTRE_BUILD_PACKAGE_RPM OFF CACHE BOOL "Build tests" FORCE)
 # set(CTRE_BUILD_PACKAGE_DEB OFF CACHE BOOL "Build tests" FORCE)
@@ -90,7 +98,6 @@ target_link_libraries(CFXS_Build PRIVATE
     lua_static
     LuaBridge
     argparse
-
-    # ctre
+    re2
     spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
 )
