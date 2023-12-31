@@ -17,6 +17,8 @@ local sources = {
     "./src/**.c",            -- current dir + recursive search
     "./src/Module_A/**.cpp", -- current dir + recursive search
     "./src/Module_B/**.cpp", -- current dir + recursive search
+    "./src/Module_A_copy/**.cpp", -- current dir + recursive search
+    "./src/Module_B_copy/**.cpp", -- current dir + recursive search
     "./src/Module_C/*.cpp",  -- current dir search
     "./src/main.cpp",        -- single file
     "!makefsdata.c",         -- exclude
@@ -30,5 +32,5 @@ test_project:add_compile_definitions({
     "CFXS"
 })
 test_project:add_compile_options({
-    "-O3"
+    "-O3",
 })

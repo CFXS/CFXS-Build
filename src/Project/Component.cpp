@@ -1,5 +1,7 @@
 #include "Component.hpp"
 #include <algorithm>
+#include <chrono>
+#include <exception>
 #include <lua.hpp>
 #include <filesystem>
 #include <bits/fs_path.h>
@@ -50,7 +52,7 @@ void Component::configure() {
         if (path.contains("*")) {
             // currently the only valid wildcards are *.extension for current folder match or **.extension for recursive match
             // This regex allows only *.ext or **.ext at the end of the path, no stars in the middle
-            const bool valid_wildcard = RE2::FullMatch(path, R"([^*\s]+\*\*?\.[^\s]+)");
+            const bool valid_wildcard = RE2::FullMatch(path, R"([^*]+\*\*?\.[^\s ]+)");
 
             if (!valid_wildcard) {
                 Log.error("Invalid source wildcard: {}", path);
@@ -61,6 +63,7 @@ void Component::configure() {
             const auto file_path           = std::filesystem::path(path);
             const bool is_inside_root_path = file_path.parent_path().string().starts_with(get_root_path().string());
 
+            // TODO: check if wildcard parent paths exist on filesystem
             if (recursive_wildcard) {
                 if (!is_inside_root_path) {
                     Log.error("Recursive add not available for external paths: {}", file_path);
@@ -142,13 +145,52 @@ void Component::clean() {
     }
 }
 
+#define ANSI_GREEN "\033[92m"
+#define ANSI_RED   "\033[91m"
+#define ANSI_RESET "\033[0m"
+#define ANSI_GRAY  "\033[90m"
+
+class BuildWorker {
+public:
+    BuildWorker(int idx) : m_index(idx) {
+        auto t = new std::thread([=]() {
+            while (!m_terminate) {
+                if (m_busy) {
+                    m_e();
+                    m_busy = false;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            m_running = false;
+        });
+    }
+    int get_index() const { return m_index; }
+    bool is_busy() const { return m_busy; }
+    bool is_running() const { return m_running; }
+    void execute(std::function<void()> e) {
+        m_e    = e;
+        m_busy = true;
+    }
+    void terminate() { m_terminate = true; }
+
+private:
+    int m_index;
+    std::function<void()> m_e;
+    bool m_terminate = false;
+    bool m_busy      = false;
+    bool m_running   = true;
+};
+
 void Component::build(std::shared_ptr<Compiler> c_compiler,
                       std::shared_ptr<Compiler> cpp_compiler,
                       std::shared_ptr<Compiler> asm_compiler) {
     Log.info("Build Component [{}]", get_name());
+    const auto build_t1 = std::chrono::high_resolution_clock::now();
 
-    const auto compile_source = [&](const SourceEntry& se) {
+    std::mutex fs_mutex;
+    const auto compile_source = [&](const SourceEntry& se) -> auto {
         // Generate output_directory if it does not exist
+        fs_mutex.lock();
         if (!std::filesystem::exists(se.get_output_directory())) {
             try {
                 std::filesystem::create_directories(se.get_output_directory());
@@ -156,12 +198,13 @@ void Component::build(std::shared_ptr<Compiler> c_compiler,
                 Log.error("Failed to create output dir [{}]: {}", se.get_output_directory(), e.what());
             }
         }
+        fs_mutex.unlock();
 
         // Create empty file se.get_output_directory() / se.get_source_file_path().filename()
         const auto obj_path        = se.get_output_directory() / se.get_source_file_path().filename().string().append(".o");
         const auto dependency_path = se.get_output_directory() / se.get_source_file_path().filename().string().append(".dep");
 
-        Log.info("Compile {}", se.get_source_file_path().filename().string());
+        // Log.info("Compile {}", se.get_source_file_path().filename().string());
 
         std::vector<std::string> args = cpp_compiler->get_flags();
         args.push_back("-c"); // Compile without linking
@@ -186,16 +229,92 @@ void Component::build(std::shared_ptr<Compiler> c_compiler,
             args.push_back(opt);
         }
 
-        auto compile_ret = execute_with_args(cpp_compiler->get_location(), args);
+        auto [compile_ret, console_out] = execute_with_args(cpp_compiler->get_location(), args);
 
-        if (compile_ret.length()) {
-            Log.warn(compile_ret);
-        }
+        return std::pair<int, std::string>{compile_ret, console_out};
     };
 
-    for (const auto& se : m_source_entries) {
-        compile_source(se);
+    const int num_threads = std::thread::hardware_concurrency();
+
+    std::vector<BuildWorker*> workers;
+    for (int i = 0; i < num_threads; i++) {
+        workers.push_back(new BuildWorker(i));
     }
+
+    int se_idx          = 0;
+    int comp_index      = 0;
+    bool error_reported = false;
+    std::mutex comp_mutex;
+    bool run = true;
+    while (run) {
+        if (se_idx == m_source_entries.size()) {
+            run = false;
+        } else {
+            auto se         = &m_source_entries[se_idx];
+            auto* cm        = &comp_mutex;
+            auto* ci        = &comp_index;
+            auto* r         = &run;
+            auto* got_error = &error_reported;
+            for (auto& w : workers) {
+                if (!w->is_busy()) {
+                    w->execute([=]() {
+                        const auto t1         = std::chrono::high_resolution_clock::now();
+                        const auto [ret, msg] = compile_source(*se);
+                        if (*got_error)
+                            return;
+                        const auto t2 = std::chrono::high_resolution_clock::now();
+                        auto ms_int   = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+                        cm->lock();
+                        (*ci)++;
+
+                        const bool success = ret == 0;
+
+                        std::string compile_unit_path =
+                            success ? se->get_source_file_path().filename().string() : se->get_source_file_path().string();
+
+                        Log.trace("[{}{}/{} ({}%) {:.03f}s{}] ({}) {} {}{}{}" ANSI_RESET,
+                                  success ? ANSI_GREEN : ANSI_RED,
+                                  *ci,
+                                  m_source_entries.size(),
+                                  (int)(100.0f / m_source_entries.size() * *ci),
+                                  ms_int / 1000.0f,
+                                  ANSI_RESET,
+                                  get_name(),
+                                  success ? (ANSI_GRAY "Compiled") : (ANSI_RED "Failed to compile" ANSI_RESET),
+                                  compile_unit_path,
+                                  msg.empty() ? "" : "\n",
+                                  msg);
+
+                        if (!success) {
+                            *r         = false;
+                            *got_error = true;
+                        }
+
+                        cm->unlock();
+                    });
+                    se_idx++;
+                    break;
+                }
+
+                if (!run)
+                    break;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    for (auto& w : workers) {
+        while (w->is_busy()) {
+        }
+        w->terminate();
+        while (w->is_running()) {
+        }
+        delete w;
+    }
+
+    const auto build_t2 = std::chrono::high_resolution_clock::now();
+    auto build_ms       = std::chrono::duration_cast<std::chrono::milliseconds>(build_t2 - build_t1).count();
+    Log.trace("Build done in {:.3}s", build_ms / 1000.0f);
 }
 
 void Component::bind_add_sources(lua_State* L) {

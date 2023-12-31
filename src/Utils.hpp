@@ -57,7 +57,7 @@ inline std::string get_program_version_string(const std::string& location) {
     return result;
 }
 
-inline std::string execute_with_args(const std::string& cmd, const std::vector<std::string>& args) {
+inline std::pair<int, std::string> execute_with_args(const std::string& cmd, const std::vector<std::string>& args) {
     std::vector<const char*> command_line = {cmd.c_str()};
     for (const auto& a : args) {
         command_line.push_back(a.c_str());
@@ -84,11 +84,6 @@ inline std::string execute_with_args(const std::string& cmd, const std::vector<s
         throw std::runtime_error("Failed to execute");
     }
 
-    if (process_ret < 0) {
-        Log.error("[execute {}] Result", process_ret);
-        throw std::runtime_error("Failed to execute");
-    }
-
     FILE* p_stdout = subprocess_stdout(&process);
 
     // read all contents of p_stdout to std::string
@@ -98,7 +93,7 @@ inline std::string execute_with_args(const std::string& cmd, const std::vector<s
         result += buf;
     }
 
-    return result;
+    return {process_ret, result};
 }
 
 template<typename T>
