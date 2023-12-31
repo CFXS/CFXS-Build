@@ -18,6 +18,23 @@ public:
     const std::string& get_location() const { return m_location; }
     const std::vector<std::string>& get_flags() const { return m_flags; }
 
+    /// Load flags for generating dependency list
+    void load_dependency_flags(std::vector<std::string>& flags, const std::filesystem::path& out_path) const;
+
+    /// Load flags for compiling and generating object file
+    void load_compile_and_output_flags(std::vector<std::string>& flags,
+                                       const std::filesystem::path& source_path,
+                                       const std::filesystem::path& obj_path) const;
+
+    /// Load flags for include directories
+    void load_include_directories(std::vector<std::string>& flags, const std::vector<std::filesystem::path>& include_directories) const;
+
+    /// Load flags for compile definitions
+    void load_compile_definitions(std::vector<std::string>& flags, const std::vector<std::string>& compile_definitions) const;
+
+    std::string_view get_object_extension() const;
+    std::string_view get_dependency_extension() const;
+
 private:
     Type m_type;
     Language m_language;
@@ -25,3 +42,22 @@ private:
     std::string m_location;
     std::vector<std::string> m_flags;
 };
+
+inline std::string to_string(Compiler::Language language) {
+    switch (language) {
+        case Compiler::Language::C: return "C";
+        case Compiler::Language::CPP: return "C++";
+        case Compiler::Language::ASM: return "ASM";
+        default: return "Unknown";
+    }
+}
+
+inline std::string to_string(Compiler::Type type) {
+    switch (type) {
+        case Compiler::Type::GNU: return "GNU";
+        case Compiler::Type::CLANG: return "Clang";
+        case Compiler::Type::MSVC: return "MSVC";
+        case Compiler::Type::IAR: return "IAR";
+        default: return "Unknown";
+    }
+}

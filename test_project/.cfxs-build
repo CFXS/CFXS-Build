@@ -8,10 +8,8 @@ set_linker("arm-none-eabi-ld")
 -- set_asm_compiler("iasmarm")
 -- set_linker("ilinkarm")
 
-local LINKER_SCRIPT = "LinkerScript.ld"
-set_linkerscript("./${LINKER_SCRIPT}")
-
 local test_project = create_executable("CFXS-Build-Test")
+test_project:set_linker_script("LinkerScript.ld")
 
 local sources = {
     "./src/**.c",            -- current dir + recursive search
@@ -21,7 +19,7 @@ local sources = {
     "./src/Module_B_copy/**.cpp", -- current dir + recursive search
     "./src/Module_C/*.cpp",  -- current dir search
     "./src/main.cpp",        -- single file
-    "!makefsdata.c",         -- exclude
+    "!makefsdata.c",         -- full path matching exclude (path.contains(exclude_entry))
 }
 
 test_project:add_sources(sources)
@@ -34,3 +32,4 @@ test_project:add_compile_definitions({
 test_project:add_compile_options({
     "-O3",
 })
+

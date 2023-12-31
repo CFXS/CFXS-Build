@@ -22,15 +22,21 @@ public:
     void bind_add_include_directories(lua_State* L);
     void bind_add_compile_definitions(lua_State* L);
     void bind_add_compile_options(lua_State* L);
+    void bind_set_linker_script(lua_State* L);
 
-    void configure();
-    void build(std::shared_ptr<Compiler> c_compiler, std::shared_ptr<Compiler> cpp_compiler, std::shared_ptr<Compiler> asm_compiler);
+    void configure(std::shared_ptr<Compiler> c_compiler, std::shared_ptr<Compiler> cpp_compiler, std::shared_ptr<Compiler> asm_compiler);
+    void build();
     void clean();
 
     Type get_type() const { return m_type; }
     const std::string& get_name() const { return m_name; }
     const std::filesystem::path& get_root_path() const { return m_root_path; }
     const std::filesystem::path& get_local_output_directory() const { return m_local_output_directory; }
+    const std::filesystem::path& get_linker_script_path() const { return m_linker_script_path; }
+
+    const std::vector<std::filesystem::path> get_include_directories() const { return m_include_directories; }
+    const std::vector<std::string> get_compile_definitions() const { return m_compile_definitions; }
+    const std::vector<std::string> get_compile_options() const { return m_compile_options; }
 
 private:
     Type m_type;
@@ -48,4 +54,8 @@ private:
     std::vector<std::filesystem::path> m_include_directories;
     std::vector<std::string> m_compile_definitions;
     std::vector<std::string> m_compile_options;
+
+    // linker
+    std::filesystem::path m_linker_script_path;
+    std::vector<std::string> m_linker_flags;
 };

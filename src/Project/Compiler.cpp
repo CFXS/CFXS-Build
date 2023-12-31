@@ -2,25 +2,6 @@
 #include <Utils.hpp>
 #include <stdexcept>
 
-static std::string to_string(Compiler::Language language) {
-    switch (language) {
-        case Compiler::Language::C: return "C";
-        case Compiler::Language::CPP: return "C++";
-        case Compiler::Language::ASM: return "ASM";
-        default: return "Unknown";
-    }
-}
-
-static std::string to_string(Compiler::Type type) {
-    switch (type) {
-        case Compiler::Type::GNU: return "GNU";
-        case Compiler::Type::CLANG: return "Clang";
-        case Compiler::Type::MSVC: return "MSVC";
-        case Compiler::Type::IAR: return "IAR";
-        default: return "Unknown";
-    }
-}
-
 static std::string to_string(Compiler::Standard standard) {
     switch (standard) {
         case Compiler::Standard::ASM: return "ASM";
@@ -107,6 +88,9 @@ Compiler::Compiler(Language language, const std::string& location, const std::st
         m_flags.push_back("-fdiagnostics-color=always");
     } else if (compiler_version_string.contains("Microsoft")) {
         m_type = Type::MSVC;
+        if (get_language() == Language::ASM) {
+            throw std::runtime_error("MSVC ASM not implemented");
+        }
     } else if (compiler_version_string.contains("IAR")) {
         m_type = Type::IAR;
     } else {
@@ -163,4 +147,102 @@ Compiler::Compiler(Language language, const std::string& location, const std::st
     if (get_standard() != Standard::ASM) {
         m_flags.push_back(get_standard_compile_flag(get_type(), get_standard()));
     }
+}
+
+void Compiler::load_dependency_flags(std::vector<std::string>& flags, const std::filesystem::path& out_path) const {
+    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+        flags.push_back("-MMD"); // Generate header dependency list (ignore system headers, but allow user angle brackets)
+        flags.push_back("-MF");  // Write to specific file
+        flags.push_back(out_path.string() + ".dep");
+    } else if (get_type() == Type::MSVC) {
+        flags.push_back("/showIncludes"); // Generate header dependency list
+        flags.push_back("/Fo");           // Write to specific file
+        flags.push_back(out_path);
+    } else if (get_type() == Type::IAR) {
+        throw std::runtime_error("Not implemented");
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
+}
+
+void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
+                                             const std::filesystem::path& source_path,
+                                             const std::filesystem::path& obj_path) const {
+    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+        flags.push_back("-c"); // Compile only
+        flags.push_back(source_path);
+        flags.push_back("-o"); // Write to specific file
+        flags.push_back(obj_path.string() + ".o");
+    } else if (get_type() == Type::MSVC) {
+        flags.push_back("/c"); // Compile only
+        flags.push_back(source_path);
+        flags.push_back("/Fo"); // Write to specific file
+        flags.push_back(obj_path);
+    } else if (get_type() == Type::IAR) {
+        throw std::runtime_error("Not implemented");
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
+}
+
+void Compiler::load_include_directories(std::vector<std::string>& flags,
+                                        const std::vector<std::filesystem::path>& include_directories) const {
+    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+        for (const auto& include_directory : include_directories) {
+            flags.push_back("-I" + include_directory.string());
+        }
+    } else if (get_type() == Type::MSVC) {
+        // do this for MSVC
+        for (const auto& include_directory : include_directories) {
+            flags.push_back("/I");
+            flags.push_back(include_directory);
+        }
+    } else if (get_type() == Type::IAR) {
+        throw std::runtime_error("Not implemented");
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
+}
+
+void Compiler::load_compile_definitions(std::vector<std::string>& flags, const std::vector<std::string>& compile_definitions) const {
+    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+        for (const auto& compile_definition : compile_definitions) {
+            flags.push_back("-D" + compile_definition);
+        }
+    } else if (get_type() == Type::MSVC) {
+        for (const auto& compile_definition : compile_definitions) {
+            flags.push_back("/D");
+            flags.push_back(compile_definition);
+        }
+    } else if (get_type() == Type::IAR) {
+        throw std::runtime_error("Not implemented");
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
+}
+
+std::string_view Compiler::get_object_extension() const {
+    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+        return ".o";
+    } else if (get_type() == Type::MSVC) {
+        return ".obj";
+    } else if (get_type() == Type::IAR) {
+        return ".o";
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
+}
+
+std::string_view Compiler::get_dependency_extension() const {
+    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+        return ".dep";
+    } else if (get_type() == Type::MSVC) {
+        throw std::runtime_error("Not implemented");
+    } else if (get_type() == Type::IAR) {
+        throw std::runtime_error("Not implemented");
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
+
+    return "";
 }

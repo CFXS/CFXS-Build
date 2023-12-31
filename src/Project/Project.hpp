@@ -25,7 +25,6 @@ private: // .cfxs-build Lua bindings
 
     // Linker config
     static void bind_set_linker(const std::string& linker);
-    static void bind_set_linkerscript(const std::string& path);
 
     static Component& bind_create_executable(const std::string& name);
     static Component& bind_create_library(const std::string& name);

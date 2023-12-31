@@ -8,11 +8,13 @@
 #include <re2/re2.h>
 #include <Utils.hpp>
 #include <fstream>
+#include <stdexcept>
 #include <thread>
 #include <vector>
 #include <execution>
 #include "Project/SourceEntry.hpp"
 #include <LuaBridge/LuaBridge.h>
+#include "FunctionWorker.hpp"
 
 Component::Component(Type type,
                      const std::string& name,
@@ -31,7 +33,9 @@ std::vector<std::string> s_TempFileExtensions = {
     ".dep",
 };
 
-void Component::configure() {
+void Component::configure(std::shared_ptr<Compiler> c_compiler,
+                          std::shared_ptr<Compiler> cpp_compiler,
+                          std::shared_ptr<Compiler> asm_compiler) {
     Log.info("Configure {}", get_name());
 
     for (auto& src : m_requested_sources) {
@@ -121,7 +125,20 @@ void Component::configure() {
         } else {
             output_dir = get_local_output_directory() / std::filesystem::relative(e.path.parent_path(), get_root_path());
         }
-        m_source_entries.emplace_back(e.path, output_dir);
+
+        Compiler* compiler;
+        const auto ext = e.path.extension();
+        if (ext == ".c") {
+            compiler = c_compiler.get();
+        } else if (ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c++") {
+            compiler = cpp_compiler.get();
+        } else if (ext == "asm" || ext == "S" || ext == "s") {
+            compiler = asm_compiler.get();
+        } else {
+            throw std::runtime_error("Unsupported file type");
+        }
+
+        m_source_entries.emplace_back(compiler, e.path, output_dir);
     }
 }
 
@@ -150,40 +167,7 @@ void Component::clean() {
 #define ANSI_RESET "\033[0m"
 #define ANSI_GRAY  "\033[90m"
 
-class BuildWorker {
-public:
-    BuildWorker(int idx) : m_index(idx) {
-        auto t = new std::thread([=]() {
-            while (!m_terminate) {
-                if (m_busy) {
-                    m_e();
-                    m_busy = false;
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
-            m_running = false;
-        });
-    }
-    int get_index() const { return m_index; }
-    bool is_busy() const { return m_busy; }
-    bool is_running() const { return m_running; }
-    void execute(std::function<void()> e) {
-        m_e    = e;
-        m_busy = true;
-    }
-    void terminate() { m_terminate = true; }
-
-private:
-    int m_index;
-    std::function<void()> m_e;
-    bool m_terminate = false;
-    bool m_busy      = false;
-    bool m_running   = true;
-};
-
-void Component::build(std::shared_ptr<Compiler> c_compiler,
-                      std::shared_ptr<Compiler> cpp_compiler,
-                      std::shared_ptr<Compiler> asm_compiler) {
+void Component::build() {
     Log.info("Build Component [{}]", get_name());
     const auto build_t1 = std::chrono::high_resolution_clock::now();
 
@@ -200,45 +184,29 @@ void Component::build(std::shared_ptr<Compiler> c_compiler,
         }
         fs_mutex.unlock();
 
-        // Create empty file se.get_output_directory() / se.get_source_file_path().filename()
-        const auto obj_path        = se.get_output_directory() / se.get_source_file_path().filename().string().append(".o");
-        const auto dependency_path = se.get_output_directory() / se.get_source_file_path().filename().string().append(".dep");
+        const auto obj_path        = se.get_output_directory() / se.get_source_file_path().filename().string();
+        const auto dependency_path = se.get_output_directory() / se.get_source_file_path().filename().string();
 
-        // Log.info("Compile {}", se.get_source_file_path().filename().string());
+        const auto* compiler          = se.get_compiler();
+        std::vector<std::string> args = compiler->get_flags();
 
-        std::vector<std::string> args = cpp_compiler->get_flags();
-        args.push_back("-c"); // Compile without linking
-        args.push_back(se.get_source_file_path());
+        compiler->load_compile_and_output_flags(args, se.get_source_file_path(), obj_path); // compile and write object
+        compiler->load_dependency_flags(args, dependency_path);                             // dependency file output
+        compiler->load_include_directories(args, get_include_directories());                // include directories
+        compiler->load_compile_definitions(args, get_compile_definitions());                // compile definitions
+        for (const auto& opt : get_compile_options())
+            args.push_back(opt); // append custom options
 
-        args.push_back("-o"); // Write output to specific file
-        args.push_back(obj_path);
-
-        args.push_back("-MMD"); // Generate header dependency list (ignore system headers, but allow user angle brackets)
-        args.push_back("-MF");  // Write to specific file
-        args.push_back(dependency_path);
-
-        for (const auto& inc_dir : m_include_directories) {
-            args.push_back("-I" + inc_dir.string());
-        }
-
-        for (const auto& def : m_compile_definitions) {
-            args.push_back("-D" + def);
-        }
-
-        for (const auto& opt : m_compile_options) {
-            args.push_back(opt);
-        }
-
-        auto [compile_ret, console_out] = execute_with_args(cpp_compiler->get_location(), args);
+        auto [compile_ret, console_out] = execute_with_args(compiler->get_location(), args);
 
         return std::pair<int, std::string>{compile_ret, console_out};
     };
 
     const int num_threads = std::thread::hardware_concurrency();
 
-    std::vector<BuildWorker*> workers;
+    std::vector<std::unique_ptr<FunctionWorker>> workers;
     for (int i = 0; i < num_threads; i++) {
-        workers.push_back(new BuildWorker(i));
+        workers.emplace_back(std::make_unique<FunctionWorker>(i));
     }
 
     int se_idx          = 0;
@@ -305,11 +273,12 @@ void Component::build(std::shared_ptr<Compiler> c_compiler,
 
     for (auto& w : workers) {
         while (w->is_busy()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         w->terminate();
         while (w->is_running()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
-        delete w;
     }
 
     const auto build_t2 = std::chrono::high_resolution_clock::now();
@@ -428,4 +397,15 @@ void Component::bind_add_compile_options(lua_State* L) {
     // remove duplicates
     // std::sort(m_compile_options.begin(), m_compile_options.end());
     // m_compile_options.erase(std::unique(m_compile_options.begin(), m_compile_options.end()), m_compile_options.end());
+}
+
+void Component::bind_set_linker_script(lua_State* L) {
+    auto script_path = luabridge::LuaRef::fromStack(L, 2); // offset 2 is arg 1
+    if (script_path.isString()) {
+        Log.trace("[{}] Set linker script: {}", get_name(), get_linker_script_path());
+        m_linker_script_path = script_path.tostring();
+    } else {
+        luaL_error(L, "Invalid linker script argument - {}", lua_typename(L, script_path.type()));
+        throw std::runtime_error("Invalid linker script argument");
+    }
 }

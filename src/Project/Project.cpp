@@ -78,14 +78,14 @@ void Project::configure() {
         throw std::runtime_error("Failed to configure");
     } else {
         auto comp = s_components[0];
-        comp->configure();
+        comp->configure(s_c_compiler, s_cpp_compiler, s_asm_compiler);
     }
 }
 
 void Project::build(const std::vector<std::string>& components) {
     if (std::find(components.begin(), components.end(), "*") != components.end()) {
         for (auto& comp : s_components) {
-            comp->build(s_c_compiler, s_cpp_compiler, s_asm_compiler);
+            comp->build();
         }
     } else {
         for (auto& c : components) {
@@ -93,7 +93,7 @@ void Project::build(const std::vector<std::string>& components) {
                 return comp->get_name() == c;
             });
             if (comp != s_components.end()) {
-                (*comp)->build(s_c_compiler, s_cpp_compiler, s_asm_compiler);
+                (*comp)->build();
             } else {
                 Log.error("Component \"{}\" does not exist", c);
                 throw std::runtime_error("Component does not exist");
@@ -156,7 +156,6 @@ void Project::initialize_lua() {
     bridge.addFunction<void, const std::string&>("set_asm_compiler", TO_FUNCTION(bind_set_asm_compiler));
 
     bridge.addFunction<void, const std::string&>("set_linker", TO_FUNCTION(bind_set_linker));
-    bridge.addFunction<void, const std::string&>("set_linkerscript", TO_FUNCTION(bind_set_linkerscript));
 
     bridge.addFunction<Component&, const std::string&>("create_executable", TO_FUNCTION(bind_create_executable));
     bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(bind_create_library));
@@ -166,6 +165,7 @@ void Project::initialize_lua() {
         .addFunction("add_include_directories", &Component::bind_add_include_directories)
         .addFunction("add_compile_definitions", &Component::bind_add_compile_definitions)
         .addFunction("add_compile_options", &Component::bind_add_compile_options)
+        .addFunction("set_linker_script", &Component::bind_set_linker_script)
         .endClass();
 }
 
@@ -186,8 +186,6 @@ void Project::bind_set_asm_compiler(const std::string& compiler) {
 void Project::bind_set_linker(const std::string& linker) {
     s_linker = std::make_shared<Linker>(linker); //
 }
-
-void Project::bind_set_linkerscript(const std::string& path) {}
 
 // Component creation
 Component& Project::bind_create_executable(const std::string& name) {

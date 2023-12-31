@@ -1,373 +1,373 @@
 [
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b -Winvalid-pch -fpch-instantiate-templates -Xclang -emit-pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx -x c++-header @CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch.modmap -o CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.cxx",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b -Winvalid-pch -fpch-instantiate-templates -Xclang -emit-pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx -x c++-header @CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch.modmap -o CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.cxx",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.cxx",
   "output": "CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/main.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/main.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/main.cpp",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/main.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/main.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/main.cpp",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/main.cpp",
   "output": "CMakeFiles/CFXS_Build.dir/src/main.cpp.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Log.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Log.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Log.cpp",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Log.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Log.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Log.cpp",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Log.cpp",
   "output": "CMakeFiles/CFXS_Build.dir/src/Log.cpp.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Project/Project.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Project/Project.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Project.cpp",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Project/Project.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Project/Project.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Project.cpp",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Project.cpp",
   "output": "CMakeFiles/CFXS_Build.dir/src/Project/Project.cpp.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Project/Component.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Project/Component.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Component.cpp",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Project/Component.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Project/Component.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Component.cpp",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Component.cpp",
   "output": "CMakeFiles/CFXS_Build.dir/src/Project/Component.cpp.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Project/Linker.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Project/Linker.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Linker.cpp",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Project/Linker.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Project/Linker.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Linker.cpp",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Linker.cpp",
   "output": "CMakeFiles/CFXS_Build.dir/src/Project/Linker.cpp.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Project/Compiler.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Project/Compiler.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Compiler.cpp",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Project/Compiler.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Project/Compiler.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Compiler.cpp",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/Compiler.cpp",
   "output": "CMakeFiles/CFXS_Build.dir/src/Project/Compiler.cpp.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Project/SourceEntry.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Project/SourceEntry.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/SourceEntry.cpp",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DFMT_SHARED -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DSPDLOG_SHARED_LIB -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_luabridge-src/Source -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/argparse-src/include -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b -Winvalid-pch -Xclang -include-pch -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx.pch -Xclang -include -Xclang /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/CMakeFiles/CFXS_Build.dir/cmake_pch.hxx @CMakeFiles/CFXS_Build.dir/src/Project/SourceEntry.cpp.o.modmap -o CMakeFiles/CFXS_Build.dir/src/Project/SourceEntry.cpp.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/SourceEntry.cpp",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/src/Project/SourceEntry.cpp",
   "output": "CMakeFiles/CFXS_Build.dir/src/Project/SourceEntry.cpp.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lapi.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lapi.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lapi.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lapi.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lapi.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lapi.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lcode.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lcode.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lcode.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lcode.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lcode.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lcode.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lctype.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lctype.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lctype.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lctype.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lctype.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lctype.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldebug.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldebug.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldebug.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldebug.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldebug.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldebug.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldo.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldo.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldo.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldo.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldo.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldo.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldump.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldump.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldump.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldump.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldump.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldump.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lfunc.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lfunc.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lfunc.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lfunc.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lfunc.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lfunc.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lgc.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lgc.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lgc.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lgc.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lgc.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lgc.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/llex.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/llex.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/llex.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/llex.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/llex.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/llex.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lmem.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lmem.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lmem.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lmem.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lmem.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lmem.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lobject.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lobject.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lobject.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lobject.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lobject.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lobject.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lopcodes.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lopcodes.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lopcodes.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lopcodes.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lopcodes.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lopcodes.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lparser.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lparser.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lparser.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lparser.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lparser.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lparser.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lstate.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lstate.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lstate.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lstate.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lstate.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lstate.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lstring.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lstring.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lstring.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lstring.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lstring.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lstring.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ltable.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ltable.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ltable.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ltable.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ltable.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ltable.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ltm.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ltm.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ltm.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ltm.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ltm.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ltm.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lundump.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lundump.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lundump.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lundump.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lundump.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lundump.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lvm.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lvm.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lvm.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lvm.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lvm.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lvm.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lzio.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lzio.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lzio.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lzio.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lzio.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lzio.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lauxlib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lauxlib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lauxlib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lauxlib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lauxlib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lauxlib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lbaselib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lbaselib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lbaselib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lbaselib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lbaselib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lbaselib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lcorolib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lcorolib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lcorolib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lcorolib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lcorolib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lcorolib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldblib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldblib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldblib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldblib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ldblib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ldblib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/liolib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/liolib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/liolib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/liolib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/liolib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/liolib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lmathlib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lmathlib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lmathlib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lmathlib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lmathlib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lmathlib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/loadlib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/loadlib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/loadlib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/loadlib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/loadlib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/loadlib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/loslib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/loslib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/loslib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/loslib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/loslib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/loslib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lstrlib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lstrlib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lstrlib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lstrlib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lstrlib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lstrlib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ltablib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ltablib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ltablib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ltablib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/ltablib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/ltablib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lutf8lib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lutf8lib.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lutf8lib.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lutf8lib.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/lutf8lib.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/lutf8lib.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -g -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/linit.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/linit.c",
+  "command": "/usr/bin/clang -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -DLUA_USE_POSIX -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/include -O3 -DNDEBUG -Wall -Wextra -o _deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/linit.c.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/linit.c",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lua-src/lua-5.4.6/src/linit.c",
   "output": "_deps/lua-build/lua-5.4.6/CMakeFiles/lua_static.dir/src/linit.c.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/bitmap256.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/bitmap256.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/bitmap256.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/bitmap256.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/bitmap256.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/bitmap256.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/bitmap256.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/bitmap256.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/bitstate.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/bitstate.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/bitstate.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/bitstate.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/bitstate.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/bitstate.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/bitstate.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/bitstate.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/compile.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/compile.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/compile.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/compile.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/compile.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/compile.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/compile.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/compile.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/dfa.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/dfa.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/dfa.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/dfa.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/dfa.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/dfa.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/dfa.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/dfa.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/filtered_re2.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/filtered_re2.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/filtered_re2.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/filtered_re2.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/filtered_re2.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/filtered_re2.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/filtered_re2.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/filtered_re2.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/mimics_pcre.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/mimics_pcre.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/mimics_pcre.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/mimics_pcre.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/mimics_pcre.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/mimics_pcre.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/mimics_pcre.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/mimics_pcre.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/nfa.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/nfa.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/nfa.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/nfa.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/nfa.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/nfa.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/nfa.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/nfa.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/onepass.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/onepass.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/onepass.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/onepass.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/onepass.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/onepass.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/onepass.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/onepass.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/parse.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/parse.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/parse.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/parse.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/parse.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/parse.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/parse.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/parse.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/perl_groups.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/perl_groups.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/perl_groups.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/perl_groups.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/perl_groups.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/perl_groups.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/perl_groups.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/perl_groups.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/prefilter.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/prefilter.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/prefilter.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/prefilter.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/prefilter.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/prefilter.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/prefilter.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/prefilter.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/prefilter_tree.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/prefilter_tree.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/prefilter_tree.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/prefilter_tree.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/prefilter_tree.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/prefilter_tree.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/prefilter_tree.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/prefilter_tree.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/prog.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/prog.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/prog.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/prog.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/prog.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/prog.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/prog.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/prog.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/re2.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/re2.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/re2.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/re2.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/re2.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/re2.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/re2.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/re2.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/regexp.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/regexp.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/regexp.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/regexp.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/regexp.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/regexp.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/regexp.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/regexp.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/set.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/set.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/set.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/set.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/set.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/set.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/set.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/set.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/simplify.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/simplify.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/simplify.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/simplify.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/simplify.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/simplify.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/simplify.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/simplify.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/tostring.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/tostring.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/tostring.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/tostring.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/tostring.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/tostring.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/tostring.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/tostring.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/unicode_casefold.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/unicode_casefold.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/unicode_casefold.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/unicode_casefold.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/unicode_casefold.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/unicode_casefold.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/unicode_casefold.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/unicode_casefold.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/unicode_groups.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/unicode_groups.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/unicode_groups.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/re2/unicode_groups.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/re2/unicode_groups.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/unicode_groups.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/re2/unicode_groups.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/re2/unicode_groups.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/util/rune.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/util/rune.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/util/rune.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/util/rune.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/util/rune.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/util/rune.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/util/rune.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/util/rune.cc.o"
 },
 {
   "directory": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build",
-  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -g -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/util/strutil.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/util/strutil.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/util/strutil.cc",
+  "command": "/usr/bin/clang++ -DCFXS_BUILD_VERSION_MAJOR=1 -DCFXS_BUILD_VERSION_MINOR=0 -I/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src -O3 -DNDEBUG -std=gnu++2b @_deps/lib_re2-build/CMakeFiles/re2.dir/util/strutil.cc.o.modmap -o _deps/lib_re2-build/CMakeFiles/re2.dir/util/strutil.cc.o -c /home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/util/strutil.cc",
   "file": "/home/cfxs/Documents/Projects/CFXS/CFXS-Build/build/_deps/lib_re2-src/util/strutil.cc",
   "output": "_deps/lib_re2-build/CMakeFiles/re2.dir/util/strutil.cc.o"
 }
