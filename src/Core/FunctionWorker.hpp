@@ -1,8 +1,18 @@
 #pragma once
 #include <thread>
 #include <functional>
+#include <memory>
 
 class FunctionWorker {
+public:
+    static std::vector<std::unique_ptr<FunctionWorker>> create_workers(int num_threads = std::thread::hardware_concurrency()) {
+        std::vector<std::unique_ptr<FunctionWorker>> workers;
+        for (int i = 0; i < num_threads; i++) {
+            workers.emplace_back(std::make_unique<FunctionWorker>(i));
+        }
+        return workers;
+    }
+
 public:
     FunctionWorker(int idx) : m_index(idx) {
         auto t = new std::thread([=]() {

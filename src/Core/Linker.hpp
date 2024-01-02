@@ -6,6 +6,7 @@ public:
 
 public:
     Linker(const std::string& linker);
+    ~Linker();
 
     Type get_type() const { return m_type; }
     const std::string& get_location() const { return m_location; }

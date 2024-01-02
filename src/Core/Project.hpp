@@ -9,6 +9,7 @@
 class Project {
 public:
     static void initialize(const std::filesystem::path& project_path, const std::filesystem::path& output_path);
+    static void uninitialize();
 
     static void configure();
     static void build(const std::vector<std::string>& components);

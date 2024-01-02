@@ -3,7 +3,7 @@
 #include <fstream>
 #include <functional>
 #include <LuaBridge/LuaBridge.h>
-#include "Project/Component.hpp"
+#include "Core/Component.hpp"
 #include "lauxlib.h"
 #include <lua.hpp>
 #include <re2/re2.h>
@@ -37,6 +37,14 @@ std::string read_source(const std::filesystem::path& path) {
     std::stringstream buffer;
     buffer << fs.rdbuf();
     return buffer.str();
+}
+
+void Project::uninitialize() {
+    s_c_compiler.reset();
+    s_cpp_compiler.reset();
+    s_asm_compiler.reset();
+    s_linker.reset();
+    s_components.clear();
 }
 
 void Project::initialize(const std::filesystem::path& project_path, const std::filesystem::path& output_path) {

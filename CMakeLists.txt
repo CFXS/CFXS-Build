@@ -12,11 +12,11 @@ project(CFXS_Build C CXX)
 set(sources
     "src/main.cpp"
     "src/Log.cpp"
-    "src/Project/Project.cpp"
-    "src/Project/Component.cpp"
-    "src/Project/Linker.cpp"
-    "src/Project/Compiler.cpp"
-    "src/Project/SourceEntry.cpp"
+    "src/Core/Project.cpp"
+    "src/Core/Component.cpp"
+    "src/Core/Linker.cpp"
+    "src/Core/Compiler.cpp"
+    "src/Core/SourceEntry.cpp"
 )
 
 add_executable(CFXS_Build ${sources})

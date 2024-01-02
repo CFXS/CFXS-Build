@@ -11,6 +11,7 @@ public:
 
 public:
     Compiler(Language type, const std::string& location, const std::string& standard_num);
+    ~Compiler();
 
     const Language get_language() const { return m_language; }
     const Standard get_standard() const { return m_standard; }

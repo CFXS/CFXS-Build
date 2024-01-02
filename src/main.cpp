@@ -1,7 +1,7 @@
 #include "Log.hpp"
 #include <argparse/argparse.hpp>
 #include <filesystem>
-#include "Project/Project.hpp"
+#include "Core/Project.hpp"
 
 int main(int argc, char **argv) {
     initialize_logging();

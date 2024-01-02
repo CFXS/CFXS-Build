@@ -11,6 +11,8 @@ static std::string to_string(Linker::Type type) {
     }
 }
 
+Linker::~Linker() { Log.warn("Delete Linker"); }
+
 Linker::Linker(const std::string& linker) : m_location(linker) {
     Log.trace("Create linker \"{}\"", get_location());
 

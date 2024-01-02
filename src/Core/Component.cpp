@@ -8,11 +8,12 @@
 #include <re2/re2.h>
 #include <Utils.hpp>
 #include <fstream>
+#include <mutex>
 #include <stdexcept>
 #include <thread>
 #include <vector>
 #include <execution>
-#include "Project/SourceEntry.hpp"
+#include "Core/SourceEntry.hpp"
 #include <LuaBridge/LuaBridge.h>
 #include "FunctionWorker.hpp"
 
@@ -162,38 +163,35 @@ void Component::clean() {
     }
 }
 
-#define ANSI_GREEN "\033[92m"
-#define ANSI_RED   "\033[91m"
-#define ANSI_RESET "\033[0m"
-#define ANSI_GRAY  "\033[90m"
-
 void Component::build() {
     Log.info("Build Component [{}]", get_name());
     const auto build_t1 = std::chrono::high_resolution_clock::now();
 
-    std::mutex fs_mutex;
+    std::mutex filesystem_mutex; // filesystem mutex to not break something if 2 threads try to create the target directory at the same time
     const auto compile_source = [&](const SourceEntry& se) -> auto {
         // Generate output_directory if it does not exist
-        fs_mutex.lock();
+        filesystem_mutex.lock();
         if (!std::filesystem::exists(se.get_output_directory())) {
             try {
                 std::filesystem::create_directories(se.get_output_directory());
             } catch (const std::exception& e) {
                 Log.error("Failed to create output dir [{}]: {}", se.get_output_directory(), e.what());
+                throw e;
             }
         }
-        fs_mutex.unlock();
+        filesystem_mutex.unlock();
 
-        const auto obj_path        = se.get_output_directory() / se.get_source_file_path().filename().string();
-        const auto dependency_path = se.get_output_directory() / se.get_source_file_path().filename().string();
+        // path to output build files to
+        const auto output_path = se.get_output_directory() / se.get_source_file_path().filename().string();
+        const auto* compiler   = se.get_compiler();
 
-        const auto* compiler          = se.get_compiler();
+        // initial args are defined from the specific compiler implementation
         std::vector<std::string> args = compiler->get_flags();
 
-        compiler->load_compile_and_output_flags(args, se.get_source_file_path(), obj_path); // compile and write object
-        compiler->load_dependency_flags(args, dependency_path);                             // dependency file output
-        compiler->load_include_directories(args, get_include_directories());                // include directories
-        compiler->load_compile_definitions(args, get_compile_definitions());                // compile definitions
+        compiler->load_compile_and_output_flags(args, se.get_source_file_path(), output_path); // compile and write object
+        compiler->load_dependency_flags(args, output_path);                                    // dependency file output
+        compiler->load_include_directories(args, get_include_directories());                   // include directories
+        compiler->load_compile_definitions(args, get_compile_definitions());                   // compile definitions
         for (const auto& opt : get_compile_options())
             args.push_back(opt); // append custom options
 
@@ -202,50 +200,52 @@ void Component::build() {
         return std::pair<int, std::string>{compile_ret, console_out};
     };
 
-    const int num_threads = std::thread::hardware_concurrency();
+    auto workers = FunctionWorker::create_workers();
 
-    std::vector<std::unique_ptr<FunctionWorker>> workers;
-    for (int i = 0; i < num_threads; i++) {
-        workers.emplace_back(std::make_unique<FunctionWorker>(i));
-    }
+    int source_entry_seq_index = 0; // current source entry index to compile
+    int current_compiled_index = 0; // currently compiled index (only for counting compiled files)
+    std::mutex index_mutex;         // mutex for locking index increments
+    bool error_reported = false;    // a source has reported a failed compilation
+    bool compiling      = true;     // still trying to compile all sources
 
-    int se_idx          = 0;
-    int comp_index      = 0;
-    bool error_reported = false;
-    std::mutex comp_mutex;
-    bool run = true;
-    while (run) {
-        if (se_idx == m_source_entries.size()) {
-            run = false;
+    while (compiling) {
+        if (source_entry_seq_index == m_source_entries.size()) {
+            // Worker assignment is done - exit compile loop and wait for workers to finish
+            compiling = false;
         } else {
-            auto se         = &m_source_entries[se_idx];
-            auto* cm        = &comp_mutex;
-            auto* ci        = &comp_index;
-            auto* r         = &run;
-            auto* got_error = &error_reported;
+            const int current_index = source_entry_seq_index;
+
             for (auto& w : workers) {
+                // loop through all workers and try to find one that is not busy
                 if (!w->is_busy()) {
-                    w->execute([=]() {
-                        const auto t1         = std::chrono::high_resolution_clock::now();
-                        const auto [ret, msg] = compile_source(*se);
-                        if (*got_error)
-                            return;
-                        const auto t2 = std::chrono::high_resolution_clock::now();
-                        auto ms_int   = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-                        cm->lock();
-                        (*ci)++;
+                    w->execute([this, current_index, compile_source, &index_mutex, &current_compiled_index, &compiling, &error_reported]() {
+                        const auto& source_entry = m_source_entries[current_index];
 
+                        const auto t_start    = std::chrono::high_resolution_clock::now();
+                        const auto [ret, msg] = compile_source(source_entry);
+
+                        // don't show successful outputs from commands after the first failed one
                         const bool success = ret == 0;
+                        if (success && error_reported)
+                            return;
 
-                        std::string compile_unit_path =
-                            success ? se->get_source_file_path().filename().string() : se->get_source_file_path().string();
+                        const auto t_end     = std::chrono::high_resolution_clock::now();
+                        auto compile_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count();
+
+                        // show full source path on fail and only filename on success
+                        std::string compile_unit_path = success ? source_entry.get_source_file_path().filename().string() :
+                                                                  source_entry.get_source_file_path().string();
+
+                        // lock compile index for sequential prints - use guard for remainder of scope to not potentially mix up console logs
+                        std::lock_guard<std::mutex> compile_index_mutex(index_mutex);
+                        current_compiled_index++;
 
                         Log.trace("[{}{}/{} ({}%) {:.03f}s{}] ({}) {} {}{}{}" ANSI_RESET,
                                   success ? ANSI_GREEN : ANSI_RED,
-                                  *ci,
+                                  current_compiled_index,
                                   m_source_entries.size(),
-                                  (int)(100.0f / m_source_entries.size() * *ci),
-                                  ms_int / 1000.0f,
+                                  (int)(100.0f / m_source_entries.size() * current_compiled_index),
+                                  compile_time_ms / 1000.0f,
                                   ANSI_RESET,
                                   get_name(),
                                   success ? (ANSI_GRAY "Compiled") : (ANSI_RED "Failed to compile" ANSI_RESET),
@@ -254,17 +254,15 @@ void Component::build() {
                                   msg);
 
                         if (!success) {
-                            *r         = false;
-                            *got_error = true;
+                            compiling      = false;
+                            error_reported = true;
                         }
-
-                        cm->unlock();
                     });
-                    se_idx++;
+                    source_entry_seq_index++;
                     break;
                 }
 
-                if (!run)
+                if (!compiling)
                     break;
             }
         }
