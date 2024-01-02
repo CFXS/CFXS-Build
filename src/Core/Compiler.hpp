@@ -28,10 +28,10 @@ public:
                                        const std::filesystem::path& obj_path) const;
 
     /// Load flags for include directories
-    void load_include_directories(std::vector<std::string>& flags, const std::vector<std::filesystem::path>& include_directories) const;
+    void push_include_directory(std::vector<std::string>& flags, const std::string& include_directory) const;
 
     /// Load flags for compile definitions
-    void load_compile_definitions(std::vector<std::string>& flags, const std::vector<std::string>& compile_definitions) const;
+    void push_compile_definition(std::vector<std::string>& flags, const std::string& compile_definition) const;
 
     std::string_view get_object_extension() const;
     std::string_view get_dependency_extension() const;

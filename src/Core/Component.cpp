@@ -14,8 +14,10 @@
 #include <vector>
 #include <execution>
 #include "Core/SourceEntry.hpp"
-#include <LuaBridge/LuaBridge.h>
 #include "FunctionWorker.hpp"
+
+#include <lua.hpp>
+#include "LuaBackend.hpp"
 
 Component::Component(Type type,
                      const std::string& name,
@@ -190,10 +192,18 @@ void Component::build() {
 
         compiler->load_compile_and_output_flags(args, se.get_source_file_path(), output_path); // compile and write object
         compiler->load_dependency_flags(args, output_path);                                    // dependency file output
-        compiler->load_include_directories(args, get_include_directories());                   // include directories
-        compiler->load_compile_definitions(args, get_compile_definitions());                   // compile definitions
-        for (const auto& opt : get_compile_options())
-            args.push_back(opt); // append custom options
+
+        // include directories
+        for (const auto& val : get_include_directories()) {
+            compiler->push_include_directory(args, val.value.string());
+        }
+        // compile definitions
+        for (const auto& val : get_compile_definitions()) {
+            compiler->push_compile_definition(args, val.value);
+        }
+        // append custom options
+        for (const auto& val : get_compile_options())
+            args.push_back(val.value);
 
         auto [compile_ret, console_out] = execute_with_args(compiler->get_location(), args);
 
@@ -295,7 +305,7 @@ void Component::bind_add_sources(lua_State* L) {
         }
     };
 
-    auto arg_sources = luabridge::LuaRef::fromStack(L, 2); // offset 2 is sources list
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
@@ -309,38 +319,41 @@ void Component::bind_add_sources(lua_State* L) {
     } else if (arg_sources.isString()) {
         push_source(arg_sources.tostring());
     } else {
-        luaL_error(L, "Invalid sources argument - {}", lua_typename(L, arg_sources.type()));
+        luaL_error(L, "Invalid sources argument: \"{}\"", lua_typename(L, arg_sources.type()));
         throw std::runtime_error("Invalid sources argument");
     }
 }
 
 void Component::bind_add_include_directories(lua_State* L) {
-    auto arg_sources = luabridge::LuaRef::fromStack(L, 2); // offset 2 is sources list
+    const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
+    LuaBackend::validate_visibility(L, arg_visibility);
+
+    const auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(1));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                m_include_directories.push_back(src.tostring());
+                m_include_directories.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
             } else {
                 luaL_error(L, "Include directory #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Include directory is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        m_include_directories.push_back(arg_sources.tostring());
+        m_include_directories.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
     } else {
-        luaL_error(L, "Invalid include directories argument - {}", lua_typename(L, arg_sources.type()));
+        luaL_error(L, "Invalid include directories argument - \"{}\"", lua_typename(L, arg_sources.type()));
         throw std::runtime_error("Invalid include directories argument");
     }
 
-    for (std::filesystem::path& dir : m_include_directories) {
+    for (auto& dir : m_include_directories) {
         // check if dir is relative path
-        if (dir.is_relative()) {
+        if (dir.value.is_relative()) {
             // if relative path, make it absolute and canonical
-            dir = std::filesystem::weakly_canonical(get_root_path() / dir);
+            dir.value = std::filesystem::weakly_canonical(get_root_path() / dir.value);
         } else {
             // make canonical
-            dir = std::filesystem::weakly_canonical(dir);
+            dir.value = std::filesystem::weakly_canonical(dir.value);
         }
     }
 
@@ -350,21 +363,24 @@ void Component::bind_add_include_directories(lua_State* L) {
 }
 
 void Component::bind_add_compile_definitions(lua_State* L) {
-    auto arg_sources = luabridge::LuaRef::fromStack(L, 2); // offset 2 is sources list
+    const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
+    LuaBackend::validate_visibility(L, arg_visibility);
+
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(1));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                m_compile_definitions.push_back(src.tostring());
+                m_compile_definitions.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
             } else {
                 luaL_error(L, "Compile definition #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Compile definition is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        m_compile_definitions.push_back(arg_sources.tostring());
+        m_compile_definitions.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
     } else {
-        luaL_error(L, "Invalid compile definitions argument - {}", lua_typename(L, arg_sources.type()));
+        luaL_error(L, "Invalid compile definitions argument: \"{}\"", lua_typename(L, arg_sources.type()));
         throw std::runtime_error("Invalid compile definitions argument");
     }
 
@@ -374,21 +390,24 @@ void Component::bind_add_compile_definitions(lua_State* L) {
 }
 
 void Component::bind_add_compile_options(lua_State* L) {
-    auto arg_sources = luabridge::LuaRef::fromStack(L, 2); // offset 2 is sources list
+    const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
+    LuaBackend::validate_visibility(L, arg_visibility);
+
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(1));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                m_compile_options.push_back(src.tostring());
+                m_compile_options.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
             } else {
                 luaL_error(L, "Compile option #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Compile option is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        m_compile_options.push_back(arg_sources.tostring());
+        m_compile_options.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
     } else {
-        luaL_error(L, "Invalid compile options argument - {}", lua_typename(L, arg_sources.type()));
+        luaL_error(L, "Invalid compile options argument: \"{}\"", lua_typename(L, arg_sources.type()));
         throw std::runtime_error("Invalid compile options argument");
     }
 
@@ -398,7 +417,7 @@ void Component::bind_add_compile_options(lua_State* L) {
 }
 
 void Component::bind_set_linker_script(lua_State* L) {
-    auto script_path = luabridge::LuaRef::fromStack(L, 2); // offset 2 is arg 1
+    auto script_path = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0)); // offset 2 is arg 1
     if (script_path.isString()) {
         Log.trace("[{}] Set linker script: {}", get_name(), get_linker_script_path());
         m_linker_script_path = script_path.tostring();

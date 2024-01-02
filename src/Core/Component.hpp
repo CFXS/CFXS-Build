@@ -11,6 +11,18 @@ public:
         LIBRARY,
     };
 
+    enum class Visibility : int {
+        LOCAL,
+        INHERIT,
+        FORWARD,
+    };
+
+    template<typename T>
+    struct ScopedValue {
+        Visibility visibility;
+        T value;
+    };
+
 public:
     Component(Type type,
               const std::string& name,
@@ -34,9 +46,9 @@ public:
     const std::filesystem::path& get_local_output_directory() const { return m_local_output_directory; }
     const std::filesystem::path& get_linker_script_path() const { return m_linker_script_path; }
 
-    const std::vector<std::filesystem::path> get_include_directories() const { return m_include_directories; }
-    const std::vector<std::string> get_compile_definitions() const { return m_compile_definitions; }
-    const std::vector<std::string> get_compile_options() const { return m_compile_options; }
+    const std::vector<ScopedValue<std::filesystem::path>> get_include_directories() const { return m_include_directories; }
+    const std::vector<ScopedValue<std::string>> get_compile_definitions() const { return m_compile_definitions; }
+    const std::vector<ScopedValue<std::string>> get_compile_options() const { return m_compile_options; }
 
 private:
     Type m_type;
@@ -51,9 +63,9 @@ private:
     // Actual selected source files to build
     std::vector<SourceEntry> m_source_entries;
 
-    std::vector<std::filesystem::path> m_include_directories;
-    std::vector<std::string> m_compile_definitions;
-    std::vector<std::string> m_compile_options;
+    std::vector<ScopedValue<std::filesystem::path>> m_include_directories;
+    std::vector<ScopedValue<std::string>> m_compile_definitions;
+    std::vector<ScopedValue<std::string>> m_compile_options;
 
     // linker
     std::filesystem::path m_linker_script_path;

@@ -17,6 +17,7 @@ set(sources
     "src/Core/Linker.cpp"
     "src/Core/Compiler.cpp"
     "src/Core/SourceEntry.cpp"
+    "src/Core/LuaBackend.cpp"
 )
 
 add_executable(CFXS_Build ${sources})

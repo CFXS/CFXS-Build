@@ -1,5 +1,6 @@
 #include "Log.hpp"
 #include <argparse/argparse.hpp>
+#include <exception>
 #include <filesystem>
 #include "Core/Project.hpp"
 
@@ -64,8 +65,14 @@ int main(int argc, char **argv) {
     try {
         Project::initialize(project_path, output_path);
 
-        if (args["--configure"] == true)
-            Project::configure();
+        if (args["--configure"] == true) {
+            try {
+                Project::configure();
+            } catch (const std::runtime_error &e) {
+                Log.error("Failed to configure project");
+                return -1;
+            }
+        }
 
         const auto build_projects = args.get<std::vector<std::string>>("--build");
         const auto clean_projects = args.get<std::vector<std::string>>("--clean");

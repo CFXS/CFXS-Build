@@ -15,21 +15,19 @@ local sources = {
     "./src/**.c",            -- current dir + recursive search
     "./src/Module_A/**.cpp", -- current dir + recursive search
     "./src/Module_B/**.cpp", -- current dir + recursive search
-    "./src/Module_A_copy/**.cpp", -- current dir + recursive search
-    "./src/Module_B_copy/**.cpp", -- current dir + recursive search
-    "./src/Module_C/*.cpp",  -- current dir search
+    "./src/Module_C/*.cpp", -- current dir + recursive search
     "./src/main.cpp",        -- single file
     "!makefsdata.c",         -- full path matching exclude (path.contains(exclude_entry))
 }
 
 test_project:add_sources(sources)
-test_project:add_include_directories({
+test_project:add_include_directories("local", {
     "./src"
 })
-test_project:add_compile_definitions({
+test_project:add_compile_definitions("forward", {
     "CFXS"
 })
-test_project:add_compile_options({
+test_project:add_compile_options("forward", {
     "-O3",
 })
 

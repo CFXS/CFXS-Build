@@ -6,10 +6,17 @@
 #include <filesystem>
 #include <subprocess.h>
 
+#define LUA_FUNCTION_ARG_OFFSET(n) (n + 2) // lua function call argument index offset
+
 #define ANSI_GREEN "\033[92m"
 #define ANSI_RED   "\033[91m"
 #define ANSI_RESET "\033[0m"
 #define ANSI_GRAY  "\033[90m"
+#ifdef WINDOWS_BUILD
+#define ANSI_YELLOW "\033[93m"
+#else
+#define ANSI_YELLOW "\033[33;1m"
+#endif
 
 inline bool is_valid_file_path(const std::string& str) {
     return std::filesystem::exists(str); //

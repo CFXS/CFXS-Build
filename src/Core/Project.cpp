@@ -8,6 +8,7 @@
 #include <lua.hpp>
 #include <re2/re2.h>
 #include <regex>
+#include "LuaBackend.hpp"
 
 lua_State* s_MainLuaState;
 std::vector<std::shared_ptr<Component>> s_components;
@@ -27,10 +28,6 @@ std::vector<std::string> s_global_asm_compile_flags;
 std::vector<std::string> s_global_link_flags;
 
 std::filesystem::file_time_type get_last_modified_time(const std::filesystem::path& path) { return std::filesystem::last_write_time(path); }
-
-#define LuaLog(...)   Log.info("[\033[1;36mLua\033[0m] " __VA_ARGS__)
-#define LuaError(...) Log.error("[\033[1;36mLua\033[0m] " __VA_ARGS__)
-#define LuaWarn(...)  Log.warn("[\033[1;36mLua\033[0m] " __VA_ARGS__)
 
 std::string read_source(const std::filesystem::path& path) {
     std::ifstream fs(path.string());
@@ -78,11 +75,12 @@ void Project::configure() {
         std::smatch match;
         if (std::regex_search(error, match, error_regex)) {
             if (match.size() == 3) {
-                error = fmt::format("\"{}:{}\"{}", source_location.string(), match[2].str(), error.substr(match[0].str().length()));
+                error = fmt::format("\"{}:{}\"\n{}", source_location.string(), match[2].str(), error.substr(match[0].str().length() + 1));
             }
         }
 
         LuaError("{}", error);
+
         throw std::runtime_error("Failed to configure");
     } else {
         auto comp = s_components[0];

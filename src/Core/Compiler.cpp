@@ -187,18 +187,13 @@ void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
     }
 }
 
-void Compiler::load_include_directories(std::vector<std::string>& flags,
-                                        const std::vector<std::filesystem::path>& include_directories) const {
+void Compiler::push_include_directory(std::vector<std::string>& flags, const std::string& include_directory) const {
     if (get_type() == Type::GNU || get_type() == Type::CLANG) {
-        for (const auto& include_directory : include_directories) {
-            flags.push_back("-I" + include_directory.string());
-        }
+        flags.push_back("-I" + include_directory);
     } else if (get_type() == Type::MSVC) {
         // do this for MSVC
-        for (const auto& include_directory : include_directories) {
-            flags.push_back("/I");
-            flags.push_back(include_directory);
-        }
+        flags.push_back("/I");
+        flags.push_back(include_directory);
     } else if (get_type() == Type::IAR) {
         throw std::runtime_error("Not implemented");
     } else {
@@ -206,20 +201,16 @@ void Compiler::load_include_directories(std::vector<std::string>& flags,
     }
 }
 
-void Compiler::load_compile_definitions(std::vector<std::string>& flags, const std::vector<std::string>& compile_definitions) const {
+void Compiler::push_compile_definition(std::vector<std::string>& flags, const std::string& compile_definition) const {
     if (get_type() == Type::GNU || get_type() == Type::CLANG) {
-        for (const auto& compile_definition : compile_definitions) {
-            flags.push_back("-D" + compile_definition);
-        }
+        flags.push_back("-D" + compile_definition);
     } else if (get_type() == Type::MSVC) {
-        for (const auto& compile_definition : compile_definitions) {
-            flags.push_back("/D");
-            flags.push_back(compile_definition);
-        }
+        flags.push_back("/D");
+        flags.push_back(compile_definition);
     } else if (get_type() == Type::IAR) {
-        throw std::runtime_error("Not implemented");
+            throw std::runtime_error("Not implemented");
     } else {
-        throw std::runtime_error("Unsupported compiler");
+            throw std::runtime_error("Unsupported compiler");
     }
 }
 
