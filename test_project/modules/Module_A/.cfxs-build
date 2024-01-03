@@ -7,12 +7,7 @@ cfxs_platform:add_sources({
     "./**.cpp",
 })
 
-cfxs_platform:add_include_directories("local", {
-    "./src"
-})
+cfxs_platform:add_include_paths("local", {"./src"})
 
-cfxs_platform:add_include_directories("inherit", {
-    "./include"
-})
+cfxs_platform:add_include_paths("inherite", {"./include"})
 
-import("/mnt/d/cfxs_ext_module")

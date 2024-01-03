@@ -189,16 +189,16 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             compile_entry->compile_args, source_entry.get_source_file_path(), output_path); // compile and write object
         compiler->load_dependency_flags(compile_entry->compile_args, output_path);          // dependency file output
 
-        // include directories
-        for (const auto& val : get_include_directories()) {
-            compiler->push_include_directory(compile_entry->compile_args, val.value.string());
+        // include paths
+        for (const auto& val : get_include_paths()) {
+            compiler->push_include_path(compile_entry->compile_args, val.value.string());
         }
         // compile definitions
-        for (const auto& val : get_compile_definitions()) {
+        for (const auto& val : get_definitions()) {
             compiler->push_compile_definition(compile_entry->compile_args, val.value);
         }
         // append custom options
-        for (const auto& val : get_compile_options())
+        for (const auto& val : get_compile_flags())
             compile_entry->compile_args.push_back(val.value);
 
         compile_entry->compiler = compiler;
@@ -350,29 +350,39 @@ void Component::bind_add_sources(lua_State* L) {
     }
 }
 
-void Component::bind_add_include_directories(lua_State* L) {
+void Component::bind_add_include_paths(lua_State* L) {
     const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
-    LuaBackend::validate_visibility(L, arg_visibility);
+
+    if (!LuaBackend::is_valid_visibility(L, arg_visibility)) {
+        luaL_error(L,
+                   "Invalid include paths argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_visibility.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_ADD_INCLUDE_PATHS));
+        throw std::runtime_error("Invalid include paths argument");
+    }
 
     const auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(1));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                m_include_directories.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
+                m_include_paths.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
             } else {
                 luaL_error(L, "Include directory #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Include directory is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        m_include_directories.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
+        m_include_paths.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
     } else {
-        luaL_error(L, "Invalid include directories argument - \"{}\"", lua_typename(L, arg_sources.type()));
-        throw std::runtime_error("Invalid include directories argument");
+        luaL_error(L,
+                   "Invalid include paths argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_sources.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_ADD_INCLUDE_PATHS));
+        throw std::runtime_error("Invalid include paths argument");
     }
 
-    for (auto& dir : m_include_directories) {
+    for (auto& dir : m_include_paths) {
         // check if dir is relative path
         if (dir.value.is_relative()) {
             // if relative path, make it absolute and canonical
@@ -384,62 +394,82 @@ void Component::bind_add_include_directories(lua_State* L) {
     }
 
     // remove duplicates
-    // std::sort(m_include_directories.begin(), m_include_directories.end());
-    // m_include_directories.erase(std::unique(m_include_directories.begin(), m_include_directories.end()), m_include_directories.end());
+    // std::sort(m_include_paths.begin(), m_include_paths.end());
+    // m_include_paths.erase(std::unique(m_include_paths.begin(), m_include_paths.end()), m_include_paths.end());
 }
 
-void Component::bind_add_compile_definitions(lua_State* L) {
+void Component::bind_add_definitions(lua_State* L) {
     const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
-    LuaBackend::validate_visibility(L, arg_visibility);
+
+    if (!LuaBackend::is_valid_visibility(L, arg_visibility)) {
+        luaL_error(L,
+                   "Invalid definitions argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_visibility.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_ADD_DEFINITIONS));
+        throw std::runtime_error("Invalid definitions argument");
+    }
 
     auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(1));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                m_compile_definitions.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
+                m_definitions.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
             } else {
-                luaL_error(L, "Compile definition #%d is not a string [%s]", i, lua_typename(L, src.type()));
-                throw std::runtime_error("Compile definition is not a string");
+                luaL_error(L, "Definition #%d is not a string [%s]", i, lua_typename(L, src.type()));
+                throw std::runtime_error("Definition is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        m_compile_definitions.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
+        m_definitions.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
     } else {
-        luaL_error(L, "Invalid compile definitions argument: \"{}\"", lua_typename(L, arg_sources.type()));
-        throw std::runtime_error("Invalid compile definitions argument");
+        luaL_error(L,
+                   "Invalid definitions argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_sources.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_ADD_DEFINITIONS));
+        throw std::runtime_error("Invalid definitions argument");
     }
 
     // remove duplicates
-    // std::sort(m_compile_definitions.begin(), m_compile_definitions.end());
-    // m_compile_definitions.erase(std::unique(m_compile_definitions.begin(), m_compile_definitions.end()), m_compile_definitions.end());
+    // std::sort(m_definitions.begin(), m_definitions.end());
+    // m_definitions.erase(std::unique(m_definitions.begin(), m_definitions.end()), m_definitions.end());
 }
 
 void Component::bind_add_compile_options(lua_State* L) {
     const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
-    LuaBackend::validate_visibility(L, arg_visibility);
+
+    if (!LuaBackend::is_valid_visibility(L, arg_visibility)) {
+        luaL_error(L,
+                   "Invalid compile options argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_visibility.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_ADD_COMPILE_OPTIONS));
+        throw std::runtime_error("Invalid compile options argument");
+    }
 
     auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(1));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                m_compile_options.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
+                m_compile_flags.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
             } else {
                 luaL_error(L, "Compile option #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Compile option is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        m_compile_options.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
+        m_compile_flags.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
     } else {
-        luaL_error(L, "Invalid compile options argument: \"{}\"", lua_typename(L, arg_sources.type()));
+        luaL_error(L,
+                   "Invalid compile options argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_sources.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_ADD_COMPILE_OPTIONS));
         throw std::runtime_error("Invalid compile options argument");
     }
 
     // remove duplicates
-    // std::sort(m_compile_options.begin(), m_compile_options.end());
-    // m_compile_options.erase(std::unique(m_compile_options.begin(), m_compile_options.end()), m_compile_options.end());
+    // std::sort(m_compile_flags.begin(), m_compile_flags.end());
+    // m_compile_flags.erase(std::unique(m_compile_flags.begin(), m_compile_flags.end()), m_compile_flags.end());
 }
 
 void Component::bind_set_linker_script(lua_State* L) {
@@ -448,7 +478,10 @@ void Component::bind_set_linker_script(lua_State* L) {
         Log.trace("[{}] Set linker script: {}", get_name(), script_path.tostring());
         m_linker_script_path = script_path.tostring();
     } else {
-        luaL_error(L, "Invalid linker script argument - {}", lua_typename(L, script_path.type()));
+        luaL_error(L,
+                   "Invalid linker script argument: type \"%s\"\n%s",
+                   lua_typename(L, script_path.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_SET_LINKER_SCRIPT));
         throw std::runtime_error("Invalid linker script argument");
     }
 }

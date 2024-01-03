@@ -10,6 +10,18 @@
 struct lua_State;
 class LuaBackend {
 public:
-    static void validate_visibility(lua_State* L, const luabridge::LuaRef& arg);
+    enum class HelpEntry {
+        SET_LINKER,
+        COMPONENT_ADD_INCLUDE_PATHS,
+        COMPONENT_ADD_DEFINITIONS,
+        COMPONENT_ADD_COMPILE_OPTIONS,
+        COMPONENT_ADD_LINK_OPTIONS,
+        COMPONENT_SET_LINKER_SCRIPT,
+    };
+
+public:
+    static bool is_valid_visibility(lua_State* L, const luabridge::LuaRef& arg);
     static Component::Visibility string_to_visibility(const std::string& str);
+
+    static const char* get_script_help_string(HelpEntry he);
 };

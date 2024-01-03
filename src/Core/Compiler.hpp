@@ -28,7 +28,7 @@ public:
                                        const std::filesystem::path& obj_path) const;
 
     /// Load flags for include directories
-    void push_include_directory(std::vector<std::string>& flags, const std::string& include_directory) const;
+    void push_include_path(std::vector<std::string>& flags, const std::string& include_directory) const;
 
     /// Load flags for compile definitions
     void push_compile_definition(std::vector<std::string>& flags, const std::string& compile_definition) const;

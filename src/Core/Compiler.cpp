@@ -187,7 +187,7 @@ void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
     }
 }
 
-void Compiler::push_include_directory(std::vector<std::string>& flags, const std::string& include_directory) const {
+void Compiler::push_include_path(std::vector<std::string>& flags, const std::string& include_directory) const {
     if (get_type() == Type::GNU || get_type() == Type::CLANG) {
         flags.push_back("-I" + include_directory);
     } else if (get_type() == Type::MSVC) {

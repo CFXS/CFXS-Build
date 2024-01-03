@@ -33,8 +33,8 @@ public:
     ~Component();
 
     void bind_add_sources(lua_State* L);
-    void bind_add_include_directories(lua_State* L);
-    void bind_add_compile_definitions(lua_State* L);
+    void bind_add_include_paths(lua_State* L);
+    void bind_add_definitions(lua_State* L);
     void bind_add_compile_options(lua_State* L);
     void bind_set_linker_script(lua_State* L);
 
@@ -51,9 +51,9 @@ public:
     const std::filesystem::path& get_local_output_directory() const { return m_local_output_directory; }
     const std::filesystem::path& get_linker_script_path() const { return m_linker_script_path; }
 
-    const std::vector<ScopedValue<std::filesystem::path>> get_include_directories() const { return m_include_directories; }
-    const std::vector<ScopedValue<std::string>> get_compile_definitions() const { return m_compile_definitions; }
-    const std::vector<ScopedValue<std::string>> get_compile_options() const { return m_compile_options; }
+    const std::vector<ScopedValue<std::filesystem::path>> get_include_paths() const { return m_include_paths; }
+    const std::vector<ScopedValue<std::string>> get_definitions() const { return m_definitions; }
+    const std::vector<ScopedValue<std::string>> get_compile_flags() const { return m_compile_flags; }
 
     const std::vector<std::shared_ptr<Component>>& get_dependencies() const { return m_dependencies; }
     void add_dependency(std::shared_ptr<Component> component);
@@ -76,9 +76,9 @@ private:
     std::vector<std::string> m_requested_sources;        // requested sources
     std::vector<std::string> m_requested_source_filters; // source filters
 
-    std::vector<ScopedValue<std::filesystem::path>> m_include_directories;
-    std::vector<ScopedValue<std::string>> m_compile_definitions;
-    std::vector<ScopedValue<std::string>> m_compile_options;
+    std::vector<ScopedValue<std::filesystem::path>> m_include_paths;
+    std::vector<ScopedValue<std::string>> m_definitions;
+    std::vector<ScopedValue<std::string>> m_compile_flags;
 
     // linker
     std::filesystem::path m_linker_script_path;

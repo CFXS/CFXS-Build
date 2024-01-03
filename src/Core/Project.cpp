@@ -85,9 +85,9 @@ static void print_traceback(const std::filesystem::path& source_location) {
 
     if (traceback != "stack traceback:") {
         traceback = traceback.substr(strlen("stack traceback:") + 1);
-        LuaError("{}\n{}Call Trace:\n\t{}{}{}\n{}{}", error, ANSI_RED, ANSI_RESET, source, ANSI_GRAY, traceback, ANSI_RESET);
+        LuaError("{}\n{}Call Trace:\n\t{}{}{}\n{}{}\n", error, ANSI_RED, ANSI_RESET, source, ANSI_GRAY, traceback, ANSI_RESET);
     } else {
-        LuaError("{}\n{}Call Trace:\n\t{}{}", error, ANSI_RED, ANSI_RESET, source, ANSI_RESET);
+        LuaError("{}\n{}Call Trace:\n\t{}{}\n", error, ANSI_RED, ANSI_RESET, source, ANSI_RESET);
     }
 }
 
@@ -228,8 +228,8 @@ void Project::initialize_lua() {
 
     bridge.beginClass<Component>("$Component")
         .addFunction("add_sources", &Component::bind_add_sources)
-        .addFunction("add_include_directories", &Component::bind_add_include_directories)
-        .addFunction("add_compile_definitions", &Component::bind_add_compile_definitions)
+        .addFunction("add_include_paths", &Component::bind_add_include_paths)
+        .addFunction("add_definitions", &Component::bind_add_definitions)
         .addFunction("add_compile_options", &Component::bind_add_compile_options)
         .addFunction("set_linker_script", &Component::bind_set_linker_script)
         .endClass();
