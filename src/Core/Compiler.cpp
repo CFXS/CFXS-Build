@@ -69,7 +69,7 @@ static std::string get_standard_compile_flag(Compiler::Type type, Compiler::Stan
     }
 }
 
-Compiler::~Compiler() { Log.warn("Delete {} Compiler", to_string(get_language())); }
+Compiler::~Compiler() { Log.trace("Delete {} Compiler", to_string(get_language())); }
 
 Compiler::Compiler(Language language, const std::string& location, const std::string& standard_num) :
     m_language(language), m_location(location) {

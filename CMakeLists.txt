@@ -34,6 +34,11 @@ add_compile_definitions("CFXS_BUILD_VERSION_MINOR=0")
 if(WIN32)
     add_compile_definitions("WINDOWS_BUILD=1")
     add_compile_definitions("_HAS_CXX17=1")
+else()
+    # target_compile_options(CFXS_Build PRIVATE "-fsanitize=address,leak,undefined")
+    # target_link_options(CFXS_Build PRIVATE "-fsanitize=address,leak,undefined")
+    # target_compile_options(CFXS_Build PRIVATE "-fsanitize=thread")
+    # target_link_options(CFXS_Build PRIVATE "-fsanitize=thread")
 endif()
 
 FetchContent_Declare(

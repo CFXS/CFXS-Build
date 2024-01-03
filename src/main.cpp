@@ -3,6 +3,23 @@
 #include <exception>
 #include <filesystem>
 #include "Core/Project.hpp"
+#include "Utils.hpp"
+#include <fstream>
+
+int get_max_ram_usage() {
+    std::ifstream file("/proc/self/status");
+    std::string line;
+
+    while (std::getline(file, line)) {
+        if (line.starts_with("VmPeak:")) {
+            const auto pos = line.find_first_of("0123456789");
+            const auto end = line.find_first_not_of("0123456789", pos);
+            return std::stoi(line.substr(pos, end - pos));
+        }
+    }
+
+    return 0;
+}
 
 int main(int argc, char **argv) {
     initialize_logging();
@@ -84,5 +101,6 @@ int main(int argc, char **argv) {
     }
 
     Log.trace("Exit :)");
+    Log.trace(ANSI_MAGENTA "Max RAM usage: {:.1f} MB" ANSI_RESET, get_max_ram_usage() / 1024.0f / 1024.0f);
     return 0;
 }

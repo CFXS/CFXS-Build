@@ -50,11 +50,17 @@ public:
     const std::vector<ScopedValue<std::string>> get_compile_definitions() const { return m_compile_definitions; }
     const std::vector<ScopedValue<std::string>> get_compile_options() const { return m_compile_options; }
 
+    const std::vector<std::shared_ptr<Component>>& get_dependencies() const { return m_dependencies; }
+    void add_dependency(std::shared_ptr<Component> component);
+
 private:
     Type m_type;
     std::string m_name;
     std::filesystem::path m_root_path;
     std::filesystem::path m_local_output_directory;
+
+    // Component tree
+    std::vector<std::shared_ptr<Component>> m_dependencies;
 
     // add_sources method
     std::vector<std::string> m_requested_sources;        // requested sources

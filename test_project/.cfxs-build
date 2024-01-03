@@ -9,12 +9,14 @@ set_linker("arm-none-eabi-ld")
 -- set_linker("ilinkarm")
 
 local test_project = create_executable("CFXS-Build-Test")
-test_project:set_linker_script("LinkerScript.ld")
+test_project:set_linker_script("./LinkerScript.ld")
 
 local sources = {
     "./src/**.c",            -- current dir + recursive search
     "./src/Module_A/**.cpp", -- current dir + recursive search
     "./src/Module_B/**.cpp", -- current dir + recursive search
+    -- "./src/Module_B2/**.cpp", -- current dir + recursive search
+    -- "./src/Module_B3/**.cpp", -- current dir + recursive search
     "./src/Module_C/*.cpp", -- current dir + recursive search
     "./src/main.cpp",        -- single file
     "!makefsdata.c",         -- full path matching exclude (path.contains(exclude_entry))
