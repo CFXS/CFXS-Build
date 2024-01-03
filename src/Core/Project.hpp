@@ -19,6 +19,9 @@ private:
     static void initialize_lua();
 
 private: // .cfxs-build Lua bindings
+         // Import
+    static void bind_import(const std::string& path_str);
+
     // Compiler config
     static void bind_set_c_compiler(const std::string& compiler, const std::string& standard);
     static void bind_set_cpp_compiler(const std::string& compiler, const std::string& standard);

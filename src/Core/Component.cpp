@@ -5,13 +5,11 @@
 #include <lua.hpp>
 #include <filesystem>
 #include <bits/fs_path.h>
-#include <Utils.hpp>
+#include <CommandUtils.hpp>
 #include <fstream>
 #include <mutex>
-#include <stdexcept>
 #include <thread>
 #include <vector>
-#include <execution>
 #include "Core/Compiler.hpp"
 #include "Core/Linker.hpp"
 #include "Core/SourceEntry.hpp"
@@ -44,7 +42,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                           std::shared_ptr<Compiler> cpp_compiler,
                           std::shared_ptr<Compiler> asm_compiler,
                           std::shared_ptr<Linker> linker) {
-    Log.info("Configure {}", get_name());
+    Log.info("Configure [{}]", get_name());
     const auto configure_t1 = std::chrono::high_resolution_clock::now();
 
     for (auto& src : m_requested_sources) {

@@ -2,6 +2,7 @@
     "files.associations": {
         "*.json": "jsonc",
         ".cfxs-build": "lua",
+        "*.cfxs-build": "lua",
         "filesystem": "cpp",
         "algorithm": "cpp",
         "any": "cpp",
@@ -102,6 +103,7 @@
         "codecvt": "cpp",
         "memory_resource": "cpp",
         "string_view": "cpp",
-        "numbers": "cpp"
+        "numbers": "cpp",
+        "execution": "cpp"
     }
 }

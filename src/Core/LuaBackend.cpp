@@ -1,6 +1,6 @@
 #include <lua.hpp>
 #include "Core/LuaBackend.hpp"
-#include <Utils.hpp>
+#include <CommandUtils.hpp>
 
 void LuaBackend::validate_visibility(lua_State* L, const luabridge::LuaRef& arg) {
     if (arg.isString()) {

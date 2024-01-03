@@ -3,7 +3,7 @@
 #include <exception>
 #include <filesystem>
 #include "Core/Project.hpp"
-#include "Utils.hpp"
+#include "CommandUtils.hpp"
 #include <fstream>
 
 int get_max_ram_usage() {

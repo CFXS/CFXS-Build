@@ -11,13 +11,16 @@ set_linker("arm-none-eabi-ld")
 local test_project = create_executable("CFXS-Build-Test")
 test_project:set_linker_script("./LinkerScript.ld")
 
+function import_module()
+    import("./modules/Module_A")
+end
+
+import_module()
+
+import("/mnt/d/cfxs_ext_module")
+
 local sources = {
     "./src/**.c",            -- current dir + recursive search
-    "./src/Module_A/**.cpp", -- current dir + recursive search
-    "./src/Module_B/**.cpp", -- current dir + recursive search
-    -- "./src/Module_B2/**.cpp", -- current dir + recursive search
-    -- "./src/Module_B3/**.cpp", -- current dir + recursive search
-    "./src/Module_C/*.cpp", -- current dir + recursive search
     "./src/main.cpp",        -- single file
     "!makefsdata.c",         -- full path matching exclude (path.contains(exclude_entry))
 }
@@ -27,9 +30,8 @@ test_project:add_include_directories("local", {
     "./src"
 })
 test_project:add_compile_definitions("forward", {
-    "CFXS"
+    "BUILD_SOMETHING"
 })
 test_project:add_compile_options("forward", {
     "-O3",
 })
-

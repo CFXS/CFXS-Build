@@ -9,12 +9,17 @@
 #include "LuaBackend.hpp"
 #include "RegexUtils.hpp"
 #include <regex>
+#include <CommandUtils.hpp>
+
+// folder inside of build path to write build files to
+#define BUILD_TEMP_LOCATION "components"
 
 lua_State* s_MainLuaState;
 std::vector<std::shared_ptr<Component>> s_components;
 
 std::filesystem::path s_project_path;
 std::filesystem::path s_output_path;
+std::vector<std::filesystem::path> s_script_path_stack;
 
 // Project state
 std::shared_ptr<Compiler> s_c_compiler;
@@ -45,8 +50,8 @@ void Project::uninitialize() {
 }
 
 void Project::initialize(const std::filesystem::path& project_path, const std::filesystem::path& output_path) {
-    s_project_path = project_path;
-    s_output_path  = output_path;
+    s_project_path = std::filesystem::weakly_canonical(project_path);
+    s_output_path  = std::filesystem::weakly_canonical(output_path);
 
     Log.trace("Project location: \"{}\"", project_path.string());
     Log.trace("Output location: \"{}\"", output_path.string());
@@ -61,30 +66,50 @@ void Project::initialize(const std::filesystem::path& project_path, const std::f
 
     initialize_lua();
 }
+
+static void print_traceback(const std::filesystem::path& source_location) {
+    std::string error = lua_tostring(s_MainLuaState, -1);
+
+    std::regex error_regex(R"((.*)\:(\d+):)");
+    std::smatch match;
+    std::string source = "";
+    if (std::regex_search(error, match, error_regex)) {
+        if (match.size() == 3) {
+            source = fmt::format("{}:{}", source_location.string(), match[2].str());
+            error  = error.substr(match[0].str().length() + 1);
+        }
+    }
+
+    luaL_traceback(s_MainLuaState, s_MainLuaState, nullptr, 1);
+    std::string traceback = lua_tostring(s_MainLuaState, -1);
+
+    if (traceback != "stack traceback:") {
+        traceback = traceback.substr(strlen("stack traceback:") + 1);
+        LuaError("{}\n{}Call Trace:\n\t{}{}{}\n{}{}", error, ANSI_RED, ANSI_RESET, source, ANSI_GRAY, traceback, ANSI_RESET);
+    } else {
+        LuaError("{}\n{}Call Trace:\n\t{}{}", error, ANSI_RED, ANSI_RESET, source, ANSI_RESET);
+    }
+}
+
 void Project::configure() {
     Log.info("Configure project");
 
     const auto source_location = s_project_path / ".cfxs-build";
     const auto root_buildfile  = read_source(source_location);
+
+    // root script path
+    s_script_path_stack = {s_project_path};
+
     // execute root_buildfile into lua state
-    if (luaL_dostring(s_MainLuaState, root_buildfile.c_str())) {
+    if (luaL_dofile(s_MainLuaState, source_location.c_str())) {
         // get and log lua error callstack
-        std::string error = lua_tostring(s_MainLuaState, -1);
-
-        std::regex error_regex(R"(\[string\s\"(.*)\"\]:(\d+):)");
-        std::smatch match;
-        if (std::regex_search(error, match, error_regex)) {
-            if (match.size() == 3) {
-                error = fmt::format("\"{}:{}\"\n{}", source_location.string(), match[2].str(), error.substr(match[0].str().length() + 1));
-            }
-        }
-
-        LuaError("{}", error);
+        print_traceback(source_location);
 
         throw std::runtime_error("Failed to configure");
     } else {
-        auto comp = s_components[0];
-        comp->configure(s_c_compiler, s_cpp_compiler, s_asm_compiler, s_linker);
+        for (auto& comp : s_components) {
+            comp->configure(s_c_compiler, s_cpp_compiler, s_asm_compiler, s_linker);
+        }
     }
 }
 
@@ -148,12 +173,45 @@ void Project::initialize_lua() {
     // load Lua libraries
     luaL_openlibs(L);
 
-// Set _G.OS to Windows or Unix
+    // Set _G.OS to Windows or Unix
 #if WINDOWS_BUILD == 1
-    luaL_loadstring(L, "_G.OS = \"Windows\"");
+    luaL_loadstring(L, "_G.Platform = \"Windows\"");
 #else
-    luaL_loadstring(L, "_G.OS = \"Unix\"");
+    luaL_loadstring(L, "_G.Platform = \"Unix\"");
 #endif
+
+    // remove some library functions
+    static constexpr const char* REMOVE_GLOBALS[] = {
+        "load",
+        "warn",
+        "coroutine",
+        "loadfile",
+        "dofile",
+        "io",
+        "package",
+        "require",
+    };
+    for (auto name : REMOVE_GLOBALS) {
+        lua_pushnil(L);
+        lua_setglobal(L, name);
+    }
+
+    // remove some library os functions
+    static constexpr const char* REMOVE_OS_FUNCTIONS[] = {
+        "remove",
+        "execute",
+        "rename",
+        "setlocale",
+        "exit",
+    };
+
+    for (auto name : REMOVE_OS_FUNCTIONS) {
+        lua_getglobal(L, "os");
+        lua_pushstring(L, name);
+        lua_pushnil(L);
+        lua_settable(L, -3);
+        lua_pop(L, 1);
+    }
 
     auto bridge = luabridge::getGlobalNamespace(L);
 
@@ -162,6 +220,8 @@ void Project::initialize_lua() {
     bridge.addFunction<void, const std::string&>("set_asm_compiler", TO_FUNCTION(bind_set_asm_compiler));
 
     bridge.addFunction<void, const std::string&>("set_linker", TO_FUNCTION(bind_set_linker));
+
+    bridge.addFunction<void, const std::string&>("import", TO_FUNCTION(bind_import));
 
     bridge.addFunction<Component&, const std::string&>("create_executable", TO_FUNCTION(bind_create_executable));
     bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(bind_create_library));
@@ -188,6 +248,39 @@ void Project::bind_set_asm_compiler(const std::string& compiler) {
     s_asm_compiler = std::make_shared<Compiler>(Compiler::Language::ASM, compiler, "ASM"); //
 }
 
+// Import
+void Project::bind_import(const std::string& path_str) {
+    std::filesystem::path fpath(path_str);
+    // default import is Folder with implicit .cfxs-build
+    if (fpath.extension() == "") {
+        fpath /= ".cfxs-build";
+    }
+
+    const auto filename = fpath.filename();
+
+    if (std::filesystem::path(path_str).is_relative()) {
+        s_script_path_stack.push_back(std::filesystem::weakly_canonical((s_script_path_stack.back() / fpath).parent_path()));
+    } else {
+        s_script_path_stack.push_back(std::filesystem::weakly_canonical(std::filesystem::path(fpath).parent_path()));
+    }
+
+    const auto source_location = s_script_path_stack.back() / filename;
+
+    if (!std::filesystem::exists(source_location)) {
+        luaL_error(s_MainLuaState, "File not found: \"%s\"", source_location.c_str());
+        return;
+    }
+
+    const bool res = luaL_dofile(s_MainLuaState, source_location.c_str());
+    if (res) {
+        // get and log lua error callstack
+        print_traceback(source_location);
+
+        throw std::runtime_error("Failed to configure");
+    }
+    s_script_path_stack.pop_back();
+}
+
 // Linker config
 void Project::bind_set_linker(const std::string& linker) {
     s_linker = std::make_shared<Linker>(linker); //
@@ -203,7 +296,8 @@ Component& Project::bind_create_executable(const std::string& name) {
         throw std::runtime_error("Invalid executable name");
     }
 
-    auto comp = std::make_shared<Component>(Component::Type::EXECUTABLE, name, s_project_path, s_output_path / "cb" / name);
+    auto comp = std::make_shared<Component>(
+        Component::Type::EXECUTABLE, name, s_script_path_stack.back(), s_output_path / BUILD_TEMP_LOCATION / name);
     s_components.push_back(comp);
     return *comp.get();
 }
@@ -217,7 +311,8 @@ Component& Project::bind_create_library(const std::string& name) {
         throw std::runtime_error("Invalid library name");
     }
 
-    auto comp = std::make_shared<Component>(Component::Type::LIBRARY, name, s_project_path, s_output_path / "cb" / name);
+    auto comp =
+        std::make_shared<Component>(Component::Type::LIBRARY, name, s_script_path_stack.back(), s_output_path / BUILD_TEMP_LOCATION / name);
     s_components.push_back(comp);
     return *comp.get();
 }

@@ -1,1 +1,1 @@
-# linkerscript
+/* linkerscript */
