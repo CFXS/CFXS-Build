@@ -6,7 +6,6 @@
 #include <filesystem>
 #include <bits/fs_path.h>
 #include <CommandUtils.hpp>
-#include <fstream>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -246,7 +245,7 @@ void Component::build() {
     auto workers = FunctionWorker::create_workers(std::thread::hardware_concurrency());
 
     int compile_entry_seq_index            = 0;     // current source entry index to compile
-    std::atomic_int current_compiled_index = 0;     // currently compiled index (only for counting compiled files)
+    std::atomic_int current_compiled_index = 1;     // currently compiled index (only for counting compiled files)
     bool error_reported                    = false; // a source has reported a failed compilation
     bool compiling                         = true;  // still trying to compile all sources
 

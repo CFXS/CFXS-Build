@@ -9,5 +9,5 @@ cfxs_platform:add_sources({
 
 cfxs_platform:add_include_paths("local", {"./src"})
 
-cfxs_platform:add_include_paths("inherite", {"./include"})
+cfxs_platform:add_include_paths("inherit", {"./include"})
 

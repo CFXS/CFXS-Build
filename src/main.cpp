@@ -1,6 +1,5 @@
 #include "Log.hpp"
 #include <argparse/argparse.hpp>
-#include <exception>
 #include <filesystem>
 #include "Core/Project.hpp"
 #include "CommandUtils.hpp"

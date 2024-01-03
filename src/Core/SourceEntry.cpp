@@ -1,5 +1,4 @@
 #include "SourceEntry.hpp"
-#include <filesystem>
 
 // For print readability
 extern std::filesystem::path s_project_path;

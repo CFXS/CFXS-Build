@@ -3,8 +3,6 @@
 #include <filesystem>
 #include <lua.hpp>
 #include "Component.hpp"
-#include "Compiler.hpp"
-#include "Linker.hpp"
 
 class Project {
 public:

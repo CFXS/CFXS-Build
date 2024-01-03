@@ -2,7 +2,6 @@
 
 #include <spdlog/spdlog.h>
 #include <filesystem>
-#include <string_view>
 #include <spdlog/fmt/fmt.h>
 
 void initialize_logging();
