@@ -13,9 +13,9 @@ public:
     Compiler(Language type, const std::string& location, const std::string& standard_num);
     ~Compiler();
 
-    const Language get_language() const { return m_language; }
-    const Standard get_standard() const { return m_standard; }
-    const Type get_type() const { return m_type; }
+    Language get_language() const { return m_language; }
+    Standard get_standard() const { return m_standard; }
+    Type get_type() const { return m_type; }
     const std::string& get_location() const { return m_location; }
     const std::vector<std::string>& get_flags() const { return m_flags; }
 

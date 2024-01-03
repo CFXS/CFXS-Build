@@ -20,7 +20,7 @@ public:
     };
 
 public:
-    static bool is_valid_visibility(lua_State* L, const luabridge::LuaRef& arg);
+    static bool is_valid_visibility(const luabridge::LuaRef& arg);
     static Component::Visibility string_to_visibility(const std::string& str);
 
     static const char* get_script_help_string(HelpEntry he);

@@ -40,7 +40,7 @@ std::vector<std::string> s_TempFileExtensions = {
 void Component::configure(std::shared_ptr<Compiler> c_compiler,
                           std::shared_ptr<Compiler> cpp_compiler,
                           std::shared_ptr<Compiler> asm_compiler,
-                          std::shared_ptr<Linker> linker) {
+                          [[maybe_unused]] std::shared_ptr<Linker> linker) {
     Log.info("Configure [{}]", get_name());
     const auto configure_t1 = std::chrono::high_resolution_clock::now();
 
@@ -244,7 +244,7 @@ void Component::build() {
 
     auto workers = FunctionWorker::create_workers(std::thread::hardware_concurrency());
 
-    int compile_entry_seq_index            = 0;     // current source entry index to compile
+    size_t compile_entry_seq_index         = 0;     // current source entry index to compile
     std::atomic_int current_compiled_index = 1;     // currently compiled index (only for counting compiled files)
     bool error_reported                    = false; // a source has reported a failed compilation
     bool compiling                         = true;  // still trying to compile all sources
@@ -352,7 +352,7 @@ void Component::bind_add_sources(lua_State* L) {
 void Component::bind_add_include_paths(lua_State* L) {
     const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
 
-    if (!LuaBackend::is_valid_visibility(L, arg_visibility)) {
+    if (!LuaBackend::is_valid_visibility(arg_visibility)) {
         luaL_error(L,
                    "Invalid include paths argument: type \"%s\"\n%s",
                    lua_typename(L, arg_visibility.type()),
@@ -400,7 +400,7 @@ void Component::bind_add_include_paths(lua_State* L) {
 void Component::bind_add_definitions(lua_State* L) {
     const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
 
-    if (!LuaBackend::is_valid_visibility(L, arg_visibility)) {
+    if (!LuaBackend::is_valid_visibility(arg_visibility)) {
         luaL_error(L,
                    "Invalid definitions argument: type \"%s\"\n%s",
                    lua_typename(L, arg_visibility.type()),
@@ -437,7 +437,7 @@ void Component::bind_add_definitions(lua_State* L) {
 void Component::bind_add_compile_options(lua_State* L) {
     const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
 
-    if (!LuaBackend::is_valid_visibility(L, arg_visibility)) {
+    if (!LuaBackend::is_valid_visibility(arg_visibility)) {
         luaL_error(L,
                    "Invalid compile options argument: type \"%s\"\n%s",
                    lua_typename(L, arg_visibility.type()),

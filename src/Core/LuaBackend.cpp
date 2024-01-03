@@ -2,7 +2,7 @@
 #include "Core/LuaBackend.hpp"
 #include <CommandUtils.hpp>
 
-bool LuaBackend::is_valid_visibility(lua_State* L, const luabridge::LuaRef& arg) {
+bool LuaBackend::is_valid_visibility(const luabridge::LuaRef& arg) {
     if (arg.isString()) {
         const auto val = arg.tostring();
         if (val == "local" || val == "inherit" || val == "forward") {
