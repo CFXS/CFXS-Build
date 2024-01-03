@@ -1,8 +1,10 @@
 #pragma once
 #include <filesystem>
 #include "SourceEntry.hpp"
-#include <lua.hpp>
 #include "Compiler.hpp"
+#include "Linker.hpp"
+
+struct lua_State;
 
 class Component {
 public:
@@ -36,7 +38,10 @@ public:
     void bind_add_compile_options(lua_State* L);
     void bind_set_linker_script(lua_State* L);
 
-    void configure(std::shared_ptr<Compiler> c_compiler, std::shared_ptr<Compiler> cpp_compiler, std::shared_ptr<Compiler> asm_compiler);
+    void configure(std::shared_ptr<Compiler> c_compiler,
+                   std::shared_ptr<Compiler> cpp_compiler,
+                   std::shared_ptr<Compiler> asm_compiler,
+                   std::shared_ptr<Linker> linker);
     void build();
     void clean();
 
@@ -53,6 +58,8 @@ public:
     const std::vector<std::shared_ptr<Component>>& get_dependencies() const { return m_dependencies; }
     void add_dependency(std::shared_ptr<Component> component);
 
+    const std::vector<std::unique_ptr<CompileEntry>>& get_compile_entries() const { return m_compile_entries; }
+
 private:
     Type m_type;
     std::string m_name;
@@ -62,12 +69,12 @@ private:
     // Component tree
     std::vector<std::shared_ptr<Component>> m_dependencies;
 
+    // Compile
+    std::vector<std::unique_ptr<CompileEntry>> m_compile_entries;
+
     // add_sources method
     std::vector<std::string> m_requested_sources;        // requested sources
     std::vector<std::string> m_requested_source_filters; // source filters
-
-    // Actual selected source files to build
-    std::vector<SourceEntry> m_source_entries;
 
     std::vector<ScopedValue<std::filesystem::path>> m_include_directories;
     std::vector<ScopedValue<std::string>> m_compile_definitions;

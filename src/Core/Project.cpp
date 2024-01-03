@@ -6,9 +6,9 @@
 #include "Core/Component.hpp"
 #include "lauxlib.h"
 #include <lua.hpp>
-#include <re2/re2.h>
-#include <regex>
 #include "LuaBackend.hpp"
+#include "RegexUtils.hpp"
+#include <regex>
 
 lua_State* s_MainLuaState;
 std::vector<std::shared_ptr<Component>> s_components;
@@ -84,7 +84,7 @@ void Project::configure() {
         throw std::runtime_error("Failed to configure");
     } else {
         auto comp = s_components[0];
-        comp->configure(s_c_compiler, s_cpp_compiler, s_asm_compiler);
+        comp->configure(s_c_compiler, s_cpp_compiler, s_asm_compiler, s_linker);
     }
 }
 
@@ -196,7 +196,7 @@ void Project::bind_set_linker(const std::string& linker) {
 // Component creation
 Component& Project::bind_create_executable(const std::string& name) {
     // valid filename match
-    if (!RE2::FullMatch(name, R"(^[a-zA-Z0-9_\- ]+$)")) {
+    if (!RegexUtils::is_valid_component_name(name)) {
         luaL_error(s_MainLuaState,
                    "Invalid executable name [%s] - name can only contain alphanumeric characters, dashes and underscores",
                    name.c_str());
@@ -210,7 +210,7 @@ Component& Project::bind_create_executable(const std::string& name) {
 
 Component& Project::bind_create_library(const std::string& name) {
     // valid filename match
-    if (!RE2::FullMatch(name, R"(^[a-zA-Z0-9_\- ]+$)")) {
+    if (!RegexUtils::is_valid_component_name(name)) {
         luaL_error(s_MainLuaState,
                    "Invalid library name [%s] - name can only contain alphanumeric characters, dashes and underscores",
                    name.c_str());

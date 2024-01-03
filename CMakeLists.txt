@@ -18,6 +18,7 @@ set(sources
     "src/Core/Compiler.cpp"
     "src/Core/SourceEntry.cpp"
     "src/Core/LuaBackend.cpp"
+    "src/Core/RegexUtils.cpp"
 )
 
 add_executable(CFXS_Build ${sources})
@@ -39,12 +40,14 @@ else()
     # target_link_options(CFXS_Build PRIVATE "-fsanitize=address,leak,undefined")
     # target_compile_options(CFXS_Build PRIVATE "-fsanitize=thread")
     # target_link_options(CFXS_Build PRIVATE "-fsanitize=thread")
+    # target_link_options(CFXS_Build PUBLIC "-static-libstdc++" "-static")
 endif()
 
 FetchContent_Declare(
     Lua
     GIT_REPOSITORY
     https://github.com/CFXS/Lua-CMake.git
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(Lua)
 
@@ -53,6 +56,7 @@ FetchContent_Declare(
     lib_LuaBridge
     GIT_REPOSITORY
     https://github.com/vinniefalco/LuaBridge.git
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(lib_LuaBridge)
 
@@ -60,26 +64,9 @@ FetchContent_Declare(
     argparse
     GIT_REPOSITORY
     https://github.com/p-ranav/argparse.git
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(argparse)
-
-FetchContent_Declare(
-    lib_re2
-    GIT_REPOSITORY
-    https://github.com/google/re2.git
-    GIT_TAG "main"
-)
-FetchContent_MakeAvailable(lib_re2)
-
-# set(CTRE_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
-# set(CTRE_BUILD_PACKAGE_RPM OFF CACHE BOOL "Build tests" FORCE)
-# set(CTRE_BUILD_PACKAGE_DEB OFF CACHE BOOL "Build tests" FORCE)
-# FetchContent_Declare(
-# lib_ctre
-# GIT_REPOSITORY
-# https://github.com/hanickadot/compile-time-regular-expressions.git
-# )
-# FetchContent_MakeAvailable(lib_ctre)
 
 # find package spdlog, if not found then do fetchcontent
 find_package(spdlog QUIET)
@@ -104,6 +91,5 @@ target_link_libraries(CFXS_Build PRIVATE
     lua_static
     LuaBridge
     argparse
-    re2
     spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
 )

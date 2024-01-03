@@ -7,6 +7,8 @@
 #include <fstream>
 
 int get_max_ram_usage() {
+#ifdef WINDOWS_BUILD
+#else
     std::ifstream file("/proc/self/status");
     std::string line;
 
@@ -17,6 +19,7 @@ int get_max_ram_usage() {
             return std::stoi(line.substr(pos, end - pos));
         }
     }
+#endif
 
     return 0;
 }
@@ -41,14 +44,14 @@ int main(int argc, char **argv) {
         .flag();                   //
 
     args.add_argument("--build")
-        .help("Build project")                          //
-        .default_value(std::vector<std::string>({"*"})) //
-        .nargs(argparse::nargs_pattern::any);
+        .help("Build project")                     //
+        .default_value(std::vector<std::string>()) //
+        .nargs(1);
 
     args.add_argument("--clean")
         .help("Clean project")                     //
         .default_value(std::vector<std::string>()) //
-        .nargs(argparse::nargs_pattern::any);
+        .nargs(1);
 
     try {
         args.parse_args(argc, argv);

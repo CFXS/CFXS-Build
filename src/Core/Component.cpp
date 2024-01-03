@@ -5,7 +5,6 @@
 #include <lua.hpp>
 #include <filesystem>
 #include <bits/fs_path.h>
-#include <re2/re2.h>
 #include <Utils.hpp>
 #include <fstream>
 #include <mutex>
@@ -14,11 +13,15 @@
 #include <vector>
 #include <execution>
 #include "Core/Compiler.hpp"
+#include "Core/Linker.hpp"
 #include "Core/SourceEntry.hpp"
 #include "FunctionWorker.hpp"
+#include "RegexUtils.hpp"
 
 #include <lua.hpp>
 #include "LuaBackend.hpp"
+
+std::mutex s_filesystem_mutex;
 
 Component::Component(Type type,
                      const std::string& name,
@@ -39,8 +42,10 @@ std::vector<std::string> s_TempFileExtensions = {
 
 void Component::configure(std::shared_ptr<Compiler> c_compiler,
                           std::shared_ptr<Compiler> cpp_compiler,
-                          std::shared_ptr<Compiler> asm_compiler) {
+                          std::shared_ptr<Compiler> asm_compiler,
+                          std::shared_ptr<Linker> linker) {
     Log.info("Configure {}", get_name());
+    const auto configure_t1 = std::chrono::high_resolution_clock::now();
 
     for (auto& src : m_requested_sources) {
         if (src[0] == '.') {
@@ -60,7 +65,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
         if (path.contains("*")) {
             // currently the only valid wildcards are *.extension for current folder match or **.extension for recursive match
             // This regex allows only *.ext or **.ext at the end of the path, no stars in the middle
-            const bool valid_wildcard = RE2::FullMatch(path, R"([^*]+\*\*?\.[^\s ]+)");
+            const bool valid_wildcard = RegexUtils::is_valid_wildcard(path);
 
             if (!valid_wildcard) {
                 Log.error("Invalid source wildcard: {}", path);
@@ -159,13 +164,57 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             throw std::runtime_error("Unsupported file type");
         }
 
-        // add source entry
-        m_source_entries.emplace_back(compiler, e.path, output_dir);
+        // create compile entry
+        auto compile_entry          = std::make_unique<CompileEntry>();
+        compile_entry->source_entry = std::make_unique<SourceEntry>(compiler, e.path, output_dir);
+        const auto& source_entry    = *compile_entry->source_entry;
+
+        if (!std::filesystem::exists(source_entry.get_output_directory())) {
+            // Generate output_directory if it does not exist
+            s_filesystem_mutex.lock();
+            try {
+                std::filesystem::create_directories(source_entry.get_output_directory());
+            } catch (const std::exception& e) {
+                Log.error("Failed to create output dir [{}]: {}", source_entry.get_output_directory(), e.what());
+                throw e;
+            }
+            s_filesystem_mutex.unlock();
+        }
+
+        // path to output build files to
+        const auto output_path = source_entry.get_output_directory() / source_entry.get_source_file_path().filename().string();
+
+        // initial args are defined from the specific compiler implementation
+        compile_entry->compile_args = compiler->get_flags();
+
+        compiler->load_compile_and_output_flags(
+            compile_entry->compile_args, source_entry.get_source_file_path(), output_path); // compile and write object
+        compiler->load_dependency_flags(compile_entry->compile_args, output_path);          // dependency file output
+
+        // include directories
+        for (const auto& val : get_include_directories()) {
+            compiler->push_include_directory(compile_entry->compile_args, val.value.string());
+        }
+        // compile definitions
+        for (const auto& val : get_compile_definitions()) {
+            compiler->push_compile_definition(compile_entry->compile_args, val.value);
+        }
+        // append custom options
+        for (const auto& val : get_compile_options())
+            compile_entry->compile_args.push_back(val.value);
+
+        compile_entry->compiler = compiler;
+        m_compile_entries.emplace_back(std::move(compile_entry));
     }
+
+    const auto configure_t2 = std::chrono::high_resolution_clock::now();
+    auto configure_ms       = std::chrono::duration_cast<std::chrono::milliseconds>(configure_t2 - configure_t1).count();
+    Log.trace("Configure done in {:.3}s", configure_ms / 1000.0f);
 }
 
 void Component::clean() {
-    Log.info("Clean Component [{}] @ {}", get_name(), get_local_output_directory());
+    Log.info("Clean [{}] @ {}", get_name(), get_local_output_directory());
+    const auto clean_t1 = std::chrono::high_resolution_clock::now();
 
     if (!std::filesystem::exists(get_local_output_directory()))
         return;
@@ -182,67 +231,19 @@ void Component::clean() {
             }
         }
     }
+
+    const auto clean_t2 = std::chrono::high_resolution_clock::now();
+    auto clean_ms       = std::chrono::duration_cast<std::chrono::milliseconds>(clean_t2 - clean_t1).count();
+    Log.trace("Clean done in {:.3}s", clean_ms / 1000.0f);
 }
 
-struct CompileEntry {
-    const Compiler* compiler;
-    const SourceEntry* source_entry;
-    std::vector<std::string> compile_args;
-};
-
-static std::pair<int, std::string> s_compile(const CompileEntry& ce) {
-    return execute_with_args(ce.compiler->get_location(), ce.compile_args);
+static std::pair<int, std::string> s_compile(const std::unique_ptr<CompileEntry>& ce) {
+    return execute_with_args(ce->compiler->get_location(), ce->compile_args);
 }
 
 void Component::build() {
-    Log.info("Build Component [{}]", get_name());
+    Log.info("Build [{}]", get_name());
     const auto build_t1 = std::chrono::high_resolution_clock::now();
-
-    std::vector<CompileEntry> compile_entries;
-    compile_entries.resize(m_source_entries.size());
-
-    int idx = 0;
-    for (const auto& source_entry : m_source_entries) {
-        auto& compile_entry        = compile_entries[idx];
-        compile_entry.source_entry = &source_entry;
-
-        if (!std::filesystem::exists(source_entry.get_output_directory())) {
-            // Generate output_directory if it does not exist
-            try {
-                std::filesystem::create_directories(source_entry.get_output_directory());
-            } catch (const std::exception& e) {
-                Log.error("Failed to create output dir [{}]: {}", source_entry.get_output_directory(), e.what());
-                throw e;
-            }
-        }
-
-        // path to output build files to
-        const auto output_path = source_entry.get_output_directory() / source_entry.get_source_file_path().filename().string();
-        const auto* compiler   = source_entry.get_compiler();
-
-        // initial args are defined from the specific compiler implementation
-        compile_entry.compile_args = compiler->get_flags();
-
-        compiler->load_compile_and_output_flags(
-            compile_entry.compile_args, source_entry.get_source_file_path(), output_path); // compile and write object
-        compiler->load_dependency_flags(compile_entry.compile_args, output_path);          // dependency file output
-
-        // include directories
-        for (const auto& val : get_include_directories()) {
-            compiler->push_include_directory(compile_entry.compile_args, val.value.string());
-        }
-        // compile definitions
-        for (const auto& val : get_compile_definitions()) {
-            compiler->push_compile_definition(compile_entry.compile_args, val.value);
-        }
-        // append custom options
-        for (const auto& val : get_compile_options())
-            compile_entry.compile_args.push_back(val.value);
-
-        compile_entry.compiler = compiler;
-
-        idx++;
-    }
 
     auto workers = FunctionWorker::create_workers(std::thread::hardware_concurrency());
 
@@ -251,6 +252,7 @@ void Component::build() {
     bool error_reported                    = false; // a source has reported a failed compilation
     bool compiling                         = true;  // still trying to compile all sources
 
+    const auto& compile_entries = get_compile_entries();
     while (compiling) {
         if (compile_entry_seq_index == compile_entries.size()) {
             // Worker assignment is done - exit compile loop and wait for workers to finish
@@ -281,14 +283,14 @@ void Component::build() {
                     const auto compile_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count();
 
                     // show full source path on fail and only filename on success
-                    const auto compile_unit_path = success ? compile_entry.source_entry->get_source_file_path().filename().string() :
-                                                             compile_entry.source_entry->get_source_file_path().string();
+                    const auto compile_unit_path = success ? compile_entry->source_entry->get_source_file_path().filename().string() :
+                                                             compile_entry->source_entry->get_source_file_path().string();
 
                     Log.info("[{}{}/{} ({}%) {:.03f}s{}] ({}) {} {}{}{}" ANSI_RESET,
                              success ? ANSI_GREEN : ANSI_RED,
                              current_compiled_index++,
-                             m_source_entries.size(),
-                             (int)(100.0f / m_source_entries.size() * current_compiled_index),
+                             get_compile_entries().size(),
+                             (int)(100.0f / get_compile_entries().size() * current_compiled_index),
                              compile_time_ms / 1000.0f,
                              ANSI_RESET,
                              get_name(),
@@ -306,8 +308,9 @@ void Component::build() {
                 compile_entry_seq_index++;
                 break;
             }
+
+            std::this_thread::sleep_for(std::chrono::microseconds(250));
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     for (auto& w : workers) {

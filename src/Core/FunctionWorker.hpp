@@ -17,7 +17,7 @@ public:
     // thread sanitizer would report a data race on m_busy and m_running,
     // but this is ok because usage should not allow actual accidental races
     FunctionWorker(int idx) : m_index(idx) {
-        m_thread = new std::thread([=]() {
+        m_thread = new std::thread([this]() {
             while (!m_terminate) {
                 if (is_busy()) {
                     m_exec_mutex.lock();
@@ -25,7 +25,7 @@ public:
                     m_exec = nullptr;
                     m_exec_mutex.unlock();
                 } else {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    std::this_thread::sleep_for(std::chrono::microseconds(250));
                 }
             }
         });

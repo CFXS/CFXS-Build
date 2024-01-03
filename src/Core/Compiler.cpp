@@ -82,7 +82,7 @@ Compiler::Compiler(Language language, const std::string& location, const std::st
 
     const auto compiler_version_string = get_program_version_string(get_location());
 
-    if (compiler_version_string.contains("GNU") || compiler_version_string.contains("gcc")) {
+    if (compiler_version_string.contains("GNU") || compiler_version_string.contains("gcc") || compiler_version_string.contains("g++")) {
         m_type = Type::GNU;
         m_flags.push_back("-fdiagnostics-color=always");
     } else if (compiler_version_string.contains("clang")) {
@@ -208,9 +208,9 @@ void Compiler::push_compile_definition(std::vector<std::string>& flags, const st
         flags.push_back("/D");
         flags.push_back(compile_definition);
     } else if (get_type() == Type::IAR) {
-            throw std::runtime_error("Not implemented");
+        throw std::runtime_error("Not implemented");
     } else {
-            throw std::runtime_error("Unsupported compiler");
+        throw std::runtime_error("Unsupported compiler");
     }
 }
 

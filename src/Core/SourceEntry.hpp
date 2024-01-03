@@ -19,3 +19,9 @@ private:
     std::filesystem::path m_source_file_path; // Source file path
     std::filesystem::path m_output_directory; // Output object file directory
 };
+
+struct CompileEntry {
+    const Compiler* compiler;
+    std::unique_ptr<SourceEntry> source_entry;
+    std::vector<std::string> compile_args;
+};
