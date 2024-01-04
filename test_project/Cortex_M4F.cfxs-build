@@ -1,0 +1,16 @@
+Cortex_M4F = create_library("Cortex-M4F")
+
+Cortex_M4F:add_definitions("forward", {
+    "CORTEX_M4F"
+})
+
+Cortex_M4F:add_compile_options("forward", {
+    "--vectorize",
+    "--enable_restrict",
+    "--no_exceptions",
+    "--no_rtti",
+    "--no_static_destruction",
+    "--cpu Cortex-M4",
+    "--fpu VFPv4_sp",
+    "--cpu_mode thumb",
+})

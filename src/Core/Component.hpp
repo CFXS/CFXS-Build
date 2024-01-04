@@ -13,10 +13,11 @@ public:
         LIBRARY,
     };
 
-    enum class Visibility : int {
-        LOCAL,
-        INHERIT,
-        FORWARD,
+    enum Visibility : int {
+        NONE    = 0,
+        LOCAL   = 1 << 0,
+        INHERIT = 1 << 1,
+        FORWARD = 1 << 2,
     };
 
     template<typename T>
@@ -38,6 +39,7 @@ public:
     void bind_add_definitions(lua_State* L);
     void bind_add_compile_options(lua_State* L);
     void bind_set_linker_script(lua_State* L);
+    void bind_add_library(lua_State* L);
 
     void configure(std::shared_ptr<Compiler> c_compiler,
                    std::shared_ptr<Compiler> cpp_compiler,
@@ -55,12 +57,18 @@ public:
 
     const std::vector<ScopedValue<std::filesystem::path>> get_include_paths() const { return m_include_paths; }
     const std::vector<ScopedValue<std::string>> get_definitions() const { return m_definitions; }
-    const std::vector<ScopedValue<std::string>> get_compile_flags() const { return m_compile_flags; }
+    const std::vector<ScopedValue<std::string>> get_compile_options() const { return m_compile_options; }
 
-    const std::vector<std::shared_ptr<Component>>& get_dependencies() const { return m_dependencies; }
-    void add_dependency(std::shared_ptr<Component> component);
+    const std::vector<Component*>& get_libraries() const { return m_libraries; }
+    void add_library(Component* component);
+    const std::vector<Component*>& get_users() const { return m_used_by; }
+    void add_user(Component* component);
 
     const std::vector<std::unique_ptr<CompileEntry>>& get_compile_entries() const { return m_compile_entries; }
+
+    Visibility get_visibility_mask_include_paths() const { return m_visibility_mask_include_paths; }
+    Visibility get_visibility_mask_definitions() const { return m_visibility_mask_definitions; }
+    Visibility get_visibility_mask_compile_options() const { return m_visibility_mask_compile_options; }
 
 private:
     Type m_type;
@@ -70,7 +78,8 @@ private:
     std::filesystem::path m_local_output_directory;
 
     // Component tree
-    std::vector<std::shared_ptr<Component>> m_dependencies;
+    std::vector<Component*> m_libraries; // Libraries that this component has added
+    std::vector<Component*> m_used_by;   // Components that added this component as a library
 
     // Compile
     std::vector<std::unique_ptr<CompileEntry>> m_compile_entries;
@@ -81,9 +90,24 @@ private:
 
     std::vector<ScopedValue<std::filesystem::path>> m_include_paths;
     std::vector<ScopedValue<std::string>> m_definitions;
-    std::vector<ScopedValue<std::string>> m_compile_flags;
+    std::vector<ScopedValue<std::string>> m_compile_options;
+    Visibility m_visibility_mask_include_paths   = Visibility::NONE;
+    Visibility m_visibility_mask_definitions     = Visibility::NONE;
+    Visibility m_visibility_mask_compile_options = Visibility::NONE;
 
     // linker
     std::filesystem::path m_linker_script_path;
     std::vector<std::string> m_linker_flags;
 };
+
+inline const char* to_string(Component::Type type) {
+    switch (type) {
+        case Component::Type::EXECUTABLE: return "executable";
+        case Component::Type::LIBRARY: return "library";
+    }
+    return "???";
+}
+
+inline Component::Visibility operator|=(Component::Visibility lhs, Component::Visibility rhs) {
+    return (Component::Visibility)(((int)lhs) | ((int)rhs));
+}

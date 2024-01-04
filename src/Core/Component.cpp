@@ -64,6 +64,33 @@ static void prepare_and_push_flags(std::vector<std::string>& flags, const std::s
     }
 }
 
+static void try_merge_lib_content(Compiler* compiler, std::vector<std::string>& compile_args, const Component* lib) {
+    // include paths
+    if (lib->get_visibility_mask_include_paths() & Component::Visibility::INHERIT | Component::Visibility::FORWARD) {
+        for (const auto& val : lib->get_include_paths()) {
+            if (!(val.visibility & (Component::Visibility::INHERIT | Component::Visibility::FORWARD)))
+                continue;
+            compiler->push_include_path(compile_args, val.value.string());
+        }
+    }
+    // compile definitions
+    if (lib->get_visibility_mask_definitions() & Component::Visibility::INHERIT | Component::Visibility::FORWARD) {
+        for (const auto& val : lib->get_definitions()) {
+            if (!(val.visibility & (Component::Visibility::INHERIT | Component::Visibility::FORWARD)))
+                continue;
+            compiler->push_compile_definition(compile_args, val.value);
+        }
+    }
+    // append custom options
+    if (lib->get_visibility_mask_compile_options() & Component::Visibility::INHERIT | Component::Visibility::FORWARD) {
+        for (const auto& val : lib->get_compile_options()) {
+            if (!(val.visibility & (Component::Visibility::INHERIT | Component::Visibility::FORWARD)))
+                continue;
+            prepare_and_push_flags(compile_args, val.value);
+        }
+    }
+}
+
 void Component::configure(std::shared_ptr<Compiler> c_compiler,
                           std::shared_ptr<Compiler> cpp_compiler,
                           std::shared_ptr<Compiler> asm_compiler,
@@ -150,7 +177,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                                 source_file_paths.end());
     }
 
-    // create path hashes for each parent directory
+    // iterate all sources
     for (const auto& e : source_file_paths) {
         std::filesystem::path output_dir;
         if (e.is_external) {
@@ -215,6 +242,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             compile_entry->compile_args, source_entry.get_source_file_path(), output_path); // compile and write object
         compiler->load_dependency_flags(compile_entry->compile_args, output_path);          // dependency file output
 
+        // [Local paths/definitions/options]
         // include paths
         for (const auto& val : get_include_paths()) {
             compiler->push_include_path(compile_entry->compile_args, val.value.string());
@@ -224,8 +252,13 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             compiler->push_compile_definition(compile_entry->compile_args, val.value);
         }
         // append custom options
-        for (const auto& val : get_compile_flags()) {
+        for (const auto& val : get_compile_options()) {
             prepare_and_push_flags(compile_entry->compile_args, val.value);
+        }
+
+        // [Library paths/definitions/options]
+        for (const auto* lib : get_libraries()) {
+            try_merge_lib_content(compiler, compile_entry->compile_args, lib);
         }
 
         compile_entry->compiler = compiler;
@@ -267,6 +300,9 @@ static std::pair<int, std::string> s_compile(const std::unique_ptr<CompileEntry>
 }
 
 void Component::build() {
+    if (get_compile_entries().empty())
+        return;
+
     Log.info("Build [{}]", get_name());
     const auto build_t1 = std::chrono::high_resolution_clock::now();
 
@@ -315,7 +351,7 @@ void Component::build() {
                                                                  compile_entry->source_entry->get_source_file_path().string();
 
                         mutex_compiled_index.lock();
-                        Log.info("[{}{}/{} ({}%) {:.03f}s{}] ({}{}{}) {} {}{}{}" ANSI_RESET,
+                        Log.info("[{}{}/{} ({}%) {:.03f}s{}] ({}{}{}) {} {}{}{}{}" ANSI_RESET,
                                  success ? ANSI_GREEN : ANSI_RED,
                                  current_compiled_index,
                                  get_compile_entries().size(),
@@ -325,9 +361,10 @@ void Component::build() {
                                  ANSI_LIGHT_GRAY,
                                  get_name(),
                                  ANSI_RESET,
-                                 success ? (ANSI_GRAY "Compiled") : (ANSI_RED "Failed to compile" ANSI_RESET),
+                                 success ? (ANSI_GRAY "Compiled" ANSI_GRAY) : (ANSI_RED "Failed to compile" ANSI_RESET),
+                                 ANSI_GRAY,
                                  compile_unit_path,
-                                 msg.empty() ? "" : "\n",
+                                 msg.empty() ? (ANSI_RESET "") : (ANSI_RESET "\n"),
                                  msg);
                         current_compiled_index++;
                         mutex_compiled_index.unlock();
@@ -408,14 +445,18 @@ void Component::bind_add_include_paths(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                m_include_paths.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
+                const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
+                m_visibility_mask_compile_options |= visibility_value;
+                m_include_paths.emplace_back(visibility_value, src.tostring());
             } else {
                 luaL_error(L, "Include directory #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Include directory is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        m_include_paths.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
+        const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
+        m_visibility_mask_compile_options |= visibility_value;
+        m_include_paths.emplace_back(visibility_value, arg_sources.tostring());
     } else {
         luaL_error(L,
                    "Invalid include paths argument: type \"%s\"\n%s",
@@ -456,14 +497,18 @@ void Component::bind_add_definitions(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                m_definitions.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
+                const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
+                m_visibility_mask_compile_options |= visibility_value;
+                m_definitions.emplace_back(visibility_value, src.tostring());
             } else {
                 luaL_error(L, "Definition #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Definition is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        m_definitions.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
+        const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
+        m_visibility_mask_compile_options |= visibility_value;
+        m_definitions.emplace_back(visibility_value, arg_sources.tostring());
     } else {
         luaL_error(L,
                    "Invalid definitions argument: type \"%s\"\n%s",
@@ -493,14 +538,18 @@ void Component::bind_add_compile_options(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                m_compile_flags.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), src.tostring());
+                const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
+                m_visibility_mask_compile_options |= visibility_value;
+                m_compile_options.emplace_back(visibility_value, src.tostring());
             } else {
                 luaL_error(L, "Compile option #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Compile option is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        m_compile_flags.emplace_back(LuaBackend::string_to_visibility(arg_visibility.tostring()), arg_sources.tostring());
+        const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
+        m_visibility_mask_compile_options |= visibility_value;
+        m_compile_options.emplace_back(visibility_value, arg_sources.tostring());
     } else {
         luaL_error(L,
                    "Invalid compile options argument: type \"%s\"\n%s",
@@ -510,8 +559,8 @@ void Component::bind_add_compile_options(lua_State* L) {
     }
 
     // remove duplicates
-    // std::sort(m_compile_flags.begin(), m_compile_flags.end());
-    // m_compile_flags.erase(std::unique(m_compile_flags.begin(), m_compile_flags.end()), m_compile_flags.end());
+    // std::sort(m_compile_options.begin(), m_compile_options.end());
+    // m_compile_options.erase(std::unique(m_compile_options.begin(), m_compile_options.end()), m_compile_options.end());
 }
 
 void Component::bind_set_linker_script(lua_State* L) {
@@ -528,7 +577,66 @@ void Component::bind_set_linker_script(lua_State* L) {
     }
 }
 
-void Component::add_dependency(std::shared_ptr<Component> component) {
-    Log.trace("[{}] Add [{}] as dependency", get_name(), component->get_name());
-    m_dependencies.push_back(component);
+void Component::bind_add_library(lua_State* L) {
+    auto arg_libs = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
+
+    if (arg_libs.isTable()) {
+        for (int i = 1; i <= arg_libs.length(); i++) {
+            auto lib = arg_libs.rawget(i);
+            if (lib.isInstance<Component>()) {
+                auto component = lib.cast<Component*>();
+                if (this == component) {
+                    luaL_error(L, "Component #%d - trying to add self as a library", i);
+                    throw std::runtime_error("Trying to add self as a library");
+                }
+                if (component->get_type() != Component::Type::LIBRARY) {
+                    luaL_error(L,
+                               "Component #%d is not a library [\"%s\" (%s)]",
+                               i,
+                               component->get_name().c_str(),
+                               to_string(component->get_type()));
+                    throw std::runtime_error("Added component not a library");
+                }
+                add_library(component);
+            } else {
+                luaL_error(L, "Component #%d is not a valid library [%s]", i, lua_typename(L, lib.type()));
+                throw std::runtime_error("Add invalid library");
+            }
+        }
+    } else {
+        if (arg_libs.isInstance<Component>()) {
+            auto component = arg_libs.cast<Component*>();
+            if (this == component) {
+                luaL_error(L, "Trying to add self as a library");
+                throw std::runtime_error("Trying to add self as a library");
+            }
+            if (component->get_type() != Component::Type::LIBRARY) {
+                luaL_error(L, "Component is not a library [\"%s\" (%s)]", component->get_name().c_str(), to_string(component->get_type()));
+                throw std::runtime_error("Added component not a library");
+            }
+            add_library(component);
+        }
+    }
+}
+
+// TODO: this is supposed to be a shared_ptr. Find a way to make it shared through Lua.
+void Component::add_library(Component* component) {
+    Log.debug("[{}] add library [{}]", get_name(), component->get_name());
+
+    // skip duplicates
+    if (std::find(get_libraries().begin(), get_libraries().end(), component) != get_libraries().end())
+        return;
+
+    // register that this component uses the added one
+    component->add_user(this);
+    // add to library list
+    m_libraries.push_back(component);
+}
+
+void Component::add_user(Component* user) {
+    // skip duplicates
+    if (std::find(get_users().begin(), get_users().end(), user) != get_users().end())
+        return;
+
+    m_used_by.push_back(user);
 }

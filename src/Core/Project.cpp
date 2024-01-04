@@ -254,6 +254,7 @@ void Project::initialize_lua() {
         .addFunction("add_definitions", &Component::bind_add_definitions)
         .addFunction("add_compile_options", &Component::bind_add_compile_options)
         .addFunction("set_linker_script", &Component::bind_set_linker_script)
+        .addFunction("add_libraries", &Component::bind_add_library)
         .endClass();
 }
 

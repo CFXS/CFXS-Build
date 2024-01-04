@@ -37,15 +37,10 @@ test_project:add_definitions("forward", {
 })
 -- test_project:add_compile_options("forward", {"-O3"})
 
-test_project:add_compile_options("local", {
-    "--vectorize",
-    "--enable_restrict",
-    "--no_exceptions",
-    "--no_rtti",
-    "--no_static_destruction",
-    "--cpu Cortex-M4",
-    "--fpu VFPv4_sp",
-    "--cpu_mode thumb",
-})
-
 import_git("https://github.com/CFXS/CFXS-Framework-v2-Dev.git", "main");
+import("./Cortex_M4F.cfxs-build")
+
+test_project:add_libraries({
+    Cortex_M4F,
+    cfxs_framework,
+})

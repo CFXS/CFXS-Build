@@ -26,11 +26,11 @@
                 "./test_project",
                 "--configure",
                 // "--clean=CFXS-Build-Test",
-                "--build=*"
+                "--build=*",
+                "--skip-git-import-update",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "externalConsole": false,
             "internalConsoleOptions": "openOnSessionStart",
             "console": "integratedTerminal",
             "environment": [],
