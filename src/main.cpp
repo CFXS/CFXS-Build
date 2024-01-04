@@ -3,6 +3,7 @@
 #include <filesystem>
 #include "Core/Project.hpp"
 #include "CommandUtils.hpp"
+#include <fstream>
 
 int get_max_ram_usage() {
 #ifdef WINDOWS_BUILD

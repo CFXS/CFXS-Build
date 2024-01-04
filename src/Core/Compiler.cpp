@@ -161,7 +161,8 @@ void Compiler::load_dependency_flags(std::vector<std::string>& flags, const std:
         flags.push_back("/Fo");           // Write to specific file
         flags.push_back(out_path.string());
     } else if (get_type() == Type::IAR) {
-        throw std::runtime_error("Not implemented");
+        flags.push_back("--dependencies"); // Write to specific file
+        flags.push_back(out_path.string());
     } else {
         throw std::runtime_error("Unsupported compiler");
     }
@@ -176,33 +177,37 @@ void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
         flags.push_back("-o"); // Write to specific file
         flags.push_back(obj_path.string() + ".o");
     } else if (get_type() == Type::MSVC) {
-        flags.push_back("/c");  // Compile only
+        flags.push_back("/c"); // Compile only
         flags.push_back(source_path.string());
         flags.push_back("/Fo"); // Write to specific file
         flags.push_back(obj_path.string());
     } else if (get_type() == Type::IAR) {
-        throw std::runtime_error("Not implemented");
+        flags.push_back("-e"); // Enable language extensions
+        if (get_language() == Language::CPP)
+            flags.push_back("--c++"); // Set language to C++
+        flags.push_back("--silent");  // Do not generate compile spam
+        flags.push_back(source_path.string());
+        flags.push_back("-o"); // Write to specific file
+        flags.push_back(obj_path.string() + ".o");
     } else {
         throw std::runtime_error("Unsupported compiler");
     }
 }
 
 void Compiler::push_include_path(std::vector<std::string>& flags, const std::string& include_directory) const {
-    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+    if (get_type() == Type::GNU || get_type() == Type::CLANG || get_type() == Type::IAR) {
         flags.push_back("-I" + include_directory);
     } else if (get_type() == Type::MSVC) {
         // do this for MSVC
         flags.push_back("/I");
         flags.push_back(include_directory);
-    } else if (get_type() == Type::IAR) {
-        throw std::runtime_error("Not implemented");
     } else {
         throw std::runtime_error("Unsupported compiler");
     }
 }
 
 void Compiler::push_compile_definition(std::vector<std::string>& flags, const std::string& compile_definition) const {
-    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+    if (get_type() == Type::GNU || get_type() == Type::CLANG || get_type() == Type::IAR) {
         flags.push_back("-D" + compile_definition);
     } else if (get_type() == Type::MSVC) {
         flags.push_back("/D");

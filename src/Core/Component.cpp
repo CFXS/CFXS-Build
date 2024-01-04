@@ -246,10 +246,11 @@ void Component::build() {
 
     auto workers = FunctionWorker::create_workers(std::thread::hardware_concurrency());
 
-    size_t compile_entry_seq_index         = 0;     // current source entry index to compile
-    std::atomic_int current_compiled_index = 1;     // currently compiled index (only for counting compiled files)
-    bool error_reported                    = false; // a source has reported a failed compilation
-    bool compiling                         = true;  // still trying to compile all sources
+    size_t compile_entry_seq_index = 0; // current source entry index to compile
+    int current_compiled_index     = 1; // currently compiled index (only for counting compiled files)
+    std::mutex mutex_compiled_index;    // mutex for output ordering
+    bool error_reported = false;        // a source has reported a failed compilation
+    bool compiling      = true;         // still trying to compile all sources
 
     const auto& compile_entries = get_compile_entries();
 
@@ -268,44 +269,48 @@ void Component::build() {
                 if (w->is_busy())
                     continue;
 
-                w->execute([this, current_index, &compile_entries, &current_compiled_index, &compiling, &error_reported]() {
-                    const auto& compile_entry = compile_entries[current_index];
+                w->execute(
+                    [this, current_index, &mutex_compiled_index, &compile_entries, &current_compiled_index, &compiling, &error_reported]() {
+                        const auto& compile_entry = compile_entries[current_index];
 
-                    const auto t_start    = std::chrono::high_resolution_clock::now();
-                    const auto [ret, msg] = s_compile(compile_entry);
+                        const auto t_start    = std::chrono::high_resolution_clock::now();
+                        const auto [ret, msg] = s_compile(compile_entry);
 
-                    // don't show successful outputs from commands after the first failed one
-                    const bool success = ret == 0;
-                    if (success && error_reported)
-                        return;
+                        // don't show successful outputs from commands after the first failed one
+                        const bool success = ret == 0;
+                        if (success && error_reported)
+                            return;
 
-                    const auto t_end           = std::chrono::high_resolution_clock::now();
-                    const auto compile_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count();
+                        const auto t_end           = std::chrono::high_resolution_clock::now();
+                        const auto compile_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count();
 
-                    // show full source path on fail and only filename on success
-                    const auto compile_unit_path = success ? compile_entry->source_entry->get_source_file_path().filename().string() :
-                                                             compile_entry->source_entry->get_source_file_path().string();
+                        // show full source path on fail and only filename on success
+                        const auto compile_unit_path = success ? compile_entry->source_entry->get_source_file_path().filename().string() :
+                                                                 compile_entry->source_entry->get_source_file_path().string();
 
-                    Log.info("[{}{}/{} ({}%) {:.03f}s{}] ({}{}{}) {} {}{}{}" ANSI_RESET,
-                             success ? ANSI_GREEN : ANSI_RED,
-                             current_compiled_index++,
-                             get_compile_entries().size(),
-                             (int)(100.0f / get_compile_entries().size() * current_compiled_index),
-                             compile_time_ms / 1000.0f,
-                             ANSI_RESET,
-                             ANSI_LIGHT_GRAY,
-                             get_name(),
-                             ANSI_RESET,
-                             success ? (ANSI_GRAY "Compiled") : (ANSI_RED "Failed to compile" ANSI_RESET),
-                             compile_unit_path,
-                             msg.empty() ? "" : "\n",
-                             msg);
+                        mutex_compiled_index.lock();
+                        Log.info("[{}{}/{} ({}%) {:.03f}s{}] ({}{}{}) {} {}{}{}" ANSI_RESET,
+                                 success ? ANSI_GREEN : ANSI_RED,
+                                 current_compiled_index,
+                                 get_compile_entries().size(),
+                                 (int)(100.0f / get_compile_entries().size() * current_compiled_index),
+                                 compile_time_ms / 1000.0f,
+                                 ANSI_RESET,
+                                 ANSI_LIGHT_GRAY,
+                                 get_name(),
+                                 ANSI_RESET,
+                                 success ? (ANSI_GRAY "Compiled") : (ANSI_RED "Failed to compile" ANSI_RESET),
+                                 compile_unit_path,
+                                 msg.empty() ? "" : "\n",
+                                 msg);
+                        current_compiled_index++;
+                        mutex_compiled_index.unlock();
 
-                    if (!success) {
-                        compiling      = false;
-                        error_reported = true;
-                    }
-                });
+                        if (!success) {
+                            compiling      = false;
+                            error_reported = true;
+                        }
+                    });
 
                 compile_entry_seq_index++;
                 break;

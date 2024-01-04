@@ -11,6 +11,7 @@
                 "--configure",
                 // "--clean=CFXS-Build-Test",
                 "--build=*",
+                "--skip-git-import-update",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -25,7 +26,7 @@
                 "./test_project",
                 "--configure",
                 // "--clean=CFXS-Build-Test",
-                "--build=*",
+                "--build=*"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
