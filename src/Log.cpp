@@ -12,7 +12,7 @@ void initialize_logging() {
     // e_FileLogger    = spdlog::basic_logger_mt("log file", "cfxs-build-log.txt");
 
 #ifndef PRODUCTION_BUILD
-    spdlog::set_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::trace);
 #endif
     // e_ConsoleLogger->set_pattern("[%H:%M:%S.%e][%^%L%$] %v");
     e_ConsoleLogger->set_pattern("[%^%L%$] %v");
