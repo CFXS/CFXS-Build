@@ -112,13 +112,14 @@ void Project::configure() {
         if (luaL_dofile(s_MainLuaState, source_location.string().c_str())) {
             // get and log lua error callstack
             print_traceback(source_location);
+            throw std::runtime_error("Failed to execute script");
         } else {
             for (auto& comp : s_components) {
                 comp->configure(s_c_compiler, s_cpp_compiler, s_asm_compiler, s_linker);
             }
         }
     } catch (const std::runtime_error& e) {
-        Log.error("Configure failed: {}", e.what());
+        throw e;
     }
 
     const auto t2 = std::chrono::high_resolution_clock::now();
@@ -150,7 +151,7 @@ void Project::build(const std::vector<std::string>& components) {
 
     const auto t2 = std::chrono::high_resolution_clock::now();
     auto ms       = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    Log.info("Project configure done in {:.3f}s", ms / 1000.0f);
+    Log.info("Project build done in {:.3f}s", ms / 1000.0f);
 }
 
 void Project::clean(const std::vector<std::string>& components) {
@@ -310,9 +311,11 @@ void Project::bind_import(lua_State* L) {
         if (res) {
             // get and log lua error callstack
             print_traceback(source_location);
+            throw std::runtime_error("Failed to execute script");
         }
     } catch (const std::runtime_error& e) {
         Log.error("Import load failed: {}", e.what());
+        throw e; // forward exception to base try block (source script executor)
     }
 
     s_script_path_stack.pop_back();
@@ -380,10 +383,14 @@ void Project::bind_import_git(lua_State* L) {
         if (git.have_changes()) {
             Log.warn("Not updating git repository \"{}\" - uncommitted changes\n    ({})", ext_path, url);
         } else {
-            Log.trace("Pull repository updates in \"{}\"\n    ({})", ext_path, url);
-            // git.fetch();
-            if (git.checkout(branch))
-                git.pull();
+            if (GlobalConfig::skip_git_import_update()) {
+                Log.trace("Skip repository update [{}]\n    ({})", ext_path, url);
+            } else {
+                Log.trace("Pull repository updates [{}]\n    ({})", ext_path, url);
+                // git.fetch();
+                if (git.checkout(branch))
+                    git.pull();
+            }
         }
     } else {
         Log.trace("Clone \"{}\" to \"{}_{}\"", url, owner, name);

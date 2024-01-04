@@ -24,9 +24,9 @@ import_modules()
 -- import("/mnt/d/cfxs_ext_module")
 
 local sources = {
-    "./src/**.c",            -- current dir + recursive search
-    "./src/main.cpp",        -- single file
-    "!makefsdata.c",         -- full path matching exclude (path.contains(exclude_entry))
+    "./src/**.c", -- current dir + recursive search
+    "./src/main.cpp", -- single file
+    "!makefsdata.c" -- full path matching exclude (path.contains(exclude_entry))
 }
 
 test_project:add_sources(sources)

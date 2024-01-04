@@ -28,6 +28,7 @@ target_include_directories(CFXS_Build PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 target_precompile_headers(CFXS_Build PRIVATE
     <Log.hpp>
+    <Core/GlobalConfig.hpp>
 )
 
 add_compile_definitions("CFXS_BUILD_VERSION_MAJOR=1")

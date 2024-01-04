@@ -7,12 +7,12 @@
 #include <subprocess.h>
 
 #define ANSI_RESET      "\033[0m"
-#define ANSI_GREEN      "\033[92m"
-#define ANSI_RED        "\033[91m"
+#define ANSI_GREEN      "\033[1;92m"
+#define ANSI_RED        "\033[1;91m"
 #define ANSI_GRAY       "\033[90m"
-#define ANSI_YELLOW     "\033[33m"
-#define ANSI_MAGENTA    "\033[35m"
-#define ANSI_CYAN       "\033[36m"
+#define ANSI_YELLOW     "\033[1;33m"
+#define ANSI_MAGENTA    "\033[1;35m"
+#define ANSI_CYAN       "\033[1;36m"
 #define ANSI_ORANGE     "\033[38;5;208m"
 #define ANSI_LIGHT_GRAY "\033[38;5;250m"
 

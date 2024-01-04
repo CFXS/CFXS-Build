@@ -3,8 +3,6 @@
 #include <filesystem>
 #include "Core/Project.hpp"
 #include "CommandUtils.hpp"
-#include <fstream>
-#include "Core/GIT.hpp"
 
 int get_max_ram_usage() {
 #ifdef WINDOWS_BUILD
@@ -23,6 +21,14 @@ int get_max_ram_usage() {
 
     return 0;
 }
+
+///////////////////////////////////////////////////////////////////////////////////
+// Global Config
+
+static bool s_config_skip_git_import_update = false;
+bool GlobalConfig::skip_git_import_update() { return s_config_skip_git_import_update; }
+
+///////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv) {
     initialize_logging();
@@ -52,6 +58,10 @@ int main(int argc, char **argv) {
         .help("Clean project")                     //
         .default_value(std::vector<std::string>()) //
         .nargs(1);
+
+    args.add_argument("--skip-git-import-update") //
+        .help("Skip git import update checks")    //
+        .flag();
 
     try {
         args.parse_args(argc, argv);
@@ -83,6 +93,10 @@ int main(int argc, char **argv) {
     }
 
     try {
+        if (args["--skip-git-import-update"] == true) {
+            s_config_skip_git_import_update = true;
+        }
+
         Project::initialize(project_path, output_path);
 
         if (args["--configure"] == true) {

@@ -2,12 +2,6 @@ print("Import CFXS Platform module")
 
 cfxs_platform = create_library("CFXS-Platform")
 
-cfxs_platform:add_sources({
-    "./**.c",
-    "./**.cpp",
-})
-
+cfxs_platform:add_sources({"./**.c", "./**.cpp"})
 cfxs_platform:add_include_paths("local", {"./src"})
-
 cfxs_platform:add_include_paths("inherit", {"./include"})
-

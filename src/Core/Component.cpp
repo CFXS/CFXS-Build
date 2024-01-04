@@ -362,10 +362,10 @@ void Component::bind_add_include_paths(lua_State* L) {
 
     if (!LuaBackend::is_valid_visibility(arg_visibility)) {
         luaL_error(L,
-                   "Invalid include paths argument: type \"%s\"\n%s",
+                   "Invalid include paths visibility argument: type \"%s\"\n%s",
                    lua_typename(L, arg_visibility.type()),
                    LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_ADD_INCLUDE_PATHS));
-        throw std::runtime_error("Invalid include paths argument");
+        throw std::runtime_error("Invalid include paths visibility argument");
     }
 
     const auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(1));
@@ -410,10 +410,10 @@ void Component::bind_add_definitions(lua_State* L) {
 
     if (!LuaBackend::is_valid_visibility(arg_visibility)) {
         luaL_error(L,
-                   "Invalid definitions argument: type \"%s\"\n%s",
+                   "Invalid definitions visibility argument: type \"%s\"\n%s",
                    lua_typename(L, arg_visibility.type()),
                    LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_ADD_DEFINITIONS));
-        throw std::runtime_error("Invalid definitions argument");
+        throw std::runtime_error("Invalid definitions visibility argument");
     }
 
     auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(1));
@@ -447,10 +447,10 @@ void Component::bind_add_compile_options(lua_State* L) {
 
     if (!LuaBackend::is_valid_visibility(arg_visibility)) {
         luaL_error(L,
-                   "Invalid compile options argument: type \"%s\"\n%s",
+                   "Invalid compile options visibility argument: type \"%s\"\n%s",
                    lua_typename(L, arg_visibility.type()),
                    LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_ADD_COMPILE_OPTIONS));
-        throw std::runtime_error("Invalid compile options argument");
+        throw std::runtime_error("Invalid compile options visibility argument");
     }
 
     auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(1));
