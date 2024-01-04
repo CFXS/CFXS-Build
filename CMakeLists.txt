@@ -19,6 +19,7 @@ set(sources
     "src/Core/SourceEntry.cpp"
     "src/Core/LuaBackend.cpp"
     "src/Core/RegexUtils.cpp"
+    "src/Core/GIT.cpp"
 )
 
 add_executable(CFXS_Build ${sources})

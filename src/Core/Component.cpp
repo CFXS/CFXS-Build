@@ -17,15 +17,18 @@
 
 #include <lua.hpp>
 #include "LuaBackend.hpp"
+#include "lauxlib.h"
 
 std::mutex s_filesystem_mutex;
 
 Component::Component(Type type,
                      const std::string& name,
+                     const std::filesystem::path& script_path,
                      const std::filesystem::path& root_path,
                      const std::filesystem::path& local_output_directory) :
     m_type(type),
     m_name(name),
+    m_script_path(std::filesystem::weakly_canonical(script_path)),
     m_root_path(std::filesystem::weakly_canonical(root_path)),
     m_local_output_directory(std::filesystem::weakly_canonical(local_output_directory)) {}
 
@@ -76,11 +79,11 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             // TODO: check if wildcard parent paths exist on filesystem
             if (recursive_wildcard) {
                 if (!is_inside_root_path) {
-                    Log.error("Recursive add not available for external paths: {}", file_path);
+                    Log.error("[{}] Recursive add not available for external paths: {}", get_name(), file_path);
                     throw std::runtime_error("External path recursion");
                 }
 
-                Log.trace("Recursively add {} sources from {}", file_path.extension(), file_path.parent_path());
+                Log.trace("[{}] Recursively add {} sources from {}", get_name(), file_path.extension(), file_path.parent_path());
 
                 // recurse file_path.parent_path and add files to source_file_paths that match file_path.extension
                 for (const auto& entry : std::filesystem::recursive_directory_iterator(file_path.parent_path())) {
@@ -89,7 +92,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                     }
                 }
             } else {
-                Log.trace("Add {} sources from {}", file_path.extension(), file_path.parent_path());
+                Log.trace("[{}] Add {} sources from {}", get_name(), file_path.extension(), file_path.parent_path());
                 // check all files in file_path.parent_path non recursively and add files to source_file_paths that match file_path.extension
                 for (const auto& entry : std::filesystem::directory_iterator(file_path.parent_path())) {
                     if (entry.path().extension() == file_path.extension()) {
@@ -103,8 +106,8 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                 const bool is_inside_root_path = std::filesystem::path(path).parent_path().string().starts_with(get_root_path().string());
                 source_file_paths.push_back({path, !is_inside_root_path});
             } else {
-                Log.error("[{}] Source \"{}\" does not exist", get_name(), path);
-                throw std::runtime_error("Source does not exist");
+                Log.error("[{}] Source \"{}\" not found", get_name(), path);
+                throw std::runtime_error("Source not found");
             }
         }
     }
@@ -330,7 +333,7 @@ void Component::bind_add_sources(lua_State* L) {
         }
     };
 
-    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
@@ -350,7 +353,7 @@ void Component::bind_add_sources(lua_State* L) {
 }
 
 void Component::bind_add_include_paths(lua_State* L) {
-    const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
+    const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
 
     if (!LuaBackend::is_valid_visibility(arg_visibility)) {
         luaL_error(L,
@@ -360,7 +363,7 @@ void Component::bind_add_include_paths(lua_State* L) {
         throw std::runtime_error("Invalid include paths argument");
     }
 
-    const auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(1));
+    const auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(1));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
@@ -398,7 +401,7 @@ void Component::bind_add_include_paths(lua_State* L) {
 }
 
 void Component::bind_add_definitions(lua_State* L) {
-    const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
+    const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
 
     if (!LuaBackend::is_valid_visibility(arg_visibility)) {
         luaL_error(L,
@@ -408,7 +411,7 @@ void Component::bind_add_definitions(lua_State* L) {
         throw std::runtime_error("Invalid definitions argument");
     }
 
-    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(1));
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(1));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
@@ -435,7 +438,7 @@ void Component::bind_add_definitions(lua_State* L) {
 }
 
 void Component::bind_add_compile_options(lua_State* L) {
-    const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0));
+    const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
 
     if (!LuaBackend::is_valid_visibility(arg_visibility)) {
         luaL_error(L,
@@ -445,7 +448,7 @@ void Component::bind_add_compile_options(lua_State* L) {
         throw std::runtime_error("Invalid compile options argument");
     }
 
-    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(1));
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(1));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
@@ -472,7 +475,7 @@ void Component::bind_add_compile_options(lua_State* L) {
 }
 
 void Component::bind_set_linker_script(lua_State* L) {
-    auto script_path = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_OFFSET(0)); // offset 2 is arg 1
+    auto script_path = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
     if (script_path.isString()) {
         Log.trace("[{}] Set linker script: {}", get_name(), script_path.tostring());
         m_linker_script_path = script_path.tostring();

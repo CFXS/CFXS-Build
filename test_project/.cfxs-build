@@ -34,4 +34,4 @@ test_project:add_include_paths("local", {"./src"})
 test_project:add_definitions("forward", {"BUILD_SOMETHING"})
 test_project:add_compile_options("forward", {"-O3"})
 
- 
+import_git("https://github.com/CFXS/CFXS-Framework-v2-Dev.git", "main");

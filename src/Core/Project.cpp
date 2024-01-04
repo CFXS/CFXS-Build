@@ -4,15 +4,19 @@
 #include <functional>
 #include <LuaBridge/LuaBridge.h>
 #include "Core/Component.hpp"
+#include "Core/GIT.hpp"
 #include "lauxlib.h"
 #include <lua.hpp>
 #include "LuaBackend.hpp"
 #include "RegexUtils.hpp"
+#include "lua.h"
 #include <regex>
 #include <CommandUtils.hpp>
+#include <stdexcept>
 
 // folder inside of build path to write build files to
 #define BUILD_TEMP_LOCATION "components"
+#define EXTERNAL_TEMP_LOCATION "external"
 
 lua_State* s_MainLuaState;
 std::vector<std::shared_ptr<Component>> s_components;
@@ -20,6 +24,7 @@ std::vector<std::shared_ptr<Component>> s_components;
 std::filesystem::path s_project_path;
 std::filesystem::path s_output_path;
 std::vector<std::filesystem::path> s_script_path_stack;
+std::vector<std::filesystem::path> s_source_location_stack;
 
 // Project state
 std::shared_ptr<Compiler> s_c_compiler;
@@ -99,17 +104,20 @@ void Project::configure() {
 
     // root script path
     s_script_path_stack = {s_project_path};
+    s_source_location_stack = {source_location};
 
-    // execute root_buildfile into lua state
-    if (luaL_dofile(s_MainLuaState, source_location.c_str())) {
-        // get and log lua error callstack
-        print_traceback(source_location);
-
-        throw std::runtime_error("Failed to configure");
-    } else {
-        for (auto& comp : s_components) {
-            comp->configure(s_c_compiler, s_cpp_compiler, s_asm_compiler, s_linker);
+    try {
+        // execute root_buildfile into lua state
+        if (luaL_dofile(s_MainLuaState, source_location.c_str())) {
+            // get and log lua error callstack
+            print_traceback(source_location);
+        } else {
+            for (auto& comp : s_components) {
+                comp->configure(s_c_compiler, s_cpp_compiler, s_asm_compiler, s_linker);
+            }
         }
+    } catch (const std::runtime_error& e) {
+        Log.error("Configure failed: {}", e.what());
     }
 }
 
@@ -221,7 +229,8 @@ void Project::initialize_lua() {
 
     bridge.addFunction<void, const std::string&>("set_linker", TO_FUNCTION(bind_set_linker));
 
-    bridge.addFunction<void, const std::string&>("import", TO_FUNCTION(bind_import));
+    bridge.addFunction<void, lua_State*>("import", TO_FUNCTION(bind_import));
+    bridge.addFunction<void, lua_State*>("import_git", TO_FUNCTION(bind_import_git));
 
     bridge.addFunction<Component&, const std::string&>("create_executable", TO_FUNCTION(bind_create_executable));
     bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(bind_create_library));
@@ -249,7 +258,18 @@ void Project::bind_set_asm_compiler(const std::string& compiler) {
 }
 
 // Import
-void Project::bind_import(const std::string& path_str) {
+void Project::bind_import(lua_State* L) {
+    auto arg_path = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(1, 0));
+    if (!arg_path.isString()) {
+        luaL_error(L,
+                   "Invalid import path: type \"%s\"\n%s",
+                   lua_typename(L, arg_path.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::IMPORT));
+        throw std::runtime_error("Invalid import argument");
+    }
+
+    const auto path_str = arg_path.tostring();
+
     std::filesystem::path fpath(path_str);
     // default import is Folder with implicit .cfxs-build
     if (fpath.extension() == "") {
@@ -260,8 +280,10 @@ void Project::bind_import(const std::string& path_str) {
 
     if (std::filesystem::path(path_str).is_relative()) {
         s_script_path_stack.push_back(std::filesystem::weakly_canonical((s_script_path_stack.back() / fpath).parent_path()));
+        s_source_location_stack.push_back(std::filesystem::weakly_canonical((s_script_path_stack.back() / fpath)));
     } else {
         s_script_path_stack.push_back(std::filesystem::weakly_canonical(std::filesystem::path(fpath).parent_path()));
+        s_source_location_stack.push_back(std::filesystem::weakly_canonical(std::filesystem::path(fpath)));
     }
 
     const auto source_location = s_script_path_stack.back() / filename;
@@ -271,19 +293,113 @@ void Project::bind_import(const std::string& path_str) {
         return;
     }
 
-    const bool res = luaL_dofile(s_MainLuaState, source_location.c_str());
-    if (res) {
-        // get and log lua error callstack
-        print_traceback(source_location);
-
-        throw std::runtime_error("Failed to configure");
+    try {
+        const bool res = luaL_dofile(s_MainLuaState, source_location.c_str());
+        if (res) {
+            // get and log lua error callstack
+            print_traceback(source_location);
+        }
+    } catch (const std::runtime_error& e) {
+        Log.error("Import load failed: {}", e.what());
     }
+
     s_script_path_stack.pop_back();
+    s_source_location_stack.pop_back();
+}
+
+void Project::bind_import_git(lua_State* L) {
+    auto arg_url    = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(2, 0));
+    auto arg_branch = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(2, 1));
+    if (!arg_url.isString()) {
+        luaL_error(L,
+                   "Invalid import external url: type \"%s\"\n%s",
+                   lua_typename(L, arg_url.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::IMPORT_GIT));
+        throw std::runtime_error("Invalid import git argument");
+    }
+    if (!arg_branch.isString() && !arg_branch.isNil()) {
+        luaL_error(L,
+                   "Invalid import external branch: type \"%s\"\n%s",
+                   lua_typename(L, arg_branch.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::IMPORT_GIT));
+        throw std::runtime_error("Invalid import git argument");
+    }
+
+    auto url          = arg_url.tostring();
+    const auto branch = arg_branch.isNil() ? "" : arg_branch.tostring();
+
+    if (url.size() < 4 || url.substr(url.size() - 4) != ".git") {
+        url += ".git";
+    }
+
+    std::regex git_url_regex(R"(http[s]?:\/\/.+\/([\w-]+)\/([\w-]+)\.git)");
+    std::smatch match;
+    if (!std::regex_search(url, match, git_url_regex)) {
+        luaL_error(L, "Unsupported git url: \"%s\"", url.c_str());
+        throw std::runtime_error("Unsupported git url");
+    }
+
+    const auto owner = match[1].str();
+    const auto name  = match[2].str();
+
+    const auto ext_path = s_output_path / EXTERNAL_TEMP_LOCATION / (owner + "_" + name);
+    const auto ext_str  = ext_path.string();
+
+    if (std::filesystem::exists(ext_path)) {
+        GIT git(ext_path);
+        if (!git.is_git_repository()) {
+            luaL_error(
+                s_MainLuaState,
+                "Failed to update repository \"%s\" at \"%s\"\nDirectory is not a git repository\nPotential fix: Delete the directory and reconfigure",
+                url.c_str(),
+                ext_str.c_str());
+            throw std::runtime_error("Import git existing target directory is not a git repository");
+        }
+
+        if (!git.is_git_root()) {
+            luaL_error(
+                s_MainLuaState,
+                "Failed to update repository \"%s\" at \"%s\"\nDirectory is not a git repository root directory\nPotential fix: Delete the directory and reconfigure",
+                url.c_str(),
+                ext_str.c_str());
+            throw std::runtime_error("Import git existing target directory is not a git repository root directory");
+        }
+
+        if (git.have_changes()) {
+            Log.warn("Not updating git repository \"{}\" - uncommitted changes\n    ({})", ext_path, url);
+        } else {
+            Log.trace("TODO: check for branch change");
+            Log.trace("Check for repository updates in \"{}\"\n    ({})", ext_path, url);
+            git.fetch();
+            git.pull();
+        }
+    } else {
+        Log.trace("Clone \"{}\" to \"{}_{}\"", url, owner, name);
+        const bool cloned = GIT::clone_branch(ext_path, url, branch);
+
+        if (!cloned) {
+            luaL_error(s_MainLuaState, "Failed to clone repository \"%s\" to \"%s\"", url.c_str(), ext_str.c_str());
+            throw std::runtime_error("Import git clone failed");
+        }
+    }
+
+    lua_pushstring(L, ext_str.c_str());
+    bind_import(L);
+    lua_pop(L, 1);
 }
 
 // Linker config
 void Project::bind_set_linker(const std::string& linker) {
     s_linker = std::make_shared<Linker>(linker); //
+}
+
+static const char* component_name_exists(std::string_view name) {
+    for (auto& comp : s_components) {
+        if (comp->get_name() == name) {
+            return comp->get_script_path().c_str();
+        }
+    }
+    return nullptr;
 }
 
 // Component creation
@@ -296,8 +412,16 @@ Component& Project::bind_create_executable(const std::string& name) {
         throw std::runtime_error("Invalid executable name");
     }
 
-    auto comp = std::make_shared<Component>(
-        Component::Type::EXECUTABLE, name, s_script_path_stack.back(), s_output_path / BUILD_TEMP_LOCATION / name);
+    if (auto existing_name = component_name_exists(name)) {
+        luaL_error(s_MainLuaState, "Invalid executable name [%s] - component name taken (at %s)", name.c_str(), existing_name);
+        throw std::runtime_error("Invalid executable name");
+    }
+
+    auto comp = std::make_shared<Component>(Component::Type::EXECUTABLE,
+                                            name,
+                                            s_source_location_stack.back(),
+                                            s_script_path_stack.back(),
+                                            s_output_path / BUILD_TEMP_LOCATION / name);
     s_components.push_back(comp);
     return *comp.get();
 }
@@ -311,8 +435,16 @@ Component& Project::bind_create_library(const std::string& name) {
         throw std::runtime_error("Invalid library name");
     }
 
-    auto comp =
-        std::make_shared<Component>(Component::Type::LIBRARY, name, s_script_path_stack.back(), s_output_path / BUILD_TEMP_LOCATION / name);
+    if (auto existing_name = component_name_exists(name)) {
+        luaL_error(s_MainLuaState, "Invalid library name [%s] - component name taken (at %s)", name.c_str(), existing_name);
+        throw std::runtime_error("Invalid library name");
+    }
+
+    auto comp = std::make_shared<Component>(Component::Type::LIBRARY,
+                                            name,
+                                            s_source_location_stack.back(),
+                                            s_script_path_stack.back(),
+                                            s_output_path / BUILD_TEMP_LOCATION / name);
     s_components.push_back(comp);
     return *comp.get();
 }

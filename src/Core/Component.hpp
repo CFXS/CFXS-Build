@@ -28,6 +28,7 @@ public:
 public:
     Component(Type type,
               const std::string& name,
+              const std::filesystem::path& script_path,
               const std::filesystem::path& root_path,
               const std::filesystem::path& local_output_directory);
     ~Component();
@@ -47,6 +48,7 @@ public:
 
     Type get_type() const { return m_type; }
     const std::string& get_name() const { return m_name; }
+    const std::filesystem::path& get_script_path() const { return m_script_path; }
     const std::filesystem::path& get_root_path() const { return m_root_path; }
     const std::filesystem::path& get_local_output_directory() const { return m_local_output_directory; }
     const std::filesystem::path& get_linker_script_path() const { return m_linker_script_path; }
@@ -63,6 +65,7 @@ public:
 private:
     Type m_type;
     std::string m_name;
+    std::filesystem::path m_script_path;
     std::filesystem::path m_root_path;
     std::filesystem::path m_local_output_directory;
 

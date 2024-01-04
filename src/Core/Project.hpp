@@ -18,7 +18,8 @@ private:
 
 private: // .cfxs-build Lua bindings
          // Import
-    static void bind_import(const std::string& path_str);
+    static void bind_import(lua_State* L);
+    static void bind_import_git(lua_State* L);
 
     // Compiler config
     static void bind_set_c_compiler(const std::string& compiler, const std::string& standard);

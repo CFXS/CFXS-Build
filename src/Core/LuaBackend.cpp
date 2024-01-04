@@ -64,6 +64,16 @@ const char* LuaBackend::get_script_help_string(HelpEntry he) {
                 ARG_COLOR "path" CODE_COLOR ")\n"                                        //
                 ARG_COLOR "    path: " ANSI_RESET "\"linker-location\"" ANSI_GRAY " (absolute/relative path or command name)" ANSI_RESET
                    "\n";
-        default: return "\n" ANSI_RED "No help available D:" ANSI_RESET "\n";
+        case HelpEntry::IMPORT:
+            return "\n" ANSI_GREEN "[Usage] " FUNCTION_COLOR "import" CODE_COLOR "(" //
+                ARG_COLOR "path" CODE_COLOR ")\n"                                    //
+                ARG_COLOR "    path: " ANSI_RESET "\"./module/module.cfxs-build\"" ANSI_GRAY
+                   " (\".cfxs-build\" not required if file name is empty; absolute/relative path)" ANSI_RESET "\n";
+        case HelpEntry::IMPORT_GIT:
+            return "\n" ANSI_GREEN "[Usage] " FUNCTION_COLOR "import_git" CODE_COLOR "("                     //
+                ARG_COLOR "url" CODE_COLOR ", " ARG_COLOR "branch" CODE_COLOR ")\n"                          //
+                ARG_COLOR "    url:    " ANSI_RESET "\"https://github.com/CFXS/CFXS-Build\"" ANSI_RESET "\n" //
+                ARG_COLOR "    branch: " ANSI_RESET "\"develop\"" ANSI_RESET "\n";
+        default: return "\n" ANSI_RED "No help available :(" ANSI_RESET "\n";
     }
 }

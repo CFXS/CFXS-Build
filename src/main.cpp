@@ -4,6 +4,7 @@
 #include "Core/Project.hpp"
 #include "CommandUtils.hpp"
 #include <fstream>
+#include "Core/GIT.hpp"
 
 int get_max_ram_usage() {
 #ifdef WINDOWS_BUILD
@@ -104,5 +105,6 @@ int main(int argc, char **argv) {
 
     Log.trace("Exit :)");
     Log.trace(ANSI_MAGENTA "Max RAM usage: {:.1f} MB" ANSI_RESET, get_max_ram_usage() / 1024.0f / 1024.0f);
+
     return 0;
 }

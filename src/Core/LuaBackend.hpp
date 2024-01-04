@@ -3,6 +3,13 @@
 #include <LuaBridge/LuaBridge.h>
 #include "Component.hpp"
 
+// TODO: check why this is positive indexed and +2. Have no idea.
+// access arguments of Component calls
+#define LUA_FUNCTION_ARG_COMPONENT_OFFSET(arg_index) (2 + arg_index)
+
+// access arguments of regular function calls
+#define LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, arg_index) (-(arg_count) + (arg_index))
+
 #define LuaLog(...)   Log.info("[\033[1;36mLua\033[0m] " __VA_ARGS__)
 #define LuaError(...) Log.error("[\033[1;36mLua\033[0m] " __VA_ARGS__)
 #define LuaWarn(...)  Log.warn("[\033[1;36mLua\033[0m] " __VA_ARGS__)
@@ -11,6 +18,8 @@ struct lua_State;
 class LuaBackend {
 public:
     enum class HelpEntry {
+        IMPORT,
+        IMPORT_GIT,
         SET_LINKER,
         COMPONENT_ADD_INCLUDE_PATHS,
         COMPONENT_ADD_DEFINITIONS,
