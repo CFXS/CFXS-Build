@@ -15,7 +15,7 @@
 #include <stdexcept>
 
 // folder inside of build path to write build files to
-#define BUILD_TEMP_LOCATION "components"
+#define BUILD_TEMP_LOCATION    "components"
 #define EXTERNAL_TEMP_LOCATION "external"
 
 lua_State* s_MainLuaState;
@@ -103,12 +103,12 @@ void Project::configure() {
     const auto root_buildfile  = read_source(source_location);
 
     // root script path
-    s_script_path_stack = {s_project_path};
+    s_script_path_stack     = {s_project_path};
     s_source_location_stack = {source_location};
 
     try {
         // execute root_buildfile into lua state
-        if (luaL_dofile(s_MainLuaState, source_location.c_str())) {
+        if (luaL_dofile(s_MainLuaState, source_location.string().c_str())) {
             // get and log lua error callstack
             print_traceback(source_location);
         } else {
@@ -289,12 +289,12 @@ void Project::bind_import(lua_State* L) {
     const auto source_location = s_script_path_stack.back() / filename;
 
     if (!std::filesystem::exists(source_location)) {
-        luaL_error(s_MainLuaState, "File not found: \"%s\"", source_location.c_str());
+        luaL_error(s_MainLuaState, "File not found: \"%s\"", source_location.string().c_str());
         return;
     }
 
     try {
-        const bool res = luaL_dofile(s_MainLuaState, source_location.c_str());
+        const bool res = luaL_dofile(s_MainLuaState, source_location.string().c_str());
         if (res) {
             // get and log lua error callstack
             print_traceback(source_location);
@@ -393,15 +393,6 @@ void Project::bind_set_linker(const std::string& linker) {
     s_linker = std::make_shared<Linker>(linker); //
 }
 
-static const char* component_name_exists(std::string_view name) {
-    for (auto& comp : s_components) {
-        if (comp->get_name() == name) {
-            return comp->get_script_path().c_str();
-        }
-    }
-    return nullptr;
-}
-
 // Component creation
 Component& Project::bind_create_executable(const std::string& name) {
     // valid filename match
@@ -412,8 +403,12 @@ Component& Project::bind_create_executable(const std::string& name) {
         throw std::runtime_error("Invalid executable name");
     }
 
-    if (auto existing_name = component_name_exists(name)) {
-        luaL_error(s_MainLuaState, "Invalid executable name [%s] - component name taken (at %s)", name.c_str(), existing_name);
+    auto name_it = std::find_if(s_components.begin(), s_components.end(), [&](const std::shared_ptr<Component>& comp) {
+        return comp->get_name() == name;
+    });
+    if (name_it != s_components.end()) {
+        luaL_error(
+            s_MainLuaState, "Invalid executable name [%s] - component name taken (at %s)", name.c_str(), (*name_it)->get_name().c_str());
         throw std::runtime_error("Invalid executable name");
     }
 
@@ -435,8 +430,12 @@ Component& Project::bind_create_library(const std::string& name) {
         throw std::runtime_error("Invalid library name");
     }
 
-    if (auto existing_name = component_name_exists(name)) {
-        luaL_error(s_MainLuaState, "Invalid library name [%s] - component name taken (at %s)", name.c_str(), existing_name);
+    auto name_it = std::find_if(s_components.begin(), s_components.end(), [&](const std::shared_ptr<Component>& comp) {
+        return comp->get_name() == name;
+    });
+    if (name_it != s_components.end()) {
+        luaL_error(
+            s_MainLuaState, "Invalid library name [%s] - component name taken (at %s)", name.c_str(), (*name_it)->get_name().c_str());
         throw std::runtime_error("Invalid library name");
     }
 
