@@ -24,8 +24,8 @@
             "args": [
                 "./test_project",
                 "--configure",
-                "--clean",
-                "--build",
+                // "--clean=CFXS-Build-Test",
+                "--build=*",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

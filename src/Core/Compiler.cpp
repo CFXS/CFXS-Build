@@ -159,7 +159,7 @@ void Compiler::load_dependency_flags(std::vector<std::string>& flags, const std:
     } else if (get_type() == Type::MSVC) {
         flags.push_back("/showIncludes"); // Generate header dependency list
         flags.push_back("/Fo");           // Write to specific file
-        flags.push_back(out_path);
+        flags.push_back(out_path.string());
     } else if (get_type() == Type::IAR) {
         throw std::runtime_error("Not implemented");
     } else {
@@ -172,14 +172,14 @@ void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
                                              const std::filesystem::path& obj_path) const {
     if (get_type() == Type::GNU || get_type() == Type::CLANG) {
         flags.push_back("-c"); // Compile only
-        flags.push_back(source_path);
+        flags.push_back(source_path.string());
         flags.push_back("-o"); // Write to specific file
         flags.push_back(obj_path.string() + ".o");
     } else if (get_type() == Type::MSVC) {
-        flags.push_back("/c"); // Compile only
-        flags.push_back(source_path);
+        flags.push_back("/c");  // Compile only
+        flags.push_back(source_path.string());
         flags.push_back("/Fo"); // Write to specific file
-        flags.push_back(obj_path);
+        flags.push_back(obj_path.string());
     } else if (get_type() == Type::IAR) {
         throw std::runtime_error("Not implemented");
     } else {

@@ -4,7 +4,6 @@
 #include <exception>
 #include <lua.hpp>
 #include <filesystem>
-#include <bits/fs_path.h>
 #include <CommandUtils.hpp>
 #include <mutex>
 #include <thread>
@@ -253,6 +252,7 @@ void Component::build() {
     bool compiling                         = true;  // still trying to compile all sources
 
     const auto& compile_entries = get_compile_entries();
+
     while (compiling) {
         if (compile_entry_seq_index == compile_entries.size()) {
             // Worker assignment is done - exit compile loop and wait for workers to finish
@@ -316,6 +316,9 @@ void Component::build() {
     }
 
     for (auto& w : workers) {
+        while (w->is_busy()) {
+            std::this_thread::sleep_for(std::chrono::microseconds(250));
+        }
         w->terminate();
     }
 
