@@ -6,13 +6,15 @@
 #include <filesystem>
 #include <subprocess.h>
 
-#define ANSI_RESET   "\033[0m"
-#define ANSI_GREEN   "\033[92m"
-#define ANSI_RED     "\033[91m"
-#define ANSI_GRAY    "\033[90m"
-#define ANSI_YELLOW  "\033[33m"
-#define ANSI_MAGENTA "\033[35m"
-#define ANSI_CYAN    "\033[36m"
+#define ANSI_RESET      "\033[0m"
+#define ANSI_GREEN      "\033[92m"
+#define ANSI_RED        "\033[91m"
+#define ANSI_GRAY       "\033[90m"
+#define ANSI_YELLOW     "\033[33m"
+#define ANSI_MAGENTA    "\033[35m"
+#define ANSI_CYAN       "\033[36m"
+#define ANSI_ORANGE     "\033[38;5;208m"
+#define ANSI_LIGHT_GRAY "\033[38;5;250m"
 
 inline bool is_valid_file_path(const std::string& str) {
     return std::filesystem::exists(str); //

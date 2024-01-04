@@ -286,14 +286,16 @@ void Component::build() {
                     const auto compile_unit_path = success ? compile_entry->source_entry->get_source_file_path().filename().string() :
                                                              compile_entry->source_entry->get_source_file_path().string();
 
-                    Log.info("[{}{}/{} ({}%) {:.03f}s{}] ({}) {} {}{}{}" ANSI_RESET,
+                    Log.info("[{}{}/{} ({}%) {:.03f}s{}] ({}{}{}) {} {}{}{}" ANSI_RESET,
                              success ? ANSI_GREEN : ANSI_RED,
                              current_compiled_index++,
                              get_compile_entries().size(),
                              (int)(100.0f / get_compile_entries().size() * current_compiled_index),
                              compile_time_ms / 1000.0f,
                              ANSI_RESET,
+                             ANSI_LIGHT_GRAY,
                              get_name(),
+                             ANSI_RESET,
                              success ? (ANSI_GRAY "Compiled") : (ANSI_RED "Failed to compile" ANSI_RESET),
                              compile_unit_path,
                              msg.empty() ? "" : "\n",

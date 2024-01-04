@@ -15,7 +15,7 @@
 #include <stdexcept>
 
 // folder inside of build path to write build files to
-#define BUILD_TEMP_LOCATION "components"
+#define BUILD_TEMP_LOCATION    "components"
 #define EXTERNAL_TEMP_LOCATION "external"
 
 lua_State* s_MainLuaState;
@@ -97,13 +97,14 @@ static void print_traceback(const std::filesystem::path& source_location) {
 }
 
 void Project::configure() {
-    Log.info("Configure project");
+    Log.info("Configure Project");
+    const auto t1 = std::chrono::high_resolution_clock::now();
 
     const auto source_location = s_project_path / ".cfxs-build";
     const auto root_buildfile  = read_source(source_location);
 
     // root script path
-    s_script_path_stack = {s_project_path};
+    s_script_path_stack     = {s_project_path};
     s_source_location_stack = {source_location};
 
     try {
@@ -119,9 +120,16 @@ void Project::configure() {
     } catch (const std::runtime_error& e) {
         Log.error("Configure failed: {}", e.what());
     }
+
+    const auto t2 = std::chrono::high_resolution_clock::now();
+    auto ms       = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    Log.info("Project configure done in {:.3f}s", ms / 1000.0f);
 }
 
 void Project::build(const std::vector<std::string>& components) {
+    Log.info("Build Project");
+    const auto t1 = std::chrono::high_resolution_clock::now();
+
     if (std::find(components.begin(), components.end(), "*") != components.end()) {
         for (auto& comp : s_components) {
             comp->build();
@@ -139,6 +147,10 @@ void Project::build(const std::vector<std::string>& components) {
             }
         }
     }
+
+    const auto t2 = std::chrono::high_resolution_clock::now();
+    auto ms       = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    Log.info("Project configure done in {:.3f}s", ms / 1000.0f);
 }
 
 void Project::clean(const std::vector<std::string>& components) {
@@ -368,10 +380,10 @@ void Project::bind_import_git(lua_State* L) {
         if (git.have_changes()) {
             Log.warn("Not updating git repository \"{}\" - uncommitted changes\n    ({})", ext_path, url);
         } else {
-            Log.trace("TODO: check for branch change");
-            Log.trace("Check for repository updates in \"{}\"\n    ({})", ext_path, url);
-            git.fetch();
-            git.pull();
+            Log.trace("Pull repository updates in \"{}\"\n    ({})", ext_path, url);
+            // git.fetch();
+            if (git.checkout(branch))
+                git.pull();
         }
     } else {
         Log.trace("Clone \"{}\" to \"{}_{}\"", url, owner, name);
