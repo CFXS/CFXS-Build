@@ -39,6 +39,31 @@ std::vector<std::string> s_TempFileExtensions = {
     ".dep",
 };
 
+static void prepare_and_push_flags(std::vector<std::string>& flags, const std::string& flag) {
+    // escape "\" characters and split regular spaces into multiple flags
+    std::vector<std::string> split_flags;
+    std::string current_flag;
+    bool escape_next = false;
+    for (const auto& c : flag) {
+        if (escape_next) {
+            current_flag += c;
+            escape_next = false;
+        } else if (c == '\\') {
+            escape_next = true;
+        } else if (c == ' ') {
+            split_flags.push_back(current_flag);
+            current_flag.clear();
+        } else {
+            current_flag += c;
+        }
+    }
+    split_flags.push_back(current_flag);
+    // push to flags
+    for (const auto& f : split_flags) {
+        flags.push_back(f);
+    }
+}
+
 void Component::configure(std::shared_ptr<Compiler> c_compiler,
                           std::shared_ptr<Compiler> cpp_compiler,
                           std::shared_ptr<Compiler> asm_compiler,
@@ -199,8 +224,9 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             compiler->push_compile_definition(compile_entry->compile_args, val.value);
         }
         // append custom options
-        for (const auto& val : get_compile_flags())
-            compile_entry->compile_args.push_back(val.value);
+        for (const auto& val : get_compile_flags()) {
+            prepare_and_push_flags(compile_entry->compile_args, val.value);
+        }
 
         compile_entry->compiler = compiler;
         m_compile_entries.emplace_back(std::move(compile_entry));
@@ -325,6 +351,10 @@ void Component::build() {
             std::this_thread::sleep_for(std::chrono::microseconds(250));
         }
         w->terminate();
+    }
+
+    if (error_reported) {
+        throw std::runtime_error("Compilation failed");
     }
 
     const auto build_t2 = std::chrono::high_resolution_clock::now();
