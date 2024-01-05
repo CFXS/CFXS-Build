@@ -25,7 +25,7 @@ public:
                     m_exec = nullptr;
                     m_exec_mutex.unlock();
                 } else {
-                    std::this_thread::sleep_for(std::chrono::microseconds(250));
+                    std::this_thread::sleep_for(std::chrono::microseconds(100));
                 }
             }
         });

@@ -220,10 +220,10 @@ std::string replace_string(std::string subject, const std::string& search, const
 void Compiler::push_compile_definition(std::vector<std::string>& flags, const std::string& compile_definition) const {
     // escape "\" in compile_definition and wrap value after DEFINITION_NAME= in escaped quotes if value contains spaces
     // replace all '"' with "\\"" safely without entering an infinite loop
-    std::string escaped_compile_definition = replace_string(compile_definition, "\"", "\\\"");
+    // std::string escaped_compile_definition = replace_string(compile_definition, "\"", "\\\"");
 
     // replace all "\\" with "\\\\"
-    escaped_compile_definition = replace_string(escaped_compile_definition, "\\", "\\\\\\");
+    std::string escaped_compile_definition = replace_string(compile_definition, "\\", "\\\\\\");
 
     auto eq_pos     = escaped_compile_definition.find('=');
     std::string def = "";

@@ -23,10 +23,10 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/CFXS_Build.exe",
             "args": [
-                "./test_project",
+                "C:/Users/User_1_196/Documents/IQTester_CMake",
                 "--configure",
                 // "--clean=CFXS-Build-Test",
-                "--build=*",
+                "--build=lwip",
                 "--skip-git-import-update",
             ],
             "stopAtEntry": false,

@@ -202,35 +202,26 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             return std::tolower(c);
         });
 
-        if (get_name() != "dlib") {
-            static bool warned = false;
-            if (!warned) {
-                warned = true;
-                Log.critical("FORCING C++ COMPILER FOR NON DLIB");
+        if (ext == ".c") {
+            compiler = c_compiler.get();
+            if (!compiler) {
+                Log.error("C Compiler not set");
+                throw std::runtime_error("C Compiler not set");
             }
+        } else if (ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c++") {
             compiler = cpp_compiler.get();
-        } else {
-            if (ext == ".c") {
-                compiler = c_compiler.get();
-                if (!compiler) {
-                    Log.error("C Compiler not set");
-                    throw std::runtime_error("C Compiler not set");
-                }
-            } else if (ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c++") {
-                compiler = cpp_compiler.get();
-                if (!compiler) {
-                    Log.error("C++ Compiler not set");
-                    throw std::runtime_error("C Compiler not set");
-                }
-            } else if (ext == ".asm" || ext == ".s") {
-                compiler = asm_compiler.get();
-                if (!compiler) {
-                    Log.error("ASM Compiler not set");
-                    throw std::runtime_error("C Compiler not set");
-                }
-            } else {
-                throw std::runtime_error("Unsupported file type");
+            if (!compiler) {
+                Log.error("C++ Compiler not set");
+                throw std::runtime_error("C Compiler not set");
             }
+        } else if (ext == ".asm" || ext == ".s") {
+            compiler = asm_compiler.get();
+            if (!compiler) {
+                Log.error("ASM Compiler not set");
+                throw std::runtime_error("C Compiler not set");
+            }
+        } else {
+            throw std::runtime_error("Unsupported file type");
         }
 
         // create compile entry
@@ -434,13 +425,13 @@ void Component::build() {
                 break;
             }
 
-            std::this_thread::sleep_for(std::chrono::microseconds(250));
+            std::this_thread::sleep_for(std::chrono::microseconds(100));
         }
     }
 
     for (auto& w : workers) {
         while (w->is_busy()) {
-            std::this_thread::sleep_for(std::chrono::microseconds(250));
+            std::this_thread::sleep_for(std::chrono::microseconds(100));
         }
         w->terminate();
     }
