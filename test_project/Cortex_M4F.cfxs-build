@@ -1,10 +1,6 @@
-Cortex_M4F = create_library("Cortex-M4F")
+print("Add global compile definitions for ARM Cortex-M4F")
 
-Cortex_M4F:add_definitions("forward", {
-    "CORTEX_M4F"
-})
-
-Cortex_M4F:add_compile_options("forward", {
+add_global_compile_options("C/C++", {
     "--vectorize",
     "--enable_restrict",
     "--no_exceptions",
@@ -13,4 +9,8 @@ Cortex_M4F:add_compile_options("forward", {
     "--cpu Cortex-M4",
     "--fpu VFPv4_sp",
     "--cpu_mode thumb",
+})
+
+add_global_definitions("C/C++", {
+    "CORTEX_M4F=1"
 })

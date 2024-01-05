@@ -20,6 +20,12 @@
 
 std::mutex s_filesystem_mutex;
 
+extern std::vector<std::string> s_global_c_compile_flags;
+extern std::vector<std::string> s_global_cpp_compile_flags;
+extern std::vector<std::string> s_global_definitions;
+extern std::vector<std::filesystem::path> s_global_include_paths;
+extern std::vector<std::string> s_global_asm_compile_flags;
+
 Component::Component(Type type,
                      const std::string& name,
                      const std::filesystem::path& script_path,
@@ -64,27 +70,30 @@ static void prepare_and_push_flags(std::vector<std::string>& flags, const std::s
     }
 }
 
-static void try_merge_lib_content(Compiler* compiler, std::vector<std::string>& compile_args, const Component* lib) {
+static void try_merge_lib_content(Compiler* compiler,
+                                  std::vector<std::string>& compile_args,
+                                  const Component* lib,
+                                  Component::Visibility check_visibilities) {
     // include paths
-    if (lib->get_visibility_mask_include_paths() & Component::Visibility::INHERIT | Component::Visibility::FORWARD) {
+    if (lib->get_visibility_mask_include_paths() & check_visibilities) {
         for (const auto& val : lib->get_include_paths()) {
-            if (!(val.visibility & (Component::Visibility::INHERIT | Component::Visibility::FORWARD)))
+            if (!(val.visibility & check_visibilities))
                 continue;
             compiler->push_include_path(compile_args, val.value.string());
         }
     }
     // compile definitions
-    if (lib->get_visibility_mask_definitions() & Component::Visibility::INHERIT | Component::Visibility::FORWARD) {
+    if (lib->get_visibility_mask_definitions() & check_visibilities) {
         for (const auto& val : lib->get_definitions()) {
-            if (!(val.visibility & (Component::Visibility::INHERIT | Component::Visibility::FORWARD)))
+            if (!(val.visibility & check_visibilities))
                 continue;
             compiler->push_compile_definition(compile_args, val.value);
         }
     }
     // append custom options
-    if (lib->get_visibility_mask_compile_options() & Component::Visibility::INHERIT | Component::Visibility::FORWARD) {
+    if (lib->get_visibility_mask_compile_options() & check_visibilities) {
         for (const auto& val : lib->get_compile_options()) {
-            if (!(val.visibility & (Component::Visibility::INHERIT | Component::Visibility::FORWARD)))
+            if (!(val.visibility & check_visibilities))
                 continue;
             prepare_and_push_flags(compile_args, val.value);
         }
@@ -258,7 +267,30 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
 
         // [Library paths/definitions/options]
         for (const auto* lib : get_libraries()) {
-            try_merge_lib_content(compiler, compile_entry->compile_args, lib);
+            try_merge_lib_content(compiler, compile_entry->compile_args, lib, Visibility::PUBLIC);
+        }
+
+        // Merge global defs
+        // include paths
+        for (const auto& val : s_global_include_paths) {
+            compiler->push_include_path(compile_entry->compile_args, val.string());
+        }
+        // compile definitions
+        for (const auto& val : s_global_definitions) {
+            compiler->push_compile_definition(compile_entry->compile_args, val);
+        }
+        // append custom options
+        std::vector<std::string>* opts = nullptr;
+        switch (compiler->get_language()) {
+            case Compiler::Language::C: opts = &s_global_c_compile_flags; break;
+            case Compiler::Language::CPP: opts = &s_global_cpp_compile_flags; break;
+            case Compiler::Language::ASM: opts = &s_global_asm_compile_flags; break;
+            default: opts = nullptr;
+        }
+        if (opts) {
+            for (const auto& val : *opts) {
+                prepare_and_push_flags(compile_entry->compile_args, val);
+            }
         }
 
         compile_entry->compiler = compiler;
@@ -366,6 +398,12 @@ void Component::build() {
                                  compile_unit_path,
                                  msg.empty() ? (ANSI_RESET "") : (ANSI_RESET "\n"),
                                  msg);
+                        if (!success) {
+                            std::string cmd;
+                            for (auto& flag : compile_entry->compile_args)
+                                cmd += flag + " ";
+                            Log.error("command: {}", cmd);
+                        }
                         current_compiled_index++;
                         mutex_compiled_index.unlock();
 
@@ -445,8 +483,8 @@ void Component::bind_add_include_paths(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
-                m_visibility_mask_compile_options |= visibility_value;
+                const auto visibility_value       = LuaBackend::string_to_visibility(arg_visibility.tostring());
+                m_visibility_mask_compile_options = m_visibility_mask_compile_options | visibility_value;
                 m_include_paths.emplace_back(visibility_value, src.tostring());
             } else {
                 luaL_error(L, "Include directory #%d is not a string [%s]", i, lua_typename(L, src.type()));
@@ -454,8 +492,8 @@ void Component::bind_add_include_paths(lua_State* L) {
             }
         }
     } else if (arg_sources.isString()) {
-        const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
-        m_visibility_mask_compile_options |= visibility_value;
+        const auto visibility_value       = LuaBackend::string_to_visibility(arg_visibility.tostring());
+        m_visibility_mask_compile_options = m_visibility_mask_compile_options | visibility_value;
         m_include_paths.emplace_back(visibility_value, arg_sources.tostring());
     } else {
         luaL_error(L,
@@ -497,8 +535,8 @@ void Component::bind_add_definitions(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
-                m_visibility_mask_compile_options |= visibility_value;
+                const auto visibility_value       = LuaBackend::string_to_visibility(arg_visibility.tostring());
+                m_visibility_mask_compile_options = m_visibility_mask_compile_options | visibility_value;
                 m_definitions.emplace_back(visibility_value, src.tostring());
             } else {
                 luaL_error(L, "Definition #%d is not a string [%s]", i, lua_typename(L, src.type()));
@@ -506,8 +544,8 @@ void Component::bind_add_definitions(lua_State* L) {
             }
         }
     } else if (arg_sources.isString()) {
-        const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
-        m_visibility_mask_compile_options |= visibility_value;
+        const auto visibility_value       = LuaBackend::string_to_visibility(arg_visibility.tostring());
+        m_visibility_mask_compile_options = m_visibility_mask_compile_options | visibility_value;
         m_definitions.emplace_back(visibility_value, arg_sources.tostring());
     } else {
         luaL_error(L,
@@ -538,8 +576,8 @@ void Component::bind_add_compile_options(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
-                m_visibility_mask_compile_options |= visibility_value;
+                const auto visibility_value       = LuaBackend::string_to_visibility(arg_visibility.tostring());
+                m_visibility_mask_compile_options = m_visibility_mask_compile_options | visibility_value;
                 m_compile_options.emplace_back(visibility_value, src.tostring());
             } else {
                 luaL_error(L, "Compile option #%d is not a string [%s]", i, lua_typename(L, src.type()));
@@ -547,8 +585,8 @@ void Component::bind_add_compile_options(lua_State* L) {
             }
         }
     } else if (arg_sources.isString()) {
-        const auto visibility_value = LuaBackend::string_to_visibility(arg_visibility.tostring());
-        m_visibility_mask_compile_options |= visibility_value;
+        const auto visibility_value       = LuaBackend::string_to_visibility(arg_visibility.tostring());
+        m_visibility_mask_compile_options = m_visibility_mask_compile_options | visibility_value;
         m_compile_options.emplace_back(visibility_value, arg_sources.tostring());
     } else {
         luaL_error(L,

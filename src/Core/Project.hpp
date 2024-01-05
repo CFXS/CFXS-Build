@@ -31,4 +31,8 @@ private: // .cfxs-build Lua bindings
 
     static Component& bind_create_executable(const std::string& name);
     static Component& bind_create_library(const std::string& name);
+
+    static void bind_add_global_include_paths(lua_State* L);
+    static void bind_add_global_definitions(lua_State* L);
+    static void bind_add_global_compile_options(lua_State* L);
 };

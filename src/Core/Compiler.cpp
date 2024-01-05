@@ -179,7 +179,6 @@ void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
         flags.push_back("/Fo"); // Write to specific file
         flags.push_back(obj_path.string());
     } else if (get_type() == Type::IAR) {
-        flags.push_back("-e");       // Enable language extensions
         flags.push_back("--silent"); // Do not generate compile spam
         flags.push_back(source_path.string());
         flags.push_back("-o");       // Write to specific file

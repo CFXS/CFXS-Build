@@ -30,17 +30,16 @@ local sources = {
 }
 
 test_project:add_sources(sources)
-test_project:add_include_paths("local", {"./src"})
-test_project:add_definitions("forward", {
-    "BUILD_SOMETHING",
-    '__na_force_inline_speed=_Pragma("inline=forced") constexpr'
-})
+test_project:add_include_paths("private", {"./src"})
+-- test_project:add_definitions("forward", {
+--     "BUILD_SOMETHING",
+--     '__na_force_inline_speed=_Pragma("inline=forced") constexpr'
+-- })
 -- test_project:add_compile_options("forward", {"-O3"})
 
 import_git("https://github.com/CFXS/CFXS-Framework-v2-Dev.git", "main");
 import("./Cortex_M4F.cfxs-build")
 
 test_project:add_libraries({
-    Cortex_M4F,
     cfxs_framework,
 })

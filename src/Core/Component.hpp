@@ -15,9 +15,8 @@ public:
 
     enum Visibility : int {
         NONE    = 0,
-        LOCAL   = 1 << 0,
-        INHERIT = 1 << 1,
-        FORWARD = 1 << 2,
+        PRIVATE = 1 << 0,
+        PUBLIC  = 1 << 1,
     };
 
     template<typename T>
@@ -108,6 +107,6 @@ inline const char* to_string(Component::Type type) {
     return "???";
 }
 
-inline Component::Visibility operator|=(Component::Visibility lhs, Component::Visibility rhs) {
+inline Component::Visibility operator|(Component::Visibility lhs, Component::Visibility rhs) {
     return (Component::Visibility)(((int)lhs) | ((int)rhs));
 }

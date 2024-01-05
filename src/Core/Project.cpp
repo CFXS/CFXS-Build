@@ -34,6 +34,8 @@ std::shared_ptr<Linker> s_linker;
 
 std::vector<std::string> s_global_c_compile_flags;
 std::vector<std::string> s_global_cpp_compile_flags;
+std::vector<std::string> s_global_definitions;
+std::vector<std::filesystem::path> s_global_include_paths;
 std::vector<std::string> s_global_asm_compile_flags;
 std::vector<std::string> s_global_link_flags;
 
@@ -244,6 +246,10 @@ void Project::initialize_lua() {
 
     bridge.addFunction<void, lua_State*>("import", TO_FUNCTION(bind_import));
     bridge.addFunction<void, lua_State*>("import_git", TO_FUNCTION(bind_import_git));
+
+    bridge.addFunction<void, lua_State*>("add_global_include_paths", TO_FUNCTION(bind_add_global_include_paths));
+    bridge.addFunction<void, lua_State*>("add_global_definitions", TO_FUNCTION(bind_add_global_definitions));
+    bridge.addFunction<void, lua_State*>("add_global_compile_options", TO_FUNCTION(bind_add_global_compile_options));
 
     bridge.addFunction<Component&, const std::string&>("create_executable", TO_FUNCTION(bind_create_executable));
     bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(bind_create_library));
@@ -466,4 +472,129 @@ Component& Project::bind_create_library(const std::string& name) {
                                             s_output_path / BUILD_TEMP_LOCATION / name);
     s_components.push_back(comp);
     return *comp.get();
+}
+
+void Project::bind_add_global_include_paths(lua_State* L) {
+    const auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(1, 0));
+    if (arg_sources.isTable()) {
+        for (int i = 1; i <= arg_sources.length(); i++) {
+            auto src = arg_sources.rawget(i);
+            if (src.isString()) {
+                s_global_include_paths.emplace_back(src.tostring());
+            } else {
+                luaL_error(L, "Include directory #%d is not a string [%s]", i, lua_typename(L, src.type()));
+                throw std::runtime_error("Include directory is not a string");
+            }
+        }
+    } else if (arg_sources.isString()) {
+        s_global_include_paths.emplace_back(arg_sources.tostring());
+    } else {
+        luaL_error(L,
+                   "Invalid include paths argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_sources.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::GLOBAL_ADD_INCLUDE_PATHS));
+        throw std::runtime_error("Invalid include paths argument");
+    }
+
+    for (auto& dir : s_global_include_paths) {
+        // check if dir is relative path
+        if (dir.is_relative()) {
+            // if relative path, make it absolute and canonical
+            dir = std::filesystem::weakly_canonical(s_script_path_stack.back() / dir);
+        } else {
+            // make canonical
+            dir = std::filesystem::weakly_canonical(dir);
+        }
+    }
+
+    // remove duplicates
+    // std::sort(m_include_paths.begin(), m_include_paths.end());
+    // m_include_paths.erase(std::unique(m_include_paths.begin(), m_include_paths.end()), m_include_paths.end());
+}
+
+void Project::bind_add_global_definitions(lua_State* L) {
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(1, 0));
+    if (arg_sources.isTable()) {
+        for (int i = 1; i <= arg_sources.length(); i++) {
+            auto src = arg_sources.rawget(i);
+            if (src.isString()) {
+                s_global_definitions.emplace_back(src.tostring());
+            } else {
+                luaL_error(L, "Definition #%d is not a string [%s]", i, lua_typename(L, src.type()));
+                throw std::runtime_error("Definition is not a string");
+            }
+        }
+    } else if (arg_sources.isString()) {
+        s_global_definitions.emplace_back(arg_sources.tostring());
+    } else {
+        luaL_error(L,
+                   "Invalid definitions argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_sources.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::GLOBAL_ADD_DEFINITIONS));
+        throw std::runtime_error("Invalid definitions argument");
+    }
+
+    // remove duplicates
+    // std::sort(m_definitions.begin(), m_definitions.end());
+    // m_definitions.erase(std::unique(m_definitions.begin(), m_definitions.end()), m_definitions.end());
+}
+
+void Project::bind_add_global_compile_options(lua_State* L) {
+    const auto arg_language = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(2, 0));
+
+    if (!LuaBackend::is_valid_language(arg_language)) {
+        luaL_error(L,
+                   "Invalid compile options language argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_language.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::GLOBAL_ADD_COMPILE_OPTIONS));
+        throw std::runtime_error("Invalid compile options language argument");
+    }
+
+    std::vector<std::string>* vec  = nullptr;
+    std::vector<std::string>* vec2 = nullptr;
+    const auto val_str             = arg_language.tostring();
+
+    if (val_str == "C") {
+        vec = &s_global_c_compile_flags;
+    } else if (val_str == "C++") {
+        vec = &s_global_cpp_compile_flags;
+    } else if (val_str == "C/C++") {
+        vec  = &s_global_asm_compile_flags;
+        vec2 = &s_global_c_compile_flags;
+    } else if (val_str == "ASM") {
+        vec = &s_global_asm_compile_flags;
+    }
+
+    if (!vec) {
+        throw std::runtime_error("Add global compile definitions - invalid language");
+    }
+
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(2, 1));
+    if (arg_sources.isTable()) {
+        for (int i = 1; i <= arg_sources.length(); i++) {
+            auto src = arg_sources.rawget(i);
+            if (src.isString()) {
+                vec->emplace_back(src.tostring());
+                if (vec2)
+                    vec2->emplace_back(src.tostring());
+            } else {
+                luaL_error(L, "Compile option #%d is not a string [%s]", i, lua_typename(L, src.type()));
+                throw std::runtime_error("Compile option is not a string");
+            }
+        }
+    } else if (arg_sources.isString()) {
+        vec->emplace_back(arg_sources.tostring());
+        if (vec2)
+            vec2->emplace_back(arg_sources.tostring());
+    } else {
+        luaL_error(L,
+                   "Invalid compile options argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_sources.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::GLOBAL_ADD_COMPILE_OPTIONS));
+        throw std::runtime_error("Invalid compile options argument");
+    }
+
+    // remove duplicates
+    // std::sort(m_compile_options.begin(), m_compile_options.end());
+    // m_compile_options.erase(std::unique(m_compile_options.begin(), m_compile_options.end()), m_compile_options.end());
 }
