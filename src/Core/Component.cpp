@@ -243,7 +243,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             !std::filesystem::exists(obj_path)) {
             need_build = true;
             // create and write modify empty file ts_temp
-            s_filesystem_mutex.lock();
+            // s_filesystem_mutex.lock();
             try {
                 std::ofstream ts_temp_file(ts_temp);
                 ts_temp_file.close();
@@ -253,13 +253,12 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                 Log.error("[{}] Failed to create timestamp file at \"{}\": {}", get_name(), ts_temp, e.what());
                 throw std::runtime_error("Failed to create timestamp file");
             }
-            s_filesystem_mutex.unlock();
+            // s_filesystem_mutex.unlock();
         } else {
-            auto src_modified_time     = std::filesystem::last_write_time(e.path);   // source file
-            auto dep_modified_time     = std::filesystem::last_write_time(dep_path); // dep file
-            auto ts_mark_modified_time = std::filesystem::last_write_time(ts_temp);  // modified time tracker
+            auto src_modified_time     = std::filesystem::last_write_time(e.path);  // source file
+            auto ts_mark_modified_time = std::filesystem::last_write_time(ts_temp); // modified time tracker
 
-            const bool source_modified = src_modified_time != ts_mark_modified_time;
+            const bool source_modified = src_modified_time > ts_mark_modified_time;
 
             if (source_modified) {
                 need_build = true;
@@ -292,13 +291,16 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                         // set ts_temp write time to src_modified_time
                         // s_filesystem_mutex.lock();
                         try {
-                            std::filesystem::last_write_time(ts_dep_temp, dependency_modified_time);
+                            // std::filesystem::last_write_time(ts_dep_temp, dependency_modified_time);
+                            std::ofstream ts_dep_temp_file(ts_dep_temp);
+                            ts_dep_temp_file.close();
                         } catch (const std::exception& e) {
                             Log.error("[{}] Failed to set timestamp file \"{}\" time: {}", get_name(), ts_temp, e.what());
                             throw std::runtime_error("Failed to set timestamp file time");
                         }
                         // s_filesystem_mutex.unlock();
                         need_build = true;
+                        break;
                     }
                 }
             }
