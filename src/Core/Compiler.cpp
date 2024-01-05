@@ -261,11 +261,9 @@ std::string_view Compiler::get_object_extension() const {
 }
 
 std::string_view Compiler::get_dependency_extension() const {
-    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+    if (get_type() == Type::GNU || get_type() == Type::CLANG || get_type() == Type::IAR) {
         return ".dep";
     } else if (get_type() == Type::MSVC) {
-        throw std::runtime_error("Not implemented");
-    } else if (get_type() == Type::IAR) {
         throw std::runtime_error("Not implemented");
     } else {
         throw std::runtime_error("Unsupported compiler");
