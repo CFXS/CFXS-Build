@@ -346,7 +346,7 @@ void Component::build() {
     Log.info("Build [{}]", get_name());
     const auto build_t1 = std::chrono::high_resolution_clock::now();
 
-    auto workers = FunctionWorker::create_workers(std::thread::hardware_concurrency());
+    auto workers = FunctionWorker::create_workers(GlobalConfig::number_of_worker_threads());
 
     size_t compile_entry_seq_index = 0; // current source entry index to compile
     int current_compiled_index     = 1; // currently compiled index (only for counting compiled files)
@@ -448,10 +448,10 @@ void Component::build() {
 void Component::bind_add_sources(lua_State* L) {
     const auto push_source = [&](const std::string& src) {
         if (src.length() && src[0] == '!') {
-            Log.trace("[{}] Add filter: {}", get_name(), src);
+            // Log.trace("[{}] Add filter: {}", get_name(), src);
             m_requested_source_filters.push_back(src.substr(1)); // remove ! prefix
         } else {
-            Log.trace("[{}] Add source: {}", get_name(), src);
+            // Log.trace("[{}] Add source: {}", get_name(), src);
             m_requested_sources.push_back(src);
         }
     };

@@ -27,6 +27,7 @@
                 "--configure",
                 // "--clean=CFXS-Build-Test",
                 "--build=lwip",
+                "--parallel=1",
                 "--skip-git-import-update",
             ],
             "stopAtEntry": false,

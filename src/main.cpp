@@ -29,6 +29,15 @@ int get_max_ram_usage() {
 static bool s_config_skip_git_import_update = false;
 bool GlobalConfig::skip_git_import_update() { return s_config_skip_git_import_update; }
 
+static int s_number_of_worker_threads = 0;
+int GlobalConfig::number_of_worker_threads() {
+    if (s_number_of_worker_threads == 0) {
+        return std::thread::hardware_concurrency();
+    } else {
+        return s_number_of_worker_threads;
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv) {
@@ -64,6 +73,12 @@ int main(int argc, char **argv) {
         .help("Skip git import update checks")    //
         .flag();
 
+    args.add_argument("--parallel")                                                   //
+        .default_value("0")                                                           //
+        .implicit_value("0")                                                          //
+        .help("Specify number of parallel threads to use (not specified or 0 = all)") //
+        .nargs(1);                                                                    //
+
     try {
         args.parse_args(argc, argv);
     } catch (const std::runtime_error &err) {
@@ -96,6 +111,15 @@ int main(int argc, char **argv) {
     try {
         if (args["--skip-git-import-update"] == true) {
             s_config_skip_git_import_update = true;
+        }
+
+        auto parallel_param = args.get<std::string>("--parallel");
+        for (int i = 1; i <= std::thread::hardware_concurrency(); i++) {
+            if (parallel_param == std::to_string(i)) {
+                s_number_of_worker_threads = i;
+                Log.info("Set parallel threads to {}", i);
+                break;
+            }
         }
 
         Project::initialize(project_path, output_path);
