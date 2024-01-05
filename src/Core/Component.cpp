@@ -202,26 +202,35 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             return std::tolower(c);
         });
 
-        if (ext == ".c") {
-            compiler = c_compiler.get();
-            if (!compiler) {
-                Log.error("C Compiler not set");
-                throw std::runtime_error("C Compiler not set");
+        if (get_name() != "dlib") {
+            static bool warned = false;
+            if (!warned) {
+                warned = true;
+                Log.critical("FORCING C++ COMPILER FOR NON DLIB");
             }
-        } else if (ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c++") {
             compiler = cpp_compiler.get();
-            if (!compiler) {
-                Log.error("C++ Compiler not set");
-                throw std::runtime_error("C Compiler not set");
-            }
-        } else if (ext == ".asm" || ext == ".s") {
-            compiler = asm_compiler.get();
-            if (!compiler) {
-                Log.error("ASM Compiler not set");
-                throw std::runtime_error("C Compiler not set");
-            }
         } else {
-            throw std::runtime_error("Unsupported file type");
+            if (ext == ".c") {
+                compiler = c_compiler.get();
+                if (!compiler) {
+                    Log.error("C Compiler not set");
+                    throw std::runtime_error("C Compiler not set");
+                }
+            } else if (ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c++") {
+                compiler = cpp_compiler.get();
+                if (!compiler) {
+                    Log.error("C++ Compiler not set");
+                    throw std::runtime_error("C Compiler not set");
+                }
+            } else if (ext == ".asm" || ext == ".s") {
+                compiler = asm_compiler.get();
+                if (!compiler) {
+                    Log.error("ASM Compiler not set");
+                    throw std::runtime_error("C Compiler not set");
+                }
+            } else {
+                throw std::runtime_error("Unsupported file type");
+            }
         }
 
         // create compile entry
@@ -289,6 +298,14 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
         }
         if (opts) {
             for (const auto& val : *opts) {
+                if (compiler == asm_compiler.get()) {
+                    if (val == "--vectorize") {
+                        Log.error("why the fuck did i get vectorized");
+                        for (auto f : s_global_asm_compile_flags) {
+                            Log.critical(f);
+                        }
+                    }
+                }
                 prepare_and_push_flags(compile_entry->compile_args, val);
             }
         }
@@ -483,8 +500,8 @@ void Component::bind_add_include_paths(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                const auto visibility_value       = LuaBackend::string_to_visibility(arg_visibility.tostring());
-                m_visibility_mask_compile_options = m_visibility_mask_compile_options | visibility_value;
+                const auto visibility_value     = LuaBackend::string_to_visibility(arg_visibility.tostring());
+                m_visibility_mask_include_paths = m_visibility_mask_include_paths | visibility_value;
                 m_include_paths.emplace_back(visibility_value, src.tostring());
             } else {
                 luaL_error(L, "Include directory #%d is not a string [%s]", i, lua_typename(L, src.type()));
@@ -492,8 +509,8 @@ void Component::bind_add_include_paths(lua_State* L) {
             }
         }
     } else if (arg_sources.isString()) {
-        const auto visibility_value       = LuaBackend::string_to_visibility(arg_visibility.tostring());
-        m_visibility_mask_compile_options = m_visibility_mask_compile_options | visibility_value;
+        const auto visibility_value     = LuaBackend::string_to_visibility(arg_visibility.tostring());
+        m_visibility_mask_include_paths = m_visibility_mask_include_paths | visibility_value;
         m_include_paths.emplace_back(visibility_value, arg_sources.tostring());
     } else {
         luaL_error(L,
@@ -535,8 +552,8 @@ void Component::bind_add_definitions(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                const auto visibility_value       = LuaBackend::string_to_visibility(arg_visibility.tostring());
-                m_visibility_mask_compile_options = m_visibility_mask_compile_options | visibility_value;
+                const auto visibility_value   = LuaBackend::string_to_visibility(arg_visibility.tostring());
+                m_visibility_mask_definitions = m_visibility_mask_definitions | visibility_value;
                 m_definitions.emplace_back(visibility_value, src.tostring());
             } else {
                 luaL_error(L, "Definition #%d is not a string [%s]", i, lua_typename(L, src.type()));
@@ -544,8 +561,8 @@ void Component::bind_add_definitions(lua_State* L) {
             }
         }
     } else if (arg_sources.isString()) {
-        const auto visibility_value       = LuaBackend::string_to_visibility(arg_visibility.tostring());
-        m_visibility_mask_compile_options = m_visibility_mask_compile_options | visibility_value;
+        const auto visibility_value   = LuaBackend::string_to_visibility(arg_visibility.tostring());
+        m_visibility_mask_definitions = m_visibility_mask_definitions | visibility_value;
         m_definitions.emplace_back(visibility_value, arg_sources.tostring());
     } else {
         luaL_error(L,

@@ -559,8 +559,8 @@ void Project::bind_add_global_compile_options(lua_State* L) {
     } else if (val_str == "C++") {
         vec = &s_global_cpp_compile_flags;
     } else if (val_str == "C/C++") {
-        vec  = &s_global_asm_compile_flags;
-        vec2 = &s_global_c_compile_flags;
+        vec  = &s_global_c_compile_flags;
+        vec2 = &s_global_cpp_compile_flags;
     } else if (val_str == "ASM") {
         vec = &s_global_asm_compile_flags;
     }

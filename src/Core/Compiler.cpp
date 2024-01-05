@@ -158,6 +158,8 @@ void Compiler::load_dependency_flags(std::vector<std::string>& flags, const std:
         flags.push_back("/Fo");           // Write to specific file
         flags.push_back(out_path.string());
     } else if (get_type() == Type::IAR) {
+        if (get_language() == Language::ASM)
+            return;
         flags.push_back("--dependencies"); // Write to specific file
         flags.push_back(out_path.string() + ".dep");
     } else {
@@ -179,9 +181,10 @@ void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
         flags.push_back("/Fo"); // Write to specific file
         flags.push_back(obj_path.string());
     } else if (get_type() == Type::IAR) {
-        flags.push_back("--silent"); // Do not generate compile spam
+        if (get_language() != Language::ASM)
+            flags.push_back("--silent"); // Do not generate compile spam
         flags.push_back(source_path.string());
-        flags.push_back("-o");       // Write to specific file
+        flags.push_back("-o");           // Write to specific file
         flags.push_back(obj_path.string() + ".o");
     } else {
         throw std::runtime_error("Unsupported compiler");
@@ -195,11 +198,11 @@ void Compiler::push_include_path(std::vector<std::string>& flags, const std::str
     }
 
     if (get_type() == Type::GNU || get_type() == Type::CLANG || get_type() == Type::IAR) {
-        flags.push_back("-I" + include_directory);
+        flags.push_back("-I" + inc);
     } else if (get_type() == Type::MSVC) {
         // do this for MSVC
         flags.push_back("/I");
-        flags.push_back(include_directory);
+        flags.push_back(inc);
     } else {
         throw std::runtime_error("Unsupported compiler");
     }
