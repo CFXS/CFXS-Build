@@ -231,11 +231,10 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
         const auto obj_path    = output_dir / (e.path.filename().string() + std::string(compiler->get_object_extension()));
         const auto dep_path    = output_dir / (e.path.filename().string() + std::string(compiler->get_dependency_extension()));
 
-        // // get source modified time
-        // if (!std::filesystem::exists(e.path)) {
-        //     Log.error("[{}] source \"{}\" does not exist", get_name(), e.path);
-        //     throw std::runtime_error("File not found");
-        // }
+        // initialize output directory for temp and build files
+        if (!std::filesystem::exists(output_dir)) {
+            std::filesystem::create_directories(output_dir);
+        }
 
         bool need_build = false;
 
@@ -243,7 +242,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             !std::filesystem::exists(obj_path)) {
             need_build = true;
             // create and write modify empty file ts_temp
-            // s_filesystem_mutex.lock();
+            s_filesystem_mutex.lock();
             try {
                 std::ofstream ts_temp_file(ts_temp);
                 ts_temp_file.close();
@@ -253,7 +252,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                 Log.error("[{}] Failed to create timestamp file at \"{}\": {}", get_name(), ts_temp, e.what());
                 throw std::runtime_error("Failed to create timestamp file");
             }
-            // s_filesystem_mutex.unlock();
+            s_filesystem_mutex.unlock();
         } else {
             auto src_modified_time     = std::filesystem::last_write_time(e.path);  // source file
             auto ts_mark_modified_time = std::filesystem::last_write_time(ts_temp); // modified time tracker
@@ -263,19 +262,19 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             if (source_modified) {
                 need_build = true;
                 // set ts_temp write time to src_modified_time
-                // s_filesystem_mutex.lock();
+                s_filesystem_mutex.lock();
                 try {
                     std::filesystem::last_write_time(ts_temp, src_modified_time);
                 } catch (const std::exception& e) {
                     Log.error("[{}] Failed to set timestamp file \"{}\" time: {}", get_name(), ts_temp, e.what());
                     throw std::runtime_error("Failed to set timestamp file time");
                 }
-                // s_filesystem_mutex.unlock();
+                s_filesystem_mutex.unlock();
             } else {
                 const auto ts_dep_modified_time = std::filesystem::last_write_time(ts_dep_temp);
 
                 // iterate deps
-                // read dep_path line by line
+                // parse dep_path file
                 compiler->iterate_dependency_file(dep_path, [&](std::string_view path) -> bool {
                     if (e.path == path)
                         return false; // ignore "this" compile unit
@@ -285,7 +284,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                     auto dependency_modified_time = std::filesystem::last_write_time(path);
                     if (dependency_modified_time > ts_dep_modified_time) { // always check to write latest change
                         // set ts_temp write time to src_modified_time
-                        // s_filesystem_mutex.lock();
+                        s_filesystem_mutex.lock();
                         try {
                             // std::filesystem::last_write_time(ts_dep_temp, dependency_modified_time);
                             std::ofstream ts_dep_temp_file(ts_dep_temp);
@@ -294,7 +293,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                             Log.error("[{}] Failed to set timestamp file \"{}\" time: {}", get_name(), ts_temp, e.what());
                             throw std::runtime_error("Failed to set timestamp file time");
                         }
-                        // s_filesystem_mutex.unlock();
+                        s_filesystem_mutex.unlock();
                         need_build = true;
                         return true; // break
                     }

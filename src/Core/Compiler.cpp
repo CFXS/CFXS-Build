@@ -306,7 +306,7 @@ void Compiler::iterate_dependency_file(const std::filesystem::path& dependency_f
         */
         std::string line;
         while (std::getline(dep_file, line)) {
-            if (line.starts_with("C:\\Program Files (x86)\\IAR Systems")) { // IAR system includes
+            if (line.starts_with("C:\\Program Files (x86)\\IAR Systems")) { // Skip IAR system includes
                 continue;
             }
             const bool should_return = callback(line);
