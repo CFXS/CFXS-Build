@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+#include <thread>
 #ifdef WINDOWS_BUILD
 #define _HAS_CXX17 1
 #endif
@@ -43,6 +45,19 @@ inline std::string get_program_version_string(const std::string& location) {
         throw std::runtime_error("Failed to get program version string");
     }
 
+    while (subprocess_alive(&process)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    FILE* p_stdout = subprocess_stdout(&process);
+
+    // read all contents of p_stdout to std::string
+    std::string result;
+    char buf[256];
+    while (fgets(buf, sizeof(buf), p_stdout) != NULL) {
+        result += buf;
+    }
+
     int process_ret = -1;
     res             = subprocess_join(&process, &process_ret);
     if (res != 0) {
@@ -53,15 +68,6 @@ inline std::string get_program_version_string(const std::string& location) {
     if (process_ret < 0) {
         Log.error("[execute {}] Failed to get program version string of \"{}\"", process_ret, location);
         throw std::runtime_error("Failed to get program version string");
-    }
-
-    FILE* p_stdout = subprocess_stdout(&process);
-
-    // read all contents of p_stdout to std::string
-    std::string result;
-    char buf[256];
-    while (fgets(buf, sizeof(buf), p_stdout) != NULL) {
-        result += buf;
     }
 
     return result;
@@ -87,11 +93,8 @@ inline std::pair<int, std::string> execute_with_args(const std::string& cmd, con
         throw std::runtime_error("Failed to execute");
     }
 
-    int process_ret = -1;
-    res             = subprocess_join(&process, &process_ret);
-    if (res != 0) {
-        Log.error("[join {}] Failed to execute with args", res);
-        throw std::runtime_error("Failed to execute");
+    while (subprocess_alive(&process)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     FILE* p_stdout = subprocess_stdout(&process);
@@ -101,6 +104,13 @@ inline std::pair<int, std::string> execute_with_args(const std::string& cmd, con
     char buf[256];
     while (fgets(buf, sizeof(buf), p_stdout) != NULL) {
         result += buf;
+    }
+
+    int process_ret = -1;
+    res             = subprocess_join(&process, &process_ret);
+    if (res != 0) {
+        Log.error("[join {}] Failed to execute with args", res);
+        throw std::runtime_error("Failed to execute");
     }
 
     return {process_ret, result};
