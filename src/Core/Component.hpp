@@ -19,6 +19,11 @@ public:
         PUBLIC  = 1 << 1,
     };
 
+    struct SourceFilePath {
+        std::filesystem::path path;
+        bool is_external;
+    };
+
     template<typename T>
     struct ScopedValue {
         Visibility visibility;
@@ -68,6 +73,9 @@ public:
     Visibility get_visibility_mask_include_paths() const { return m_visibility_mask_include_paths; }
     Visibility get_visibility_mask_definitions() const { return m_visibility_mask_definitions; }
     Visibility get_visibility_mask_compile_options() const { return m_visibility_mask_compile_options; }
+
+private:
+    void load_source_file_paths(std::vector<SourceFilePath>& source_file_paths);
 
 private:
     Type m_type;

@@ -113,79 +113,10 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             src = std::filesystem::weakly_canonical(get_root_path() / src).string();
         }
     }
-
-    struct SourceFilePath {
-        std::filesystem::path path;
-        bool is_external;
-    };
     std::vector<SourceFilePath> source_file_paths;
 
     // Add requested sources to path vector
-    for (const auto& path : m_requested_sources) {
-        // if path contains wildcards
-        if (path.contains("*")) {
-            // currently the only valid wildcards are *.extension for current folder match or **.extension for recursive match
-            // This regex allows only *.ext or **.ext at the end of the path, no stars in the middle
-            const bool valid_wildcard = RegexUtils::is_valid_wildcard(path);
-
-            if (!valid_wildcard) {
-                Log.error("Invalid source wildcard: {}", path);
-                throw std::runtime_error("Invalid source wildcard");
-            }
-
-            const bool recursive_wildcard  = container_count(path, '*') == 2;
-            const auto file_path           = std::filesystem::path(path);
-            const bool is_inside_root_path = file_path.parent_path().string().starts_with(get_root_path().string());
-
-            // TODO: check if wildcard parent paths exist on filesystem
-            if (recursive_wildcard) {
-                if (!is_inside_root_path) {
-                    Log.error("[{}] Recursive add not available for external paths: {}", get_name(), file_path);
-                    throw std::runtime_error("External path recursion");
-                }
-
-                Log.trace("[{}] Recursively add {} sources from {}", get_name(), file_path.extension(), file_path.parent_path());
-
-                // recurse file_path.parent_path and add files to source_file_paths that match file_path.extension
-                for (const auto& entry : std::filesystem::recursive_directory_iterator(file_path.parent_path())) {
-                    if (entry.path().extension() == file_path.extension()) {
-                        source_file_paths.push_back({entry.path(), false});
-                    }
-                }
-            } else {
-                Log.trace("[{}] Add {} sources from {}", get_name(), file_path.extension(), file_path.parent_path());
-                // check all files in file_path.parent_path non recursively and add files to source_file_paths that match file_path.extension
-                for (const auto& entry : std::filesystem::directory_iterator(file_path.parent_path())) {
-                    if (entry.path().extension() == file_path.extension()) {
-                        source_file_paths.push_back({entry.path(), !is_inside_root_path});
-                    }
-                }
-            }
-        } else {
-            // source is not in wildcard form
-            if (std::filesystem::exists(path)) {
-                const bool is_inside_root_path = std::filesystem::path(path).parent_path().string().starts_with(get_root_path().string());
-                source_file_paths.push_back({path, !is_inside_root_path});
-            } else {
-                Log.error("[{}] Source \"{}\" not found", get_name(), path);
-                throw std::runtime_error("Source not found");
-            }
-        }
-    }
-
-    // remove source file paths that contain the strings in filter list
-    for (const auto& filter : m_requested_source_filters) {
-        source_file_paths.erase(std::remove_if(source_file_paths.begin(),
-                                               source_file_paths.end(),
-                                               [&](const auto& sfp) {
-                                                   const bool filtered = sfp.path.string().contains(filter);
-                                                   if (filtered) {
-                                                       Log.trace("Remove {} [filter = {}]", sfp.path, filter);
-                                                   }
-                                                   return filtered;
-                                               }),
-                                source_file_paths.end());
-    }
+    load_source_file_paths(source_file_paths);
 
     // iterate all sources
     for (const auto& e : source_file_paths) {
@@ -371,14 +302,6 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
         }
         if (opts) {
             for (const auto& val : *opts) {
-                if (compiler == asm_compiler.get()) {
-                    if (val == "--vectorize") {
-                        Log.error("why the fuck did i get vectorized");
-                        for (auto f : s_global_asm_compile_flags) {
-                            Log.critical(f);
-                        }
-                    }
-                }
                 prepare_and_push_flags(compile_entry->compile_args, val);
             }
         }
@@ -525,6 +448,75 @@ void Component::build() {
     const auto build_t2 = std::chrono::high_resolution_clock::now();
     auto build_ms       = std::chrono::duration_cast<std::chrono::milliseconds>(build_t2 - build_t1).count();
     Log.trace("Build done in {:.3}s", build_ms / 1000.0f);
+}
+
+void Component::load_source_file_paths(std::vector<SourceFilePath>& source_file_paths) {
+    // Add requested paths
+    for (const auto& path : m_requested_sources) {
+        // if path contains wildcards
+        if (path.contains("*")) {
+            // currently the only valid wildcards are *.extension for current folder match or **.extension for recursive match
+            // This regex allows only *.ext or **.ext at the end of the path, no stars in the middle
+            const bool valid_wildcard = RegexUtils::is_valid_wildcard(path);
+
+            if (!valid_wildcard) {
+                Log.error("Invalid source wildcard: {}", path);
+                throw std::runtime_error("Invalid source wildcard");
+            }
+
+            const bool recursive_wildcard  = container_count(path, '*') == 2;
+            const auto file_path           = std::filesystem::path(path);
+            const bool is_inside_root_path = file_path.parent_path().string().starts_with(get_root_path().string());
+
+            // TODO: check if wildcard parent paths exist on filesystem
+            if (recursive_wildcard) {
+                if (!is_inside_root_path) {
+                    Log.error("[{}] Recursive add not available for external paths: {}", get_name(), file_path);
+                    throw std::runtime_error("External path recursion");
+                }
+
+                Log.trace("[{}] Recursively add {} sources from {}", get_name(), file_path.extension(), file_path.parent_path());
+
+                // recurse file_path.parent_path and add files to source_file_paths that match file_path.extension
+                for (const auto& entry : std::filesystem::recursive_directory_iterator(file_path.parent_path())) {
+                    if (entry.path().extension() == file_path.extension()) {
+                        source_file_paths.push_back({entry.path(), false});
+                    }
+                }
+            } else {
+                Log.trace("[{}] Add {} sources from {}", get_name(), file_path.extension(), file_path.parent_path());
+                // check all files in file_path.parent_path non recursively and add files to source_file_paths that match file_path.extension
+                for (const auto& entry : std::filesystem::directory_iterator(file_path.parent_path())) {
+                    if (entry.path().extension() == file_path.extension()) {
+                        source_file_paths.push_back({entry.path(), !is_inside_root_path});
+                    }
+                }
+            }
+        } else {
+            // source is not in wildcard form
+            if (std::filesystem::exists(path)) {
+                const bool is_inside_root_path = std::filesystem::path(path).parent_path().string().starts_with(get_root_path().string());
+                source_file_paths.push_back({path, !is_inside_root_path});
+            } else {
+                Log.error("[{}] Source \"{}\" not found", get_name(), path);
+                throw std::runtime_error("Source not found");
+            }
+        }
+    }
+
+    // Remove source file paths that contain the strings in filter list
+    for (const auto& filter : m_requested_source_filters) {
+        source_file_paths.erase(std::remove_if(source_file_paths.begin(),
+                                               source_file_paths.end(),
+                                               [&](const auto& sfp) {
+                                                   const bool filtered = sfp.path.string().contains(filter);
+                                                   if (filtered) {
+                                                       Log.trace("Remove {} [filter = {}]", sfp.path, filter);
+                                                   }
+                                                   return filtered;
+                                               }),
+                                source_file_paths.end());
+    }
 }
 
 void Component::bind_add_sources(lua_State* L) {
