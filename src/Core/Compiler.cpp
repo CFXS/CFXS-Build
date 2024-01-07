@@ -1,6 +1,7 @@
 #include "Compiler.hpp"
 #include <CommandUtils.hpp>
 #include <stdexcept>
+#include <fstream>
 
 static std::string to_string(Compiler::Standard standard) {
     switch (standard) {
@@ -270,4 +271,51 @@ std::string_view Compiler::get_dependency_extension() const {
     }
 
     return "";
+}
+
+void Compiler::iterate_dependency_file(const std::filesystem::path& dependency_file,
+                                       const std::function<bool(std::string_view)>& callback) const {
+    std::ifstream dep_file(dependency_file);
+
+    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+        /* Format:
+            object/path/obj.o: \
+            dep/path/a.cpp \
+            dep/path/b.hpp \
+            dep/path/c.hpp \
+        */
+        // Format includes the compiled cpp file as well.
+        // TODO: don't check the actual compiled file - other cpp files should be ok to check
+        std::string line;
+        std::getline(dep_file, line); // skip first line
+        while (std::getline(dep_file, line)) {
+            // trim line spaces from beginning and remove potential " \" at the end of the line
+            const auto last_backslash = line.find_last_of('\\');
+            std::string_view line_sv(line.data() + line.find_first_not_of(' '),
+                                     line.data() + (last_backslash != std::string::npos ? (last_backslash - 1) : line.length()));
+
+            const bool should_return = callback(line_sv);
+            if (should_return)
+                return;
+        }
+    } else if (get_type() == Type::IAR) {
+        /* Format:
+            dep/path/a.hpp
+            dep/path/b.hpp
+            dep/path/c.hpp
+        */
+        std::string line;
+        while (std::getline(dep_file, line)) {
+            if (line.starts_with("C:\\Program Files (x86)\\IAR Systems")) { // IAR system includes
+                continue;
+            }
+            const bool should_return = callback(line);
+            if (should_return)
+                return;
+        }
+    } else if (get_type() == Type::MSVC) {
+        throw std::runtime_error("Not implemented");
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
 }

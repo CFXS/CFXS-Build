@@ -33,6 +33,9 @@ public:
     /// Load flags for compile definitions
     void push_compile_definition(std::vector<std::string>& flags, const std::string& compile_definition) const;
 
+    /// Parse + iterate dependency file
+    void iterate_dependency_file(const std::filesystem::path& dependency_file, const std::function<bool(std::string_view)>& callback) const;
+
     std::string_view get_object_extension() const;
     std::string_view get_dependency_extension() const;
 

@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
         }
 
         auto parallel_param = args.get<std::string>("--parallel");
-        for (int i = 1; i <= std::thread::hardware_concurrency(); i++) {
+        for (uint32_t i = 1; i <= std::thread::hardware_concurrency(); i++) {
             if (parallel_param == std::to_string(i)) {
                 s_number_of_worker_threads = i;
                 Log.info("Set parallel threads to {}", i);

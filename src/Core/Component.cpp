@@ -276,17 +276,13 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
 
                 // iterate deps
                 // read dep_path line by line
-                std::ifstream dep_file(dep_path);
-                std::string line;
-                while (std::getline(dep_file, line)) {
-                    if (compiler->get_type() == Compiler::Type::IAR)
-                        if (line.starts_with("C:\\Program Files (x86)\\IAR Systems")) { // IAR system includes
-                            continue;
-                        }
-                    if (!std::filesystem::exists(line))
-                        continue;
+                compiler->iterate_dependency_file(dep_path, [&](std::string_view path) -> bool {
+                    if (e.path == path)
+                        return false; // ignore "this" compile unit
+                    if (!std::filesystem::exists(path))
+                        return false;
                     // check if dep file is newer than obj file
-                    auto dependency_modified_time = std::filesystem::last_write_time(line);
+                    auto dependency_modified_time = std::filesystem::last_write_time(path);
                     if (dependency_modified_time > ts_dep_modified_time) { // always check to write latest change
                         // set ts_temp write time to src_modified_time
                         // s_filesystem_mutex.lock();
@@ -300,9 +296,11 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                         }
                         // s_filesystem_mutex.unlock();
                         need_build = true;
-                        break;
+                        return true; // break
                     }
-                }
+
+                    return false; // dont break
+                });
             }
         }
 
