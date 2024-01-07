@@ -1,4 +1,5 @@
 set_linker("arm-none-eabi-ld")
+set_archiver("arm-none-eabi-ar")
 set_c_compiler("arm-none-eabi-gcc", "11")
 set_cpp_compiler("arm-none-eabi-g++", "20")
 set_asm_compiler("arm-none-eabi-gcc")

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <functional>
 #include <LuaBridge/LuaBridge.h>
+#include "Core/Archiver.hpp"
 #include "Core/Component.hpp"
 #include "Core/GIT.hpp"
 #include "lauxlib.h"
@@ -31,6 +32,7 @@ std::shared_ptr<Compiler> s_c_compiler;
 std::shared_ptr<Compiler> s_cpp_compiler;
 std::shared_ptr<Compiler> s_asm_compiler;
 std::shared_ptr<Linker> s_linker;
+std::shared_ptr<Archiver> s_archiver;
 
 std::vector<std::string> s_global_c_compile_flags;
 std::vector<std::string> s_global_cpp_compile_flags;
@@ -117,11 +119,42 @@ void Project::configure() {
             throw std::runtime_error("Failed to execute script");
         } else {
             for (auto& comp : s_components) {
-                comp->configure(s_c_compiler, s_cpp_compiler, s_asm_compiler, s_linker);
+                comp->configure(s_c_compiler, s_cpp_compiler, s_asm_compiler, s_linker, s_archiver);
             }
         }
     } catch (const std::runtime_error& e) {
         throw e;
+    }
+
+    // create single compile_commands for all components in s_project_path
+    if (GlobalConfig::generate_compile_commands()) {
+        std::string compile_commands;
+        for (const auto& comp : s_components) {
+            for (const auto& ce : comp->get_compile_entries()) {
+                const auto& source_entry = *ce->source_entry;
+                compile_commands += "{\n";
+                compile_commands += ("    \"directory\": \"" + source_entry.get_output_directory().string() + "\",\n");
+                compile_commands +=
+                    ("    \"command\": \"" + ce->compiler->get_location() + " " + container_to_string(ce->compile_args) + "\",\n");
+                compile_commands += ("    \"file\": \"" + source_entry.get_source_file_path().string() + "\"\n");
+                compile_commands += ("},\n");
+            }
+        }
+        if (compile_commands.length()) {
+            // remove trailing comma
+            compile_commands.pop_back();
+            compile_commands.pop_back();
+        }
+        std::ofstream compile_commands_file(s_project_path / "compile_commands.json");
+        if (compile_commands_file.is_open()) {
+            compile_commands_file << "[\n";
+            compile_commands_file << compile_commands;
+            compile_commands_file << "\n]";
+            compile_commands_file.close();
+        } else {
+            Log.error("Failed to open \"{}\" for writing", s_project_path / "compile_commands.json");
+            throw std::runtime_error("Failed to open compile_commands.json for writing");
+        }
     }
 
     const auto t2 = std::chrono::high_resolution_clock::now();
@@ -244,6 +277,7 @@ void Project::initialize_lua() {
     bridge.addFunction<void, const std::string&>("set_asm_compiler", TO_FUNCTION(bind_set_asm_compiler));
 
     bridge.addFunction<void, const std::string&>("set_linker", TO_FUNCTION(bind_set_linker));
+    bridge.addFunction<void, const std::string&>("set_archiver", TO_FUNCTION(bind_set_archiver));
 
     bridge.addFunction<void, lua_State*>("import", TO_FUNCTION(bind_import));
     bridge.addFunction<void, lua_State*>("import_git", TO_FUNCTION(bind_import_git));
@@ -418,6 +452,10 @@ void Project::bind_import_git(lua_State* L) {
 // Linker config
 void Project::bind_set_linker(const std::string& linker) {
     s_linker = std::make_shared<Linker>(linker); //
+}
+
+void Project::bind_set_archiver(const std::string& ar) {
+    s_archiver = std::make_shared<Archiver>(ar); //
 }
 
 // Component creation

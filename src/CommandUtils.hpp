@@ -126,3 +126,15 @@ template<ContainerObject T, typename U>
 auto container_count(const T& cont, const U& val) {
     return std::count(cont.begin(), cont.end(), val);
 }
+
+// container_to_string
+template<ContainerObject T>
+std::string container_to_string(const T& cont) {
+    std::string result;
+    for (const auto& e : cont) {
+        result += e + " ";
+    }
+    if (result.length())
+        result.pop_back(); // remove trailing space
+    return result;
+}

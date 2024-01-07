@@ -12,6 +12,7 @@
                 // "--clean=CFXS-Build-Test",
                 "--build=*",
                 "--skip-git-import-update",
+                "-c",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

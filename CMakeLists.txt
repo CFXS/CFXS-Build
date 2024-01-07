@@ -16,6 +16,7 @@ set(sources
     "src/Core/Component.cpp"
     "src/Core/Linker.cpp"
     "src/Core/Compiler.cpp"
+    "src/Core/Archiver.cpp"
     "src/Core/SourceEntry.cpp"
     "src/Core/LuaBackend.cpp"
     "src/Core/RegexUtils.cpp"

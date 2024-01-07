@@ -38,6 +38,9 @@ int GlobalConfig::number_of_worker_threads() {
     }
 }
 
+static bool s_generate_compile_commands = false;
+bool GlobalConfig::generate_compile_commands() { return s_generate_compile_commands; }
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv) {
@@ -79,6 +82,10 @@ int main(int argc, char **argv) {
         .help("Specify number of parallel threads to use (not specified or 0 = all)") //
         .nargs(1);                                                                    //
 
+    args.add_argument("-c")                     //
+        .help("Generate compile_commands.json") //
+        .flag();                                //
+
     try {
         args.parse_args(argc, argv);
     } catch (const std::runtime_error &err) {
@@ -111,6 +118,10 @@ int main(int argc, char **argv) {
     try {
         if (args["--skip-git-import-update"] == true) {
             s_config_skip_git_import_update = true;
+        }
+
+        if (args["-c"] == true) {
+            s_generate_compile_commands = true;
         }
 
         auto parallel_param = args.get<std::string>("--parallel");

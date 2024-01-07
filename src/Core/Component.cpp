@@ -8,6 +8,7 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include "Core/Archiver.hpp"
 #include "Core/Compiler.hpp"
 #include "Core/Linker.hpp"
 #include "Core/SourceEntry.hpp"
@@ -104,7 +105,10 @@ static void try_merge_lib_content(Compiler* compiler,
 void Component::configure(std::shared_ptr<Compiler> c_compiler,
                           std::shared_ptr<Compiler> cpp_compiler,
                           std::shared_ptr<Compiler> asm_compiler,
-                          [[maybe_unused]] std::shared_ptr<Linker> linker) {
+                          std::shared_ptr<Linker> linker,
+                          std::shared_ptr<Archiver> archiver) {
+    m_linker   = linker;
+    m_archiver = archiver;
     Log.info("Configure [{}]", get_name());
     const auto configure_t1 = std::chrono::high_resolution_clock::now();
 
@@ -117,6 +121,19 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
 
     // Add requested sources to path vector
     load_source_file_paths(source_file_paths);
+
+    bool have_linked_output = false;
+    if (get_type() == Type::LIBRARY) {
+        const auto library_path = get_local_output_directory() / (get_name() + std::string(m_archiver->get_archive_extension()));
+        if (std::filesystem::exists(library_path)) {
+            have_linked_output = true;
+        }
+    } else {
+        const auto library_path = get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension()));
+        if (std::filesystem::exists(library_path)) {
+            have_linked_output = true;
+        }
+    }
 
     // iterate all sources
     for (const auto& e : source_file_paths) {
@@ -167,7 +184,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             std::filesystem::create_directories(output_dir);
         }
 
-        bool need_build = false;
+        bool need_build = !have_linked_output;
 
         if (!std::filesystem::exists(ts_temp) || !std::filesystem::exists(ts_dep_temp) || !std::filesystem::exists(dep_path) ||
             !std::filesystem::exists(obj_path)) {
@@ -344,6 +361,15 @@ static std::pair<int, std::string> s_compile(const std::unique_ptr<CompileEntry>
     return execute_with_args(ce->compiler->get_location(), ce->compile_args);
 }
 
+void Component::iterate_libs(const Component* comp, std::vector<std::string>& list) {
+    for (const auto* lib : comp->get_libraries()) {
+        if (lib->get_type() == Type::LIBRARY) {
+            list.push_back(lib->get_local_output_directory() / (lib->get_name() + std::string(lib->m_archiver->get_archive_extension())));
+            iterate_libs(lib, list);
+        }
+    }
+}
+
 void Component::build() {
     if (get_compile_entries().empty())
         return;
@@ -443,6 +469,52 @@ void Component::build() {
 
     if (error_reported) {
         throw std::runtime_error("Compilation failed");
+    }
+
+    Log.info("Link [{}]", get_name());
+    // Linking
+    if (get_type() == Type::LIBRARY) {
+        // Create link command and execute to link all compile_entries object files into library file
+        std::vector<std::string> ar_flags;
+        m_archiver->load_archive_flags(ar_flags,
+                                       get_local_output_directory() / (get_name() + std::string(m_archiver->get_archive_extension())));
+        for (const auto& ce : get_compile_entries()) {
+            m_archiver->load_input_flags(
+                ar_flags,
+                ce->source_entry->get_output_directory() /
+                    (ce->source_entry->get_source_file_path().filename().string() + std::string(ce->compiler->get_object_extension())));
+        }
+        const auto [ret, msg] = execute_with_args(m_archiver->get_location(), ar_flags);
+        if (ret != 0) {
+            Log.error("Failed to link [{}]:\n{}", get_name(), msg);
+            // throw std::runtime_error("Failed to link");
+        }
+    } else {
+        // recursively iterate all libraries of get_libraries() and add .a paths to vector
+        std::vector<std::string> library_paths;
+        iterate_libs(this, library_paths);
+
+        // create .elf file from all lib files and .o files from this Component
+        std::vector<std::string> link_flags;
+        m_linker->load_link_flags(link_flags,
+                                  get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension())));
+        for (const auto& ce : get_compile_entries()) {
+            m_linker->load_input_flags(
+                link_flags,
+                ce->source_entry->get_output_directory() /
+                    (ce->source_entry->get_source_file_path().filename().string() + std::string(ce->compiler->get_object_extension())));
+        }
+        for (const auto& lib : library_paths) {
+            m_linker->load_input_flags(link_flags, lib);
+        }
+        for (const auto& flag : m_linker_flags) {
+            link_flags.push_back(flag);
+        }
+        const auto [ret, msg] = execute_with_args(m_linker->get_location(), link_flags);
+        if (ret != 0) {
+            Log.error("Failed to link [{}]:\n{}", get_name(), msg);
+            throw std::runtime_error("Failed to link");
+        }
     }
 
     const auto build_t2 = std::chrono::high_resolution_clock::now();

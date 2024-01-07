@@ -38,3 +38,45 @@ Linker::Linker(const std::string& linker) : m_location(linker) {
 
     Log.trace(" - Type: {}", to_string(get_type()));
 }
+
+void Linker::load_link_flags(std::vector<std::string>& args, const std::string& output_file) const {
+    switch (get_type()) {
+        case Type::GNU:
+            args.push_back("-o");
+            args.push_back(output_file);
+            break;
+        case Type::CLANG:
+            args.push_back("-o");
+            args.push_back(output_file);
+            break;
+        case Type::MSVC:
+            args.push_back("/OUT:");
+            args.push_back(output_file);
+            break;
+        // case Type::IAR:
+        //     args.push_back("-o");
+        //     args.push_back(output_file);
+        //     break;
+        default: Log.error("Linker \"{}\" is not supported", get_location()); throw std::runtime_error("Linker not supported");
+    }
+}
+
+void Linker::load_input_flags(std::vector<std::string>& args, const std::string& input_object) const {
+    switch (get_type()) {
+        case Type::GNU: args.push_back(input_object); break;
+        case Type::CLANG: args.push_back(input_object); break;
+        case Type::MSVC: args.push_back(input_object); break;
+        case Type::IAR: args.push_back(input_object); break;
+        default: Log.error("Linker \"{}\" is not supported", get_location()); throw std::runtime_error("Linker not supported");
+    }
+}
+
+std::string_view Linker::get_executable_extension() const {
+    switch (get_type()) {
+        case Type::GNU: return ".elf";
+        case Type::CLANG: return ".elf";
+        // case Type::MSVC: return ".lib";
+        case Type::IAR: return ".elf";
+        default: Log.error("Linker \"{}\" is not supported", get_location()); throw std::runtime_error("Linker not supported");
+    }
+}

@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+#include "Core/Archiver.hpp"
 #include "SourceEntry.hpp"
 #include "Compiler.hpp"
 #include "Linker.hpp"
@@ -48,7 +49,8 @@ public:
     void configure(std::shared_ptr<Compiler> c_compiler,
                    std::shared_ptr<Compiler> cpp_compiler,
                    std::shared_ptr<Compiler> asm_compiler,
-                   std::shared_ptr<Linker> linker);
+                   std::shared_ptr<Linker> linker,
+                   std::shared_ptr<Archiver> archiver);
     void build();
     void clean();
 
@@ -77,6 +79,8 @@ public:
 private:
     void load_source_file_paths(std::vector<SourceFilePath>& source_file_paths);
 
+    static void iterate_libs(const Component* comp, std::vector<std::string>& list);
+
 private:
     Type m_type;
     std::string m_name;
@@ -103,6 +107,8 @@ private:
     Visibility m_visibility_mask_compile_options = Visibility::NONE;
 
     // linker
+    std::shared_ptr<Archiver> m_archiver;
+    std::shared_ptr<Linker> m_linker;
     std::filesystem::path m_linker_script_path;
     std::vector<std::string> m_linker_flags;
 };
