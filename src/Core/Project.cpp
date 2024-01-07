@@ -134,8 +134,9 @@ void Project::build(const std::vector<std::string>& components) {
     const auto t1 = std::chrono::high_resolution_clock::now();
 
     if (std::find(components.begin(), components.end(), "*") != components.end()) {
-        for (auto& comp : s_components) {
-            comp->build();
+        // reverse iterate and build components (reverse will preserve linked/added dependency availability order)
+        for (auto it = s_components.rbegin(); it != s_components.rend(); ++it) {
+            (*it)->build();
         }
     } else {
         for (auto& c : components) {
