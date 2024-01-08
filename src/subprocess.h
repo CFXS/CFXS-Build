@@ -543,15 +543,18 @@ inline int subprocess_create_ex(const char *const commandLine[],
         }
     } else {
         if (SUBPROCESS_NULL != environment) {
+            printf("SUBPROCESS_NULL != environment\n");
             return -1;
         }
     }
 
     if (!CreatePipe(&rd, &wr, SUBPROCESS_PTR_CAST(LPSECURITY_ATTRIBUTES, &saAttr), 0)) {
+        printf("Failed to create pipe\n");
         return -1;
     }
 
     if (!SetHandleInformation(wr, handleFlagInherit, 0)) {
+        printf("Failed to set handle information\n");
         return -1;
     }
 
@@ -561,6 +564,7 @@ inline int subprocess_create_ex(const char *const commandLine[],
         out_process->stdin_file = _fdopen(fd, "wb");
 
         if (SUBPROCESS_NULL == out_process->stdin_file) {
+            printf("SUBPROCESS_NULL == out_process->stdin_file\n");
             return -1;
         }
     }
@@ -569,15 +573,18 @@ inline int subprocess_create_ex(const char *const commandLine[],
 
     if (options & subprocess_option_enable_async) {
         if (subprocess_create_named_pipe_helper(&rd, &wr)) {
+            printf("Failed to create named pipe\n");
             return -1;
         }
     } else {
         if (!CreatePipe(&rd, &wr, SUBPROCESS_PTR_CAST(LPSECURITY_ATTRIBUTES, &saAttr), 0)) {
+            printf("Failed to create pipe [location 2]\n");
             return -1;
         }
     }
 
     if (!SetHandleInformation(rd, handleFlagInherit, 0)) {
+        printf("Failed to set handle information [location 2]\n");
         return -1;
     }
 
@@ -587,6 +594,7 @@ inline int subprocess_create_ex(const char *const commandLine[],
         out_process->stdout_file = _fdopen(fd, "rb");
 
         if (SUBPROCESS_NULL == out_process->stdout_file) {
+            printf("SUBPROCESS_NULL == out_process->stdout_file\n");
             return -1;
         }
     }
@@ -599,15 +607,18 @@ inline int subprocess_create_ex(const char *const commandLine[],
     } else {
         if (options & subprocess_option_enable_async) {
             if (subprocess_create_named_pipe_helper(&rd, &wr)) {
+                printf("Failed to create named pipe helper\n");
                 return -1;
             }
         } else {
             if (!CreatePipe(&rd, &wr, SUBPROCESS_PTR_CAST(LPSECURITY_ATTRIBUTES, &saAttr), 0)) {
+                printf("Failed to create pipe [location 3]\n");
                 return -1;
             }
         }
 
         if (!SetHandleInformation(rd, handleFlagInherit, 0)) {
+            printf("Failed to set handle information [location 3]\n");
             return -1;
         }
 
@@ -617,6 +628,7 @@ inline int subprocess_create_ex(const char *const commandLine[],
             out_process->stderr_file = _fdopen(fd, "rb");
 
             if (SUBPROCESS_NULL == out_process->stderr_file) {
+                printf("SUBPROCESS_NULL == out_process->stderr_file\n");
                 return -1;
             }
         }
@@ -660,6 +672,7 @@ inline int subprocess_create_ex(const char *const commandLine[],
     commandLineCombined = SUBPROCESS_CAST(char *, _alloca(len));
 
     if (!commandLineCombined) {
+        printf("!commandLineCombined\n");
         return -1;
     }
 
@@ -698,16 +711,17 @@ inline int subprocess_create_ex(const char *const commandLine[],
     commandLineCombined[len] = '\0';
 
     if (!CreateProcessA(SUBPROCESS_NULL,
-                        commandLineCombined, // command line
-                        SUBPROCESS_NULL,     // process security attributes
-                        SUBPROCESS_NULL,     // primary thread security attributes
-                        1,                   // handles are inherited
-                        flags,               // creation flags
-                        used_environment,    // used environment
-                        SUBPROCESS_NULL,     // use parent's current directory
+                        commandLineCombined,             // command line
+                        SUBPROCESS_NULL,                 // process security attributes
+                        SUBPROCESS_NULL,                 // primary thread security attributes
+                        1,                               // handles are inherited
+                        flags,                           // creation flags
+                        used_environment,                // used environment
+                        SUBPROCESS_NULL,                 // use parent's current directory
                         SUBPROCESS_PTR_CAST(LPSTARTUPINFOA,
                                             &startInfo), // STARTUPINFO pointer
                         SUBPROCESS_PTR_CAST(LPPROCESS_INFORMATION, &processInfo))) {
+        printf("Failed to  create process\n");
         return -1;
     }
 

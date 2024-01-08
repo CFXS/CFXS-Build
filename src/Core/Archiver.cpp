@@ -40,34 +40,34 @@ Archiver::Archiver(const std::string& ar) : m_location(ar) {
     Log.trace(" - Type: {}", to_string(get_type()));
 }
 
-void Archiver::load_archive_flags(std::vector<std::string>& args, const std::string& output_file) const {
+void Archiver::load_archive_flags(std::vector<std::string>& args, const std::filesystem::path& output_file) const {
     switch (get_type()) {
         case Type::GNU:
             args.push_back("rcs");
-            args.push_back(output_file);
+            args.push_back(output_file.string());
             break;
         case Type::CLANG:
             args.push_back("-o");
-            args.push_back(output_file);
+            args.push_back(output_file.string());
             break;
         case Type::MSVC:
             args.push_back("/OUT:");
-            args.push_back(output_file);
+            args.push_back(output_file.string());
             break;
-        // case Type::IAR:
-        //     args.push_back("-o");
-        //     args.push_back(output_file);
-        //     break;
+        case Type::IAR:
+            args.push_back("-o");
+            args.push_back(output_file.string());
+            break;
         default: Log.error("Archiver \"{}\" is not supported", get_location()); throw std::runtime_error("Archiver not supported");
     }
 }
 
-void Archiver::load_input_flags(std::vector<std::string>& args, const std::string& input_object) const {
+void Archiver::load_input_flags(std::vector<std::string>& args, const std::filesystem::path& input_object) const {
     switch (get_type()) {
-        case Type::GNU: args.push_back(input_object); break;
-        case Type::CLANG: args.push_back(input_object); break;
-        case Type::MSVC: args.push_back(input_object); break;
-        case Type::IAR: args.push_back(input_object); break;
+        case Type::GNU: args.push_back(input_object.string()); break;
+        case Type::CLANG: args.push_back(input_object.string()); break;
+        case Type::MSVC: args.push_back(input_object.string()); break;
+        case Type::IAR: args.push_back(input_object.string()); break;
         default: Log.error("Archiver \"{}\" is not supported", get_location()); throw std::runtime_error("Archiver not supported");
     }
 }

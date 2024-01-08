@@ -37,7 +37,6 @@ inline std::string get_program_version_string(const std::string& location) {
     struct subprocess_s process;
     int res = subprocess_create(command_line,
                                 subprocess_option_combined_stdout_stderr | //
-                                    subprocess_option_enable_async |       //
                                     subprocess_option_search_user_path,    //
                                 &process);
     if (res != 0) {
@@ -61,14 +60,21 @@ inline std::string get_program_version_string(const std::string& location) {
     int process_ret = -1;
     res             = subprocess_join(&process, &process_ret);
     if (res != 0) {
+        subprocess_terminate(&process);
+        subprocess_destroy(&process);
         Log.error("[join {}] Failed to get program version string of \"{}\"", res, location);
         throw std::runtime_error("Failed to get program version string");
     }
 
     if (process_ret < 0) {
+        subprocess_terminate(&process);
+        subprocess_destroy(&process);
         Log.error("[execute {}] Failed to get program version string of \"{}\"", process_ret, location);
         throw std::runtime_error("Failed to get program version string");
     }
+
+    subprocess_terminate(&process);
+    subprocess_destroy(&process);
 
     return result;
 }
@@ -85,7 +91,6 @@ inline std::pair<int, std::string> execute_with_args(const std::string& cmd, con
     struct subprocess_s process;
     int res = subprocess_create(command_line.data(),
                                 subprocess_option_combined_stdout_stderr |                                      //
-                                    subprocess_option_enable_async |                                            //
                                     subprocess_option_search_user_path | subprocess_option_inherit_environment, //
                                 &process);
     if (res != 0) {
@@ -109,9 +114,14 @@ inline std::pair<int, std::string> execute_with_args(const std::string& cmd, con
     int process_ret = -1;
     res             = subprocess_join(&process, &process_ret);
     if (res != 0) {
+        subprocess_terminate(&process);
+        subprocess_destroy(&process);
         Log.error("[join {}] Failed to execute with args", res);
         throw std::runtime_error("Failed to execute");
     }
+
+    subprocess_terminate(&process);
+    subprocess_destroy(&process);
 
     return {process_ret, result};
 }

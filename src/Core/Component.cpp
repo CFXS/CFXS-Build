@@ -122,16 +122,16 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
     // Add requested sources to path vector
     load_source_file_paths(source_file_paths);
 
-    bool have_linked_output = false;
+    bool have_linked_output = true;
     if (get_type() == Type::LIBRARY) {
         const auto library_path = get_local_output_directory() / (get_name() + std::string(m_archiver->get_archive_extension()));
         if (std::filesystem::exists(library_path)) {
-            have_linked_output = true;
+            // have_linked_output = true;
         }
     } else {
         const auto library_path = get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension()));
         if (std::filesystem::exists(library_path)) {
-            have_linked_output = true;
+            // have_linked_output = true;
         }
     }
 
@@ -364,7 +364,9 @@ static std::pair<int, std::string> s_compile(const std::unique_ptr<CompileEntry>
 void Component::iterate_libs(const Component* comp, std::vector<std::string>& list) {
     for (const auto* lib : comp->get_libraries()) {
         if (lib->get_type() == Type::LIBRARY) {
-            list.push_back(lib->get_local_output_directory() / (lib->get_name() + std::string(lib->m_archiver->get_archive_extension())));
+            const auto lib_path =
+                lib->get_local_output_directory() / (lib->get_name() + std::string(lib->m_archiver->get_archive_extension()));
+            list.push_back(lib_path.string());
             iterate_libs(lib, list);
         }
     }
@@ -497,7 +499,8 @@ void Component::build() {
         // create .elf file from all lib files and .o files from this Component
         std::vector<std::string> link_flags;
         m_linker->load_link_flags(link_flags,
-                                  get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension())));
+                                  get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension())),
+                                  m_linker_script_path);
         for (const auto& ce : get_compile_entries()) {
             m_linker->load_input_flags(
                 link_flags,

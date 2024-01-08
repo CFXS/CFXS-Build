@@ -39,34 +39,48 @@ Linker::Linker(const std::string& linker) : m_location(linker) {
     Log.trace(" - Type: {}", to_string(get_type()));
 }
 
-void Linker::load_link_flags(std::vector<std::string>& args, const std::string& output_file) const {
+void Linker::load_link_flags(std::vector<std::string>& args,
+                             const std::filesystem::path& output_file,
+                             const std::filesystem::path& linker_script) const {
     switch (get_type()) {
         case Type::GNU:
             args.push_back("-o");
-            args.push_back(output_file);
+            args.push_back(output_file.string());
+            if (!linker_script.empty()) {
+                args.push_back("-T");
+                args.push_back(linker_script.string());
+            }
             break;
         case Type::CLANG:
             args.push_back("-o");
-            args.push_back(output_file);
+            args.push_back(output_file.string());
+            if (!linker_script.empty()) {
+                args.push_back("-T");
+                args.push_back(linker_script.string());
+            }
             break;
         case Type::MSVC:
             args.push_back("/OUT:");
-            args.push_back(output_file);
+            args.push_back(output_file.string());
             break;
-        // case Type::IAR:
-        //     args.push_back("-o");
-        //     args.push_back(output_file);
-        //     break;
+        case Type::IAR:
+            args.push_back("-o");
+            args.push_back(output_file.string());
+            if (!linker_script.empty()) {
+                args.push_back("--config");
+                args.push_back(linker_script.string());
+            }
+            break;
         default: Log.error("Linker \"{}\" is not supported", get_location()); throw std::runtime_error("Linker not supported");
     }
 }
 
-void Linker::load_input_flags(std::vector<std::string>& args, const std::string& input_object) const {
+void Linker::load_input_flags(std::vector<std::string>& args, const std::filesystem::path& input_object) const {
     switch (get_type()) {
-        case Type::GNU: args.push_back(input_object); break;
-        case Type::CLANG: args.push_back(input_object); break;
-        case Type::MSVC: args.push_back(input_object); break;
-        case Type::IAR: args.push_back(input_object); break;
+        case Type::GNU: args.push_back(input_object.string()); break;
+        case Type::CLANG: args.push_back(input_object.string()); break;
+        case Type::MSVC: args.push_back(input_object.string()); break;
+        case Type::IAR: args.push_back(input_object.string()); break;
         default: Log.error("Linker \"{}\" is not supported", get_location()); throw std::runtime_error("Linker not supported");
     }
 }

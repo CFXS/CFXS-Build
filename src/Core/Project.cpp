@@ -132,11 +132,14 @@ void Project::configure() {
         for (const auto& comp : s_components) {
             for (const auto& ce : comp->get_compile_entries()) {
                 const auto& source_entry = *ce->source_entry;
+                const auto dir           = source_entry.get_output_directory().string();
+                const auto source        = source_entry.get_source_file_path().string();
+
                 compile_commands += "{\n";
-                compile_commands += ("    \"directory\": \"" + source_entry.get_output_directory().string() + "\",\n");
+                compile_commands += ("    \"directory\": \"" + dir + "\",\n");
                 compile_commands +=
                     ("    \"command\": \"" + ce->compiler->get_location() + " " + container_to_string(ce->compile_args) + "\",\n");
-                compile_commands += ("    \"file\": \"" + source_entry.get_source_file_path().string() + "\"\n");
+                compile_commands += ("    \"file\": \"" + source + "\"\n");
                 compile_commands += ("},\n");
             }
         }
@@ -145,14 +148,18 @@ void Project::configure() {
             compile_commands.pop_back();
             compile_commands.pop_back();
         }
-        std::ofstream compile_commands_file(s_project_path / "compile_commands.json");
+
+        std::regex regex(R"(\\)");
+        compile_commands = std::regex_replace(compile_commands, regex, R"(\\)");
+
+        std::ofstream compile_commands_file(s_project_path / "cfxs_compile_commands.json");
         if (compile_commands_file.is_open()) {
             compile_commands_file << "[\n";
             compile_commands_file << compile_commands;
             compile_commands_file << "\n]";
             compile_commands_file.close();
         } else {
-            Log.error("Failed to open \"{}\" for writing", s_project_path / "compile_commands.json");
+            Log.error("Failed to open \"{}\" for writing", s_project_path / "cfxs_compile_commands.json");
             throw std::runtime_error("Failed to open compile_commands.json for writing");
         }
     }
