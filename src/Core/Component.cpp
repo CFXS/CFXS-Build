@@ -27,6 +27,7 @@ extern std::vector<std::string> s_global_cpp_compile_flags;
 extern std::vector<std::string> s_global_definitions;
 extern std::vector<std::filesystem::path> s_global_include_paths;
 extern std::vector<std::string> s_global_asm_compile_flags;
+extern std::vector<std::string> s_global_link_flags;
 
 Component::Component(Type type,
                      const std::string& name,
@@ -473,46 +474,80 @@ void Component::build() {
         throw std::runtime_error("Compilation failed");
     }
 
-    Log.info("Link [{}]", get_name());
     // Linking
+
+    std::vector<std::filesystem::path> cmd_entries;
+
     if (get_type() == Type::LIBRARY) {
+        Log.info("Archive [{}]", get_name());
         // Create link command and execute to link all compile_entries object files into library file
         std::vector<std::string> ar_flags;
         m_archiver->load_archive_flags(ar_flags,
                                        get_local_output_directory() / (get_name() + std::string(m_archiver->get_archive_extension())));
         for (const auto& ce : get_compile_entries()) {
-            m_archiver->load_input_flags(
-                ar_flags,
+            cmd_entries.push_back(std::filesystem::weakly_canonical(
                 ce->source_entry->get_output_directory() /
-                    (ce->source_entry->get_source_file_path().filename().string() + std::string(ce->compiler->get_object_extension())));
+                (ce->source_entry->get_source_file_path().filename().string() + std::string(ce->compiler->get_object_extension()))));
         }
+        const auto arg_file = get_local_output_directory() / (get_name() + "_ar_args.txt");
+        // delete arg_file
+        if (std::filesystem::exists(arg_file)) {
+            std::filesystem::remove(arg_file);
+        }
+        // write cmd_entries line by line to arg file
+        std::ofstream stream_arg_file(arg_file);
+        for (const auto& ce : cmd_entries) {
+            stream_arg_file << ce.string() << " ";
+        }
+        stream_arg_file.close();
+        m_archiver->load_input_flags_ext_file(ar_flags, arg_file);
+
         const auto [ret, msg] = execute_with_args(m_archiver->get_location(), ar_flags);
         if (ret != 0) {
             Log.error("Failed to link [{}]:\n{}", get_name(), msg);
             // throw std::runtime_error("Failed to link");
         }
     } else {
+        Log.info("Link [{}]", get_name());
         // recursively iterate all libraries of get_libraries() and add .a paths to vector
         std::vector<std::string> library_paths;
         iterate_libs(this, library_paths);
 
         // create .elf file from all lib files and .o files from this Component
         std::vector<std::string> link_flags;
+
         m_linker->load_link_flags(link_flags,
                                   get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension())),
                                   m_linker_script_path);
         for (const auto& ce : get_compile_entries()) {
-            m_linker->load_input_flags(
-                link_flags,
+            cmd_entries.push_back(std::filesystem::weakly_canonical(
                 ce->source_entry->get_output_directory() /
-                    (ce->source_entry->get_source_file_path().filename().string() + std::string(ce->compiler->get_object_extension())));
+                (ce->source_entry->get_source_file_path().filename().string() + std::string(ce->compiler->get_object_extension()))));
         }
+        const auto arg_file = get_local_output_directory() / (get_name() + "_link_args.txt");
+        // delete arg_file
+        if (std::filesystem::exists(arg_file)) {
+            std::filesystem::remove(arg_file);
+        }
+        // write cmd_entries line by line to arg file
+        std::ofstream stream_arg_file(arg_file);
+        for (const auto& ce : cmd_entries) {
+            stream_arg_file << ce.string() << " ";
+        }
+        stream_arg_file.close();
+        m_linker->load_input_flags_ext_file(link_flags, arg_file);
+
         for (const auto& lib : library_paths) {
             m_linker->load_input_flags(link_flags, lib);
         }
         for (const auto& flag : m_linker_flags) {
-            link_flags.push_back(flag);
+            prepare_and_push_flags(link_flags, flag);
         }
+
+        for (const auto& flag : s_global_link_flags) {
+            prepare_and_push_flags(link_flags, flag);
+        }
+
         const auto [ret, msg] = execute_with_args(m_linker->get_location(), link_flags);
         if (ret != 0) {
             Log.error("Failed to link [{}]:\n{}", get_name(), msg);

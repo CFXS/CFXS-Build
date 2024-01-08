@@ -721,7 +721,7 @@ inline int subprocess_create_ex(const char *const commandLine[],
                         SUBPROCESS_PTR_CAST(LPSTARTUPINFOA,
                                             &startInfo), // STARTUPINFO pointer
                         SUBPROCESS_PTR_CAST(LPPROCESS_INFORMATION, &processInfo))) {
-        printf("Failed to  create process\n");
+        printf("Failed to create process: %d\n", GetLastError());
         return -1;
     }
 

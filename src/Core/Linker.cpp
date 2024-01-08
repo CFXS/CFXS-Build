@@ -85,6 +85,23 @@ void Linker::load_input_flags(std::vector<std::string>& args, const std::filesys
     }
 }
 
+void Linker::load_input_flags_ext_file(std::vector<std::string>& args, const std::filesystem::path& input_ext_file) const {
+    // commandline extension files
+    switch (get_type()) {
+        case Type::GNU:
+        case Type::CLANG: {
+            args.push_back("@" + input_ext_file.string());
+            break;
+        };
+        case Type::IAR: {
+            args.push_back("-f"); // command line extension without dependency
+            args.push_back(input_ext_file.string());
+            break;
+        };
+        default: throw std::runtime_error("Linker command line extension not supported");
+    }
+}
+
 std::string_view Linker::get_executable_extension() const {
     switch (get_type()) {
         case Type::GNU: return ".elf";

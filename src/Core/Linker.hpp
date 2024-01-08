@@ -15,6 +15,8 @@ public:
                          const std::filesystem::path& output_file,
                          const std::filesystem::path& linker_script = {}) const;
     void load_input_flags(std::vector<std::string>& args, const std::filesystem::path& input_object) const;
+    void load_input_flags_ext_file(std::vector<std::string>& args, const std::filesystem::path& input_ext_file) const;
+
     std::string_view get_executable_extension() const;
 
 private:

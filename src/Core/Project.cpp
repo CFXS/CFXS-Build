@@ -292,6 +292,7 @@ void Project::initialize_lua() {
     bridge.addFunction<void, lua_State*>("add_global_include_paths", TO_FUNCTION(bind_add_global_include_paths));
     bridge.addFunction<void, lua_State*>("add_global_definitions", TO_FUNCTION(bind_add_global_definitions));
     bridge.addFunction<void, lua_State*>("add_global_compile_options", TO_FUNCTION(bind_add_global_compile_options));
+    bridge.addFunction<void, lua_State*>("add_global_link_options", TO_FUNCTION(bind_add_global_link_options));
 
     bridge.addFunction<Component&, const std::string&>("create_executable", TO_FUNCTION(bind_create_executable));
     bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(bind_create_library));
@@ -638,6 +639,33 @@ void Project::bind_add_global_compile_options(lua_State* L) {
                    lua_typename(L, arg_sources.type()),
                    LuaBackend::get_script_help_string(LuaBackend::HelpEntry::GLOBAL_ADD_COMPILE_OPTIONS));
         throw std::runtime_error("Invalid compile options argument");
+    }
+
+    // remove duplicates
+    // std::sort(m_compile_options.begin(), m_compile_options.end());
+    // m_compile_options.erase(std::unique(m_compile_options.begin(), m_compile_options.end()), m_compile_options.end());
+}
+
+void Project::bind_add_global_link_options(lua_State* L) {
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(1, 0));
+    if (arg_sources.isTable()) {
+        for (int i = 1; i <= arg_sources.length(); i++) {
+            auto src = arg_sources.rawget(i);
+            if (src.isString()) {
+                s_global_link_flags.emplace_back(src.tostring());
+            } else {
+                luaL_error(L, "Link option #%d is not a string [%s]", i, lua_typename(L, src.type()));
+                throw std::runtime_error("Link option is not a string");
+            }
+        }
+    } else if (arg_sources.isString()) {
+        s_global_link_flags.emplace_back(arg_sources.tostring());
+    } else {
+        luaL_error(L,
+                   "Invalid link options argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_sources.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::GLOBAL_ADD_COMPILE_OPTIONS));
+        throw std::runtime_error("Invalid link options argument");
     }
 
     // remove duplicates
