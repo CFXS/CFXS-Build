@@ -17,7 +17,10 @@ private:
     static void initialize_lua();
 
 private: // .cfxs-build Lua bindings
-         // Import
+    // Global
+    static void bind_cfxs_print(const std::string& str);
+
+    // Import
     static void bind_import(lua_State* L);
     static void bind_import_git(lua_State* L);
 

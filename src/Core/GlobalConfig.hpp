@@ -16,4 +16,9 @@ public:
     // Default = false
     // Flag: -c
     static bool generate_compile_commands();
+
+    // Print trace log messages
+    // Default = false
+    // Flag: -t
+    static bool log_trace();
 };

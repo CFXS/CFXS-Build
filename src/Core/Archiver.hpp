@@ -13,7 +13,7 @@ public:
 
     void load_archive_flags(std::vector<std::string>& args, const std::filesystem::path& output_file) const;
     void load_input_flags(std::vector<std::string>& args, const std::filesystem::path& input_object) const;
-    void load_input_flags_ext_file(std::vector<std::string>& args, const std::filesystem::path& input_ext_file) const;
+    void load_input_flag_extension_file(std::vector<std::string>& args, const std::filesystem::path& input_ext_file) const;
     std::string_view get_archive_extension() const;
 
 private:

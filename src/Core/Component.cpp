@@ -6,8 +6,10 @@
 #include <filesystem>
 #include <CommandUtils.hpp>
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 #include <vector>
+#include <map>
 #include "Core/Archiver.hpp"
 #include "Core/Compiler.hpp"
 #include "Core/Linker.hpp"
@@ -16,18 +18,38 @@
 #include "RegexUtils.hpp"
 #include <fstream>
 
-#include <lua.hpp>
 #include "LuaBackend.hpp"
-#include "lauxlib.h"
 
-std::mutex s_filesystem_mutex;
+////////////////////////////////////
+// File modified cache
+static std::map<size_t, std::filesystem::file_time_type> s_file_modified_cache;
+static std::mutex s_mutex_file_modified_cache;
 
-extern std::vector<std::string> s_global_c_compile_flags;
-extern std::vector<std::string> s_global_cpp_compile_flags;
-extern std::vector<std::string> s_global_definitions;
-extern std::vector<std::filesystem::path> s_global_include_paths;
-extern std::vector<std::string> s_global_asm_compile_flags;
-extern std::vector<std::string> s_global_link_flags;
+std::filesystem::file_time_type get_file_modified_time(const std::filesystem::path& path) {
+    const auto hash = std::hash<std::string>{}(path.string());
+
+    std::lock_guard<std::mutex> _lock(s_mutex_file_modified_cache);
+
+    const auto it = s_file_modified_cache.find(hash);
+    if (it != s_file_modified_cache.end()) {
+        return it->second;
+    } else {
+        const auto mod_time         = std::filesystem::last_write_time(path);
+        s_file_modified_cache[hash] = mod_time;
+        return mod_time;
+    }
+}
+
+////////////////////////////////////
+
+static std::mutex s_filesystem_mutex;
+
+extern std::vector<std::string> e_global_c_compile_options;
+extern std::vector<std::string> e_global_cpp_compile_options;
+extern std::vector<std::string> e_global_definitions;
+extern std::vector<std::filesystem::path> e_global_include_paths;
+extern std::vector<std::string> e_global_asm_compile_options;
+extern std::vector<std::string> e_global_link_options;
 
 Component::Component(Type type,
                      const std::string& name,
@@ -123,19 +145,6 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
     // Add requested sources to path vector
     load_source_file_paths(source_file_paths);
 
-    bool have_linked_output = true;
-    if (get_type() == Type::LIBRARY) {
-        const auto library_path = get_local_output_directory() / (get_name() + std::string(m_archiver->get_archive_extension()));
-        if (std::filesystem::exists(library_path)) {
-            // have_linked_output = true;
-        }
-    } else {
-        const auto library_path = get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension()));
-        if (std::filesystem::exists(library_path)) {
-            // have_linked_output = true;
-        }
-    }
-
     // iterate all sources
     for (const auto& e : source_file_paths) {
         std::filesystem::path output_dir;
@@ -185,7 +194,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
             std::filesystem::create_directories(output_dir);
         }
 
-        bool need_build = !have_linked_output;
+        bool need_build = false;
 
         if (!std::filesystem::exists(ts_temp) || !std::filesystem::exists(ts_dep_temp) || !std::filesystem::exists(dep_path) ||
             !std::filesystem::exists(obj_path)) {
@@ -230,7 +239,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
                     if (!std::filesystem::exists(path))
                         return false;
                     // check if dep file is newer than obj file
-                    auto dependency_modified_time = std::filesystem::last_write_time(path);
+                    auto dependency_modified_time = get_file_modified_time(path);
                     if (dependency_modified_time > ts_dep_modified_time) { // always check to write latest change
                         // set ts_temp write time to src_modified_time
                         s_filesystem_mutex.lock();
@@ -276,7 +285,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
         const auto output_path = source_entry.get_output_directory() / source_entry.get_source_file_path().filename().string();
 
         // initial args are defined from the specific compiler implementation
-        compile_entry->compile_args = compiler->get_flags();
+        compile_entry->compile_args = compiler->get_options();
 
         compiler->load_compile_and_output_flags(
             compile_entry->compile_args, source_entry.get_source_file_path(), output_path); // compile and write object
@@ -303,19 +312,19 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
 
         // Merge global defs
         // include paths
-        for (const auto& val : s_global_include_paths) {
+        for (const auto& val : e_global_include_paths) {
             compiler->push_include_path(compile_entry->compile_args, val.string());
         }
         // compile definitions
-        for (const auto& val : s_global_definitions) {
+        for (const auto& val : e_global_definitions) {
             compiler->push_compile_definition(compile_entry->compile_args, val);
         }
         // append custom options
         std::vector<std::string>* opts = nullptr;
         switch (compiler->get_language()) {
-            case Compiler::Language::C: opts = &s_global_c_compile_flags; break;
-            case Compiler::Language::CPP: opts = &s_global_cpp_compile_flags; break;
-            case Compiler::Language::ASM: opts = &s_global_asm_compile_flags; break;
+            case Compiler::Language::C: opts = &e_global_c_compile_options; break;
+            case Compiler::Language::CPP: opts = &e_global_cpp_compile_options; break;
+            case Compiler::Language::ASM: opts = &e_global_asm_compile_options; break;
             default: opts = nullptr;
         }
         if (opts) {
@@ -374,39 +383,58 @@ void Component::iterate_libs(const Component* comp, std::vector<std::string>& li
 }
 
 void Component::build() {
-    if (get_compile_entries().empty())
-        return;
-
-    Log.info("Build [{}]", get_name());
     const auto build_t1 = std::chrono::high_resolution_clock::now();
 
-    auto workers = FunctionWorker::create_workers(GlobalConfig::number_of_worker_threads());
-
-    size_t compile_entry_seq_index = 0; // current source entry index to compile
-    int current_compiled_index     = 1; // currently compiled index (only for counting compiled files)
-    std::mutex mutex_compiled_index;    // mutex for output ordering
-    bool error_reported = false;        // a source has reported a failed compilation
-    bool compiling      = true;         // still trying to compile all sources
+    // return if have final build object and configure did not request source build
+    if (get_type() == Type::LIBRARY) {
+        const auto library_path = get_local_output_directory() / (get_name() + std::string(m_archiver->get_archive_extension()));
+        if (std::filesystem::exists(library_path)) {
+            if (get_compile_entries().empty())
+                return;
+        }
+    } else {
+        const auto exe_path = get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension()));
+        if (std::filesystem::exists(exe_path)) {
+            if (get_compile_entries().empty())
+                return;
+        }
+    }
 
     const auto& compile_entries = get_compile_entries();
 
-    while (compiling) {
-        if (compile_entry_seq_index == compile_entries.size()) {
-            // Worker assignment is done - exit compile loop and wait for workers to finish
-            compiling = false;
-        } else {
-            const int current_index = compile_entry_seq_index;
+    if (!compile_entries.empty()) {
+        Log.info("Build [{}]", get_name());
 
-            // loop through all workers and try to find one that is not busy
-            // break if compiling stopped/done
-            for (auto& w : workers) {
-                if (!compiling)
-                    break;
-                if (w->is_busy())
-                    continue;
+        auto workers = FunctionWorker::create_workers(GlobalConfig::number_of_worker_threads());
 
-                w->execute(
-                    [this, current_index, &mutex_compiled_index, &compile_entries, &current_compiled_index, &compiling, &error_reported]() {
+        size_t compile_entry_seq_index = 0; // current source entry index to compile
+        int current_compiled_index     = 1; // currently compiled index (only for counting compiled files)
+        std::mutex mutex_compiled_index;    // mutex for output ordering
+        bool error_reported = false;        // a source has reported a failed compilation
+        bool compiling      = true;         // still trying to compile all sources
+
+        while (compiling) {
+            if (compile_entry_seq_index == compile_entries.size()) {
+                // Worker assignment is done - exit compile loop and wait for workers to finish
+                compiling = false;
+            } else {
+                const int current_index = compile_entry_seq_index;
+
+                // loop through all workers and try to find one that is not busy
+                // break if compiling stopped/done
+                for (auto& w : workers) {
+                    if (!compiling)
+                        break;
+                    if (w->is_busy())
+                        continue;
+
+                    w->execute([this,
+                                current_index,
+                                &mutex_compiled_index,
+                                &compile_entries,
+                                &current_compiled_index,
+                                &compiling,
+                                &error_reported]() {
                         const auto& compile_entry = compile_entries[current_index];
 
                         const auto t_start    = std::chrono::high_resolution_clock::now();
@@ -455,28 +483,28 @@ void Component::build() {
                         }
                     });
 
-                compile_entry_seq_index++;
-                break;
+                    compile_entry_seq_index++;
+                    break;
+                }
+
+                std::this_thread::sleep_for(std::chrono::microseconds(100));
             }
-
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
         }
-    }
 
-    for (auto& w : workers) {
-        while (w->is_busy()) {
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
+        for (auto& w : workers) {
+            while (w->is_busy()) {
+                std::this_thread::sleep_for(std::chrono::microseconds(100));
+            }
+            w->terminate();
         }
-        w->terminate();
-    }
 
-    if (error_reported) {
-        throw std::runtime_error("Compilation failed");
+        if (error_reported) {
+            throw std::runtime_error("Compilation failed");
+        }
     }
 
     // Linking
-
-    std::vector<std::filesystem::path> cmd_entries;
+    std::vector<std::filesystem::path> obj_paths;
 
     if (get_type() == Type::LIBRARY) {
         Log.info("Archive [{}]", get_name());
@@ -485,7 +513,7 @@ void Component::build() {
         m_archiver->load_archive_flags(ar_flags,
                                        get_local_output_directory() / (get_name() + std::string(m_archiver->get_archive_extension())));
         for (const auto& ce : get_compile_entries()) {
-            cmd_entries.push_back(std::filesystem::weakly_canonical(
+            obj_paths.push_back(std::filesystem::weakly_canonical(
                 ce->source_entry->get_output_directory() /
                 (ce->source_entry->get_source_file_path().filename().string() + std::string(ce->compiler->get_object_extension()))));
         }
@@ -496,16 +524,17 @@ void Component::build() {
         }
         // write cmd_entries line by line to arg file
         std::ofstream stream_arg_file(arg_file);
-        for (const auto& ce : cmd_entries) {
-            stream_arg_file << ce.string() << " ";
+        for (const auto& ce : obj_paths) {
+            stream_arg_file << "\"" << ce.string() << "\""
+                            << " ";
         }
         stream_arg_file.close();
-        m_archiver->load_input_flags_ext_file(ar_flags, arg_file);
+        m_archiver->load_input_flag_extension_file(ar_flags, arg_file);
 
         const auto [ret, msg] = execute_with_args(m_archiver->get_location(), ar_flags);
         if (ret != 0) {
-            Log.error("Failed to link [{}]:\n{}", get_name(), msg);
-            // throw std::runtime_error("Failed to link");
+            Log.error("Failed to archive [{}]:\n{}", get_name(), msg);
+            throw std::runtime_error("Failed to archive");
         }
     } else {
         Log.info("Link [{}]", get_name());
@@ -513,38 +542,53 @@ void Component::build() {
         std::vector<std::string> library_paths;
         iterate_libs(this, library_paths);
 
-        // create .elf file from all lib files and .o files from this Component
+        // create executable file from all lib and object files from this Component
         std::vector<std::string> link_flags;
+
+        // expand linker script path
+        if (get_linker_script_path().is_relative()) {
+            // if relative path, make it absolute and canonical
+            m_linker_script_path = std::filesystem::weakly_canonical(get_root_path() / m_linker_script_path);
+        } else {
+            // make canonical
+            m_linker_script_path = std::filesystem::weakly_canonical(m_linker_script_path);
+        }
+        if (!std::filesystem::exists(m_linker_script_path)) {
+            Log.error("[{}] Linker script not found: {}", get_name(), m_linker_script_path);
+            throw std::runtime_error("Linker script not found");
+        }
 
         m_linker->load_link_flags(link_flags,
                                   get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension())),
-                                  m_linker_script_path);
+                                  get_linker_script_path());
+
         for (const auto& ce : get_compile_entries()) {
-            cmd_entries.push_back(std::filesystem::weakly_canonical(
+            obj_paths.push_back(std::filesystem::weakly_canonical(
                 ce->source_entry->get_output_directory() /
                 (ce->source_entry->get_source_file_path().filename().string() + std::string(ce->compiler->get_object_extension()))));
         }
+
         const auto arg_file = get_local_output_directory() / (get_name() + "_link_args.txt");
         // delete arg_file
         if (std::filesystem::exists(arg_file)) {
             std::filesystem::remove(arg_file);
         }
-        // write cmd_entries line by line to arg file
+        // write object paths to arg file
         std::ofstream stream_arg_file(arg_file);
-        for (const auto& ce : cmd_entries) {
+        for (const auto& ce : obj_paths) {
             stream_arg_file << ce.string() << " ";
         }
         stream_arg_file.close();
-        m_linker->load_input_flags_ext_file(link_flags, arg_file);
+        m_linker->load_input_flag_extension_file(link_flags, arg_file);
 
         for (const auto& lib : library_paths) {
             m_linker->load_input_flags(link_flags, lib);
         }
-        for (const auto& flag : m_linker_flags) {
+        for (const auto& flag : m_link_options) {
             prepare_and_push_flags(link_flags, flag);
         }
 
-        for (const auto& flag : s_global_link_flags) {
+        for (const auto& flag : e_global_link_options) {
             prepare_and_push_flags(link_flags, flag);
         }
 
@@ -587,19 +631,29 @@ void Component::load_source_file_paths(std::vector<SourceFilePath>& source_file_
 
                 Log.trace("[{}] Recursively add {} sources from {}", get_name(), file_path.extension(), file_path.parent_path());
 
-                // recurse file_path.parent_path and add files to source_file_paths that match file_path.extension
-                for (const auto& entry : std::filesystem::recursive_directory_iterator(file_path.parent_path())) {
-                    if (entry.path().extension() == file_path.extension()) {
-                        source_file_paths.push_back({entry.path(), false});
+                try {
+                    // recurse file_path.parent_path and add files to source_file_paths that match file_path.extension
+                    for (const auto& entry : std::filesystem::recursive_directory_iterator(file_path.parent_path())) {
+                        if (entry.path().extension() == file_path.extension()) {
+                            source_file_paths.push_back({entry.path(), false});
+                        }
                     }
+                } catch (const std::exception& e) {
+                    Log.error("[{}] Failed to recursively add sources from: \"{}\"\n{}", get_name(), file_path.parent_path(), e.what());
+                    throw std::runtime_error("Failed to recursively add sources");
                 }
             } else {
                 Log.trace("[{}] Add {} sources from {}", get_name(), file_path.extension(), file_path.parent_path());
-                // check all files in file_path.parent_path non recursively and add files to source_file_paths that match file_path.extension
-                for (const auto& entry : std::filesystem::directory_iterator(file_path.parent_path())) {
-                    if (entry.path().extension() == file_path.extension()) {
-                        source_file_paths.push_back({entry.path(), !is_inside_root_path});
+                try {
+                    // check all files in file_path.parent_path non recursively and add files to source_file_paths that match file_path.extension
+                    for (const auto& entry : std::filesystem::directory_iterator(file_path.parent_path())) {
+                        if (entry.path().extension() == file_path.extension()) {
+                            source_file_paths.push_back({entry.path(), !is_inside_root_path});
+                        }
                     }
+                } catch (const std::exception& e) {
+                    Log.error("[{}] Failed to recursively add sources from: \"{}\"\n{}", get_name(), file_path.parent_path(), e.what());
+                    throw std::runtime_error("Failed to recursively add sources");
                 }
             }
         } else {
@@ -635,7 +689,7 @@ void Component::bind_add_sources(lua_State* L) {
             // Log.trace("[{}] Add filter: {}", get_name(), src);
             m_requested_source_filters.push_back(src.substr(1)); // remove ! prefix
         } else {
-            // Log.trace("[{}] Add source: {}", get_name(), src);
+             Log.trace("[{}] Add source: {}", get_name(), src);
             m_requested_sources.push_back(src);
         }
     };
@@ -846,6 +900,29 @@ void Component::bind_add_library(lua_State* L) {
             }
             add_library(component);
         }
+    }
+}
+
+void Component::bind_add_link_options(lua_State* L) {
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
+    if (arg_sources.isTable()) {
+        for (int i = 1; i <= arg_sources.length(); i++) {
+            auto src = arg_sources.rawget(i);
+            if (src.isString()) {
+                m_link_options.emplace_back(src.tostring());
+            } else {
+                luaL_error(L, "Link option #%d is not a string [%s]", i, lua_typename(L, src.type()));
+                throw std::runtime_error("Link option is not a string");
+            }
+        }
+    } else if (arg_sources.isString()) {
+        m_link_options.emplace_back(arg_sources.tostring());
+    } else {
+        luaL_error(L,
+                   "Invalid link options argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_sources.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::GLOBAL_ADD_COMPILE_OPTIONS));
+        throw std::runtime_error("Invalid link options argument");
     }
 }
 

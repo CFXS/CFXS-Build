@@ -1,4 +1,11 @@
-print("Add global compile definitions for ARM Cortex-M4F")
+print("Configure for IAR")
+
+_G.TOOLCHAIN = "IAR"
+set_c_compiler("iccarm", "11")
+set_cpp_compiler("iccarm", "14")
+set_asm_compiler("iasmarm")
+set_linker("ilinkarm")
+set_archiver("iarchive")
 
 add_global_compile_options("C/C++", {
     "--vectorize",
@@ -9,8 +16,4 @@ add_global_compile_options("C/C++", {
     "--cpu Cortex-M4",
     "--fpu VFPv4_sp",
     "--cpu_mode thumb",
-})
-
-add_global_definitions("C/C++", {
-    "CORTEX_M4F=1"
 })

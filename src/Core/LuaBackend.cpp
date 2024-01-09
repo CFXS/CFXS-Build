@@ -39,8 +39,7 @@ const char* LuaBackend::get_script_help_string(HelpEntry he) {
 #define FUNCTION_COLOR ANSI_MAGENTA
 #define ARG_COLOR      ANSI_CYAN
 
-// #define VISIBILITY_ARGS "\"" ANSI_YELLOW "local" ANSI_RESET "\", \"" ANSI_YELLOW "inherit" ANSI_RESET "\", " ANSI_YELLOW "forward" ANSI_RESET "\""
-#define VISIBILITY_ARGS "\"local\", \"inherit\", \"forward\""
+#define VISIBILITY_ARGS "\"private\", \"public\""
 
     switch (he) {
         case HelpEntry::COMPONENT_ADD_INCLUDE_PATHS:

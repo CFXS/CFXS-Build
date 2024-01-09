@@ -1,13 +1,11 @@
-set_linker("arm-none-eabi-ld")
-set_archiver("arm-none-eabi-ar")
-set_c_compiler("arm-none-eabi-gcc", "11")
-set_cpp_compiler("arm-none-eabi-g++", "20")
-set_asm_compiler("arm-none-eabi-gcc")
+local USE_GCC = true
 
--- set_c_compiler("iccarm", "11")
--- set_cpp_compiler("iccarm", "14")
--- set_asm_compiler("iasmarm")
--- set_linker("ilinkarm")
+if(USE_GCC) then
+    import("./.cfxs/GCC.cfxs-build")
+else
+    import("./.cfxs/IAR.cfxs-build")
+end
+import("./.cfxs/Cortex_M4F.cfxs-build")
 
 local test_project = create_executable("CFXS-Build-Test")
 test_project:set_linker_script("./LinkerScript.ld")
@@ -32,14 +30,8 @@ local sources = {
 
 test_project:add_sources(sources)
 test_project:add_include_paths("private", {"./src"})
--- test_project:add_definitions("forward", {
---     "BUILD_SOMETHING",
---     '__na_force_inline_speed=_Pragma("inline=forced") constexpr'
--- })
--- test_project:add_compile_options("forward", {"-O3"})
 
 import_git("https://github.com/CFXS/CFXS-Framework-v2-Dev.git", "main");
--- import("./Cortex_M4F.cfxs-build")
 
 test_project:add_libraries({
     cfxs_framework,

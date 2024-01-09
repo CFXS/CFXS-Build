@@ -1,0 +1,3 @@
+print("Add global compile definitions for ARM Cortex-M4F")
+
+

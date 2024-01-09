@@ -85,7 +85,7 @@ void Linker::load_input_flags(std::vector<std::string>& args, const std::filesys
     }
 }
 
-void Linker::load_input_flags_ext_file(std::vector<std::string>& args, const std::filesystem::path& input_ext_file) const {
+void Linker::load_input_flag_extension_file(std::vector<std::string>& args, const std::filesystem::path& input_ext_file) const {
     // commandline extension files
     switch (get_type()) {
         case Type::GNU:

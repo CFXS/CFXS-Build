@@ -17,7 +17,7 @@ public:
     Standard get_standard() const { return m_standard; }
     Type get_type() const { return m_type; }
     const std::string& get_location() const { return m_location; }
-    const std::vector<std::string>& get_flags() const { return m_flags; }
+    const std::vector<std::string>& get_options() const { return m_flags; }
 
     /// Load flags for generating dependency list
     void load_dependency_flags(std::vector<std::string>& flags, const std::filesystem::path& out_path) const;

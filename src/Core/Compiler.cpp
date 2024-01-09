@@ -79,6 +79,8 @@ Compiler::Compiler(Language language, const std::string& location, const std::st
     if (compiler_version_string.contains("GNU") || compiler_version_string.contains("gcc") || compiler_version_string.contains("g++")) {
         m_type = Type::GNU;
         m_flags.push_back("-fdiagnostics-color=always");
+        m_flags.push_back("-Dgcc");
+        m_flags.push_back("-fmax-errors=100");
     } else if (compiler_version_string.contains("clang")) {
         m_type = Type::CLANG;
         m_flags.push_back("-fdiagnostics-color=always");
@@ -209,15 +211,6 @@ void Compiler::push_include_path(std::vector<std::string>& flags, const std::str
     }
 }
 
-std::string replace_string(std::string subject, const std::string& search, const std::string& replace) {
-    size_t pos = 0;
-    while ((pos = subject.find(search, pos)) != std::string::npos) {
-        subject.replace(pos, search.length(), replace);
-        pos += replace.length();
-    }
-    return subject;
-}
-
 void Compiler::push_compile_definition(std::vector<std::string>& flags, const std::string& compile_definition) const {
     // escape "\" in compile_definition and wrap value after DEFINITION_NAME= in escaped quotes if value contains spaces
     // replace all '"' with "\\"" safely without entering an infinite loop
@@ -231,7 +224,10 @@ void Compiler::push_compile_definition(std::vector<std::string>& flags, const st
     if (eq_pos != std::string::npos) {
         auto part_2 = escaped_compile_definition.substr(eq_pos + 1);
         if (part_2.find(' ') != std::string::npos) {
-            def = escaped_compile_definition.substr(0, eq_pos + 1) + "\\\"" + part_2 + "\\\"";
+            if (part_2.starts_with('\"') && part_2.ends_with('\"'))
+                def = escaped_compile_definition.substr(0, eq_pos + 1) + "\"" + part_2.substr(1, part_2.length() - 2) + "\"";
+            else
+                def = escaped_compile_definition.substr(0, eq_pos + 1) + "\"" + part_2 + "\"";
         } else {
             def = escaped_compile_definition.substr(0, eq_pos + 1) + part_2;
         }

@@ -7,7 +7,7 @@ include(FetchContent)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(CFXS_Build C CXX)
+project(cfxs-build C CXX)
 
 set(sources
     "src/main.cpp"
@@ -23,11 +23,11 @@ set(sources
     "src/Core/GIT.cpp"
 )
 
-add_executable(CFXS_Build ${sources})
+add_executable(cfxs-build ${sources})
 
-target_include_directories(CFXS_Build PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_include_directories(cfxs-build PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-target_precompile_headers(CFXS_Build PRIVATE
+target_precompile_headers(cfxs-build PRIVATE
     <Log.hpp>
     <Core/GlobalConfig.hpp>
 )
@@ -39,12 +39,12 @@ if(WIN32)
     add_compile_definitions("WINDOWS_BUILD=1")
     add_compile_definitions("_HAS_CXX17=1")
 else()
-    # target_compile_options(CFXS_Build PRIVATE "-fsanitize=address,leak,undefined")
-    # target_link_options(CFXS_Build PRIVATE "-fsanitize=address,leak,undefined")
-    # target_compile_options(CFXS_Build PRIVATE "-fsanitize=thread")
-    # target_link_options(CFXS_Build PRIVATE "-fsanitize=thread")
-    # target_link_options(CFXS_Build PUBLIC "-static-libstdc++" "-static")
-    target_compile_options(CFXS_Build PRIVATE "-fdiagnostics-color=always" "-Wall" "-Wextra")
+    # target_compile_options(cfxs-build PRIVATE "-fsanitize=address,leak,undefined")
+    # target_link_options(cfxs-build PRIVATE "-fsanitize=address,leak,undefined")
+    # target_compile_options(cfxs-build PRIVATE "-fsanitize=thread")
+    # target_link_options(cfxs-build PRIVATE "-fsanitize=thread")
+    target_link_options(cfxs-build PUBLIC "-static-libstdc++" "-static")
+    target_compile_options(cfxs-build PRIVATE "-fdiagnostics-color=always" "-Wall" "-Wextra")
 endif()
 
 FetchContent_Declare(
@@ -72,26 +72,21 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
-# find package spdlog, if not found then do fetchcontent
-find_package(spdlog QUIET)
+message(STATUS "spdlog not found, fetching from github")
+set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "Build shared library" FORCE)
+set(SPDLOG_BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
+set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
+set(SPDLOG_INSTALL OFF CACHE BOOL "Generate installation target" FORCE)
 
-if(NOT spdlog_FOUND)
-    message(STATUS "spdlog not found, fetching from github")
-    set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "Build shared library" FORCE)
-    set(SPDLOG_BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
-    set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
-    set(SPDLOG_INSTALL OFF CACHE BOOL "Generate installation target" FORCE)
+FetchContent_Declare(
+    lib_spdlog
+    GIT_REPOSITORY
+    https://github.com/gabime/spdlog.git
+    GIT_TAG "v2.x"
+)
+FetchContent_MakeAvailable(lib_spdlog)
 
-    FetchContent_Declare(
-        lib_spdlog
-        GIT_REPOSITORY
-        https://github.com/gabime/spdlog.git
-        GIT_TAG "v2.x"
-    )
-    FetchContent_MakeAvailable(lib_spdlog)
-endif()
-
-target_link_libraries(CFXS_Build PRIVATE
+target_link_libraries(cfxs-build PRIVATE
     lua_static
     LuaBridge
     argparse

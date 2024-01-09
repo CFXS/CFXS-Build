@@ -1,5 +1,7 @@
+#include "Core/GlobalConfig.hpp"
 #include "Log.hpp"
 #include <argparse/argparse.hpp>
+#include <exception>
 #include <filesystem>
 #include "Core/Project.hpp"
 #include "CommandUtils.hpp"
@@ -41,11 +43,12 @@ int GlobalConfig::number_of_worker_threads() {
 static bool s_generate_compile_commands = false;
 bool GlobalConfig::generate_compile_commands() { return s_generate_compile_commands; }
 
+static bool s_log_trace = false;
+bool GlobalConfig::log_trace() { return s_log_trace; }
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv) {
-    initialize_logging();
-
     const auto version_string = std::to_string(CFXS_BUILD_VERSION_MAJOR) + "." + std::to_string(CFXS_BUILD_VERSION_MINOR);
     argparse::ArgumentParser args("cfxs-build", version_string);
 
@@ -86,6 +89,10 @@ int main(int argc, char **argv) {
         .help("Generate compile_commands.json") //
         .flag();                                //
 
+    args.add_argument("-t")               //
+        .help("Print trace log messages") //
+        .flag();                          //
+
     try {
         args.parse_args(argc, argv);
     } catch (const std::runtime_error &err) {
@@ -93,6 +100,14 @@ int main(int argc, char **argv) {
         std::cout << args.usage() << std::endl;
         return 1;
     }
+
+    try {
+        if (args["-t"] == true) {
+            s_log_trace = true;
+        }
+    } catch (const std::exception &e) {
+    }
+    initialize_logging();
 
     Log.info("CFXS Build v{}", version_string);
 
@@ -139,7 +154,7 @@ int main(int argc, char **argv) {
             try {
                 Project::configure();
             } catch (const std::runtime_error &e) {
-                Log.error("Failed to configure project");
+                Log.error("Failed to configure project: {}", e.what());
                 return -1;
             }
         }
@@ -147,8 +162,19 @@ int main(int argc, char **argv) {
         const auto build_projects = args.get<std::vector<std::string>>("--build");
         const auto clean_projects = args.get<std::vector<std::string>>("--clean");
 
-        Project::clean(clean_projects);
-        Project::build(build_projects);
+        try {
+            Project::clean(clean_projects);
+        } catch (const std::runtime_error &e) {
+            Log.error("Failed to clean project: {}", e.what());
+            return -1;
+        }
+
+        try {
+            Project::build(build_projects);
+        } catch (const std::runtime_error &e) {
+            Log.error("Failed to build project: {}", e.what());
+            return -1;
+        }
     } catch (const std::runtime_error &e) {
         return 1;
     }

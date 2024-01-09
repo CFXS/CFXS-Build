@@ -34,12 +34,12 @@ std::shared_ptr<Compiler> s_asm_compiler;
 std::shared_ptr<Linker> s_linker;
 std::shared_ptr<Archiver> s_archiver;
 
-std::vector<std::string> s_global_c_compile_flags;
-std::vector<std::string> s_global_cpp_compile_flags;
-std::vector<std::string> s_global_definitions;
-std::vector<std::filesystem::path> s_global_include_paths;
-std::vector<std::string> s_global_asm_compile_flags;
-std::vector<std::string> s_global_link_flags;
+std::vector<std::string> e_global_c_compile_options;
+std::vector<std::string> e_global_cpp_compile_options;
+std::vector<std::string> e_global_definitions;
+std::vector<std::filesystem::path> e_global_include_paths;
+std::vector<std::string> e_global_asm_compile_options;
+std::vector<std::string> e_global_link_options;
 
 std::filesystem::file_time_type get_last_modified_time(const std::filesystem::path& path) { return std::filesystem::last_write_time(path); }
 
@@ -135,10 +135,11 @@ void Project::configure() {
                 const auto dir           = source_entry.get_output_directory().string();
                 const auto source        = source_entry.get_source_file_path().string();
 
+                const auto cmd = replace_string(container_to_string(ce->compile_args), "\"", "\\\"");
+
                 compile_commands += "{\n";
                 compile_commands += ("    \"directory\": \"" + dir + "\",\n");
-                compile_commands +=
-                    ("    \"command\": \"" + ce->compiler->get_location() + " " + container_to_string(ce->compile_args) + "\",\n");
+                compile_commands += ("    \"command\": \"" + ce->compiler->get_location() + " " + cmd + "\",\n");
                 compile_commands += ("    \"file\": \"" + source + "\"\n");
                 compile_commands += ("},\n");
             }
@@ -149,8 +150,8 @@ void Project::configure() {
             compile_commands.pop_back();
         }
 
-        std::regex regex(R"(\\)");
-        compile_commands = std::regex_replace(compile_commands, regex, R"(\\)");
+        std::regex regex(R"(\\\\)");
+        compile_commands = std::regex_replace(compile_commands, regex, R"(\\\\\\)");
 
         std::ofstream compile_commands_file(s_project_path / "cfxs_compile_commands.json");
         if (compile_commands_file.is_open()) {
@@ -239,10 +240,15 @@ void Project::initialize_lua() {
 
     // Set _G.OS to Windows or Unix
 #if WINDOWS_BUILD == 1
-    luaL_loadstring(L, "_G.Platform = \"Windows\"");
+    lua_pushstring(L, "\"Windows\"");
 #else
-    luaL_loadstring(L, "_G.Platform = \"Unix\"");
+    lua_pushstring(L, "\"Unix\"");
 #endif
+    lua_setglobal(L, "Platform");
+
+    // Create printf function with custom C++ side log format
+    luaL_loadstring(L, R"(_G.printf = function(...) __cfxs_print(string.format(...)) end)");
+    lua_pcall(L, 0, 0, 0);
 
     // remove some library functions
     static constexpr const char* REMOVE_GLOBALS[] = {
@@ -279,12 +285,14 @@ void Project::initialize_lua() {
 
     auto bridge = luabridge::getGlobalNamespace(L);
 
-    bridge.addFunction<void, const std::string&, const std::string&>("set_c_compiler", TO_FUNCTION(bind_set_c_compiler));
-    bridge.addFunction<void, const std::string&, const std::string&>("set_cpp_compiler", TO_FUNCTION(bind_set_cpp_compiler));
-    bridge.addFunction<void, const std::string&>("set_asm_compiler", TO_FUNCTION(bind_set_asm_compiler));
+    bridge.addFunction<void, const std::string& /*path*/, const std::string& /*std*/>("set_c_compiler", TO_FUNCTION(bind_set_c_compiler));
+    bridge.addFunction<void, const std::string& /*path*/, const std::string& /*std*/>("set_cpp_compiler",
+                                                                                      TO_FUNCTION(bind_set_cpp_compiler));
+    bridge.addFunction<void, const std::string& /*path*/>("set_asm_compiler", TO_FUNCTION(bind_set_asm_compiler));
+    bridge.addFunction<void, const std::string& /*path*/>("set_linker", TO_FUNCTION(bind_set_linker));
+    bridge.addFunction<void, const std::string& /*path*/>("set_archiver", TO_FUNCTION(bind_set_archiver));
 
-    bridge.addFunction<void, const std::string&>("set_linker", TO_FUNCTION(bind_set_linker));
-    bridge.addFunction<void, const std::string&>("set_archiver", TO_FUNCTION(bind_set_archiver));
+    bridge.addFunction<void, const std::string&>("__cfxs_print", TO_FUNCTION(bind_cfxs_print));
 
     bridge.addFunction<void, lua_State*>("import", TO_FUNCTION(bind_import));
     bridge.addFunction<void, lua_State*>("import_git", TO_FUNCTION(bind_import_git));
@@ -304,7 +312,12 @@ void Project::initialize_lua() {
         .addFunction("add_compile_options", &Component::bind_add_compile_options)
         .addFunction("set_linker_script", &Component::bind_set_linker_script)
         .addFunction("add_libraries", &Component::bind_add_library)
+        .addFunction("add_link_options", &Component::bind_add_link_options)
         .endClass();
+}
+
+void Project::bind_cfxs_print(const std::string& str) {
+    Log.info("[" ANSI_MAGENTA "Script" ANSI_RESET "] {}", str); //
 }
 
 // Compiler config
@@ -391,9 +404,13 @@ void Project::bind_import_git(lua_State* L) {
     }
 
     auto url          = arg_url.tostring();
+    // trim spaces from start and end
+    url = url.substr(url.find_first_not_of(" \t"));
+    url = url.substr(0, url.find_last_not_of(" \t") + 1);
+
     const auto branch = arg_branch.isNil() ? "" : arg_branch.tostring();
 
-    if (url.size() < 4 || url.substr(url.size() - 4) != ".git") {
+    if (url.length() < 4 || url.substr(url.length() - 4) != ".git") {
         url += ".git";
     }
 
@@ -443,7 +460,7 @@ void Project::bind_import_git(lua_State* L) {
             }
         }
     } else {
-        Log.trace("Clone \"{}\" to \"{}_{}\"", url, owner, name);
+        Log.info("Clone \"{}\" to \"{}_{}\"", url, owner, name);
         const bool cloned = GIT::clone_branch(ext_path, url, branch);
 
         if (!cloned) {
@@ -527,14 +544,14 @@ void Project::bind_add_global_include_paths(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                s_global_include_paths.emplace_back(src.tostring());
+                e_global_include_paths.emplace_back(src.tostring());
             } else {
                 luaL_error(L, "Include directory #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Include directory is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        s_global_include_paths.emplace_back(arg_sources.tostring());
+        e_global_include_paths.emplace_back(arg_sources.tostring());
     } else {
         luaL_error(L,
                    "Invalid include paths argument: type \"%s\"\n%s",
@@ -543,7 +560,7 @@ void Project::bind_add_global_include_paths(lua_State* L) {
         throw std::runtime_error("Invalid include paths argument");
     }
 
-    for (auto& dir : s_global_include_paths) {
+    for (auto& dir : e_global_include_paths) {
         // check if dir is relative path
         if (dir.is_relative()) {
             // if relative path, make it absolute and canonical
@@ -565,14 +582,14 @@ void Project::bind_add_global_definitions(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                s_global_definitions.emplace_back(src.tostring());
+                e_global_definitions.emplace_back(src.tostring());
             } else {
                 luaL_error(L, "Definition #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Definition is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        s_global_definitions.emplace_back(arg_sources.tostring());
+        e_global_definitions.emplace_back(arg_sources.tostring());
     } else {
         luaL_error(L,
                    "Invalid definitions argument: type \"%s\"\n%s",
@@ -602,14 +619,14 @@ void Project::bind_add_global_compile_options(lua_State* L) {
     const auto val_str             = arg_language.tostring();
 
     if (val_str == "C") {
-        vec = &s_global_c_compile_flags;
+        vec = &e_global_c_compile_options;
     } else if (val_str == "C++") {
-        vec = &s_global_cpp_compile_flags;
+        vec = &e_global_cpp_compile_options;
     } else if (val_str == "C/C++") {
-        vec  = &s_global_c_compile_flags;
-        vec2 = &s_global_cpp_compile_flags;
+        vec  = &e_global_c_compile_options;
+        vec2 = &e_global_cpp_compile_options;
     } else if (val_str == "ASM") {
-        vec = &s_global_asm_compile_flags;
+        vec = &e_global_asm_compile_options;
     }
 
     if (!vec) {
@@ -652,14 +669,14 @@ void Project::bind_add_global_link_options(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                s_global_link_flags.emplace_back(src.tostring());
+                e_global_link_options.emplace_back(src.tostring());
             } else {
                 luaL_error(L, "Link option #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Link option is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        s_global_link_flags.emplace_back(arg_sources.tostring());
+        e_global_link_options.emplace_back(arg_sources.tostring());
     } else {
         luaL_error(L,
                    "Invalid link options argument: type \"%s\"\n%s",

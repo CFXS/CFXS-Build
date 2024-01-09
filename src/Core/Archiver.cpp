@@ -15,22 +15,22 @@ static std::string to_string(Archiver::Type type) {
 Archiver::~Archiver() { Log.trace("Delete Archiver"); }
 
 Archiver::Archiver(const std::string& ar) : m_location(ar) {
-    Log.trace("Create linker \"{}\"", get_location());
+    Log.trace("Create archiver \"{}\"", get_location());
 
     if (!is_valid_program(get_location())) {
         Log.error("Archiver \"{}\" not found", get_location());
         throw std::runtime_error("Archiver not found");
     }
 
-    const auto linker_version_string = get_program_version_string(get_location());
+    const auto ar_version_string = get_program_version_string(get_location());
 
-    if (linker_version_string.contains("GNU")) {
+    if (ar_version_string.contains("GNU")) {
         m_type = Type::GNU;
-    } else if (linker_version_string.contains("clang")) {
+    } else if (ar_version_string.contains("clang")) {
         m_type = Type::CLANG;
-    } else if (linker_version_string.contains("Microsoft")) {
+    } else if (ar_version_string.contains("Microsoft")) {
         m_type = Type::MSVC;
-    } else if (linker_version_string.contains("IAR")) {
+    } else if (ar_version_string.contains("IAR")) {
         m_type = Type::IAR;
     } else {
         Log.error("Archiver \"{}\" is not supported", get_location());
@@ -72,7 +72,12 @@ void Archiver::load_input_flags(std::vector<std::string>& args, const std::files
     }
 }
 
-void Archiver::load_input_flags_ext_file(std::vector<std::string>& args, const std::filesystem::path& input_ext_file) const {
+void Archiver::load_input_flag_extension_file(std::vector<std::string>& args, const std::filesystem::path& input_ext_file) const {
+    auto file_location = input_ext_file.string();
+
+    // wrap in quotes if there is a space in the path
+    file_location = file_location.find(' ') != std::string::npos ? "\"" + file_location + "\"" : file_location;
+
     // commandline extension files
     switch (get_type()) {
         case Type::GNU:

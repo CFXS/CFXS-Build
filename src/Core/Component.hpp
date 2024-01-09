@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+#include <string>
 #include "Core/Archiver.hpp"
 #include "SourceEntry.hpp"
 #include "Compiler.hpp"
@@ -45,6 +46,7 @@ public:
     void bind_add_compile_options(lua_State* L);
     void bind_set_linker_script(lua_State* L);
     void bind_add_library(lua_State* L);
+    void bind_add_link_options(lua_State* L);
 
     void configure(std::shared_ptr<Compiler> c_compiler,
                    std::shared_ptr<Compiler> cpp_compiler,
@@ -64,6 +66,8 @@ public:
     const std::vector<ScopedValue<std::filesystem::path>> get_include_paths() const { return m_include_paths; }
     const std::vector<ScopedValue<std::string>> get_definitions() const { return m_definitions; }
     const std::vector<ScopedValue<std::string>> get_compile_options() const { return m_compile_options; }
+
+    const std::vector<std::string> get_link_options() const { return m_link_options; }
 
     const std::vector<Component*>& get_libraries() const { return m_libraries; }
     void add_library(Component* component);
@@ -110,7 +114,7 @@ private:
     std::shared_ptr<Archiver> m_archiver;
     std::shared_ptr<Linker> m_linker;
     std::filesystem::path m_linker_script_path;
-    std::vector<std::string> m_linker_flags;
+    std::vector<std::string> m_link_options;
 };
 
 inline const char* to_string(Component::Type type) {

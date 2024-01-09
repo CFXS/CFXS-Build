@@ -18,6 +18,15 @@
 #define ANSI_ORANGE     "\033[38;5;208m"
 #define ANSI_LIGHT_GRAY "\033[38;5;250m"
 
+inline std::string replace_string(std::string subject, const std::string& search, const std::string& replace) {
+    size_t pos = 0;
+    while ((pos = subject.find(search, pos)) != std::string::npos) {
+        subject.replace(pos, search.length(), replace);
+        pos += replace.length();
+    }
+    return subject;
+}
+
 inline bool is_valid_file_path(const std::string& str) {
     return std::filesystem::exists(str); //
 }
@@ -59,7 +68,6 @@ inline std::string get_program_version_string(const std::string& location) {
 
     int process_ret = -1;
     res             = subprocess_join(&process, &process_ret);
-    subprocess_terminate(&process);
     subprocess_destroy(&process);
 
     if (res != 0) {
@@ -109,7 +117,6 @@ inline std::pair<int, std::string> execute_with_args(const std::string& cmd, con
 
     int process_ret = -1;
     res             = subprocess_join(&process, &process_ret);
-    subprocess_terminate(&process);
     subprocess_destroy(&process);
 
     if (res != 0) {

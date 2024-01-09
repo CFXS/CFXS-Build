@@ -10,9 +10,9 @@
 // access arguments of regular function calls
 #define LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, arg_index) (-(arg_count) + (arg_index))
 
-#define LuaLog(...)   Log.info("[\033[1;36mLua\033[0m] " __VA_ARGS__)
-#define LuaError(...) Log.error("[\033[1;36mLua\033[0m] " __VA_ARGS__)
-#define LuaWarn(...)  Log.warn("[\033[1;36mLua\033[0m] " __VA_ARGS__)
+#define LuaLog(...)   Log.info("[\033[1;36mScript\033[0m] " __VA_ARGS__)
+#define LuaError(...) Log.error("[\033[1;36mScript\033[0m] " __VA_ARGS__)
+#define LuaWarn(...)  Log.warn("[\033[1;36mScript\033[0m] " __VA_ARGS__)
 
 struct lua_State;
 class LuaBackend {
