@@ -134,6 +134,7 @@ void Project::configure() {
                 const auto& source_entry = *ce->source_entry;
                 const auto dir           = source_entry.get_output_directory().string();
                 const auto source        = source_entry.get_source_file_path().string();
+                // const auto obj           = source_entry.get_object_path().string();
 
                 const auto cmd = replace_string(container_to_string(ce->compile_args), "\"", "\\\"");
 
@@ -141,6 +142,7 @@ void Project::configure() {
                 compile_commands += ("    \"directory\": \"" + dir + "\",\n");
                 compile_commands += ("    \"command\": \"" + ce->compiler->get_location() + " " + cmd + "\",\n");
                 compile_commands += ("    \"file\": \"" + source + "\"\n");
+                // compile_commands += ("    \"output\": \"" + obj + "\"\n");
                 compile_commands += ("},\n");
             }
         }
@@ -313,6 +315,7 @@ void Project::initialize_lua() {
         .addFunction("set_linker_script", &Component::bind_set_linker_script)
         .addFunction("add_libraries", &Component::bind_add_library)
         .addFunction("add_link_options", &Component::bind_add_link_options)
+        .addFunction("create_precompiled_header", &Component::bind_create_precompiled_header)
         .endClass();
 }
 

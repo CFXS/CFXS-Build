@@ -22,8 +22,19 @@ public:
     };
 
     struct SourceFilePath {
+        SourceFilePath(const std::filesystem::path& path,
+                       bool is_external,
+                       const std::filesystem::path& explicit_output_directory = {},
+                       bool is_precompiled_header_file                        = false) :
+            path(path),
+            is_external(is_external),
+            explicit_output_directory(explicit_output_directory),
+            is_precompiled_header_file(is_precompiled_header_file) {}
+
         std::filesystem::path path;
         bool is_external;
+        std::filesystem::path explicit_output_directory;
+        bool is_precompiled_header_file;
     };
 
     template<typename T>
@@ -47,6 +58,7 @@ public:
     void bind_set_linker_script(lua_State* L);
     void bind_add_library(lua_State* L);
     void bind_add_link_options(lua_State* L);
+    void bind_create_precompiled_header(lua_State* L);
 
     void configure(std::shared_ptr<Compiler> c_compiler,
                    std::shared_ptr<Compiler> cpp_compiler,
@@ -74,6 +86,8 @@ public:
     const std::vector<Component*>& get_users() const { return m_used_by; }
     void add_user(Component* component);
 
+    const std::vector<std::string>& get_precompiled_header() const { return m_precompiled_header; }
+
     const std::vector<std::unique_ptr<CompileEntry>>& get_compile_entries() const { return m_compile_entries; }
 
     Visibility get_visibility_mask_include_paths() const { return m_visibility_mask_include_paths; }
@@ -81,8 +95,19 @@ public:
     Visibility get_visibility_mask_compile_options() const { return m_visibility_mask_compile_options; }
 
 private:
-    void load_source_file_paths(std::vector<SourceFilePath>& source_file_paths);
+    /// Get vector of processed source file paths
+    std::vector<SourceFilePath> get_source_file_paths();
 
+    /// Convert source path to source output directory
+    std::filesystem::path get_source_output_directory(const SourceFilePath& sfp);
+
+    /// Process source path and add to compile list if needed
+    void process_source_file_path(const SourceFilePath& sfp,
+                                  std::shared_ptr<Compiler> c_compiler,
+                                  std::shared_ptr<Compiler> cpp_compiler,
+                                  std::shared_ptr<Compiler> asm_compiler);
+
+private:
     static void iterate_libs(const Component* comp, std::vector<std::string>& list);
 
 private:
@@ -103,6 +128,11 @@ private:
     std::vector<std::string> m_requested_sources;        // requested sources
     std::vector<std::string> m_requested_source_filters; // source filters
 
+    // Precompilled header
+    std::vector<std::string> m_precompiled_header; // list of header paths to precompile
+    Visibility m_visibility_precompile_headers;
+
+    // Definitions and options
     std::vector<ScopedValue<std::filesystem::path>> m_include_paths;
     std::vector<ScopedValue<std::string>> m_definitions;
     std::vector<ScopedValue<std::string>> m_compile_options;

@@ -25,7 +25,8 @@ public:
     /// Load flags for compiling and generating object file
     void load_compile_and_output_flags(std::vector<std::string>& flags,
                                        const std::filesystem::path& source_path,
-                                       const std::filesystem::path& obj_path) const;
+                                       const std::filesystem::path& obj_path,
+                                       bool is_pch) const;
 
     /// Load flags for include directories
     void push_include_path(std::vector<std::string>& flags, const std::string& include_directory) const;
@@ -36,8 +37,13 @@ public:
     /// Parse + iterate dependency file
     void iterate_dependency_file(const std::filesystem::path& dependency_file, const std::function<bool(std::string_view)>& callback) const;
 
-    std::string_view get_object_extension() const;
-    std::string_view get_dependency_extension() const;
+    /// Get flag for including pch
+    std::string get_pch_include_flags(const std::filesystem::path& pch_gen_path) const;
+
+    std::string get_object_extension() const;
+    std::string get_dependency_extension() const;
+    std::string get_precompile_header_extension() const;
+    std::string get_system_header_pragma() const;
 
 private:
     Type m_type;

@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 
     args.add_argument("--out")
         .help("Build output directory") //
-        .default_value("./.cfxs/build") //
+        .default_value("./")            //
         .required();                    //
 
     args.add_argument("--configure")
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     Log.info("CFXS Build v{}", version_string);
 
     auto project_path = std::filesystem::path(args.get<std::string>("project"));
-    auto output_path  = std::filesystem::path(args.get<std::string>("--out"));
+    auto output_path  = std::filesystem::path(args.get<std::string>("--out")) / ".cfxs/build";
 
     if (!project_path.is_absolute())
         project_path = std::filesystem::absolute(project_path);

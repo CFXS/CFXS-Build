@@ -7,7 +7,9 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/cfxs-build",
             "args": [
-                "/home/cfxs/Documents/Projects/CFXS/CFXS-Phase-DSP/CFXS_Phase_DSP",
+                "/home/cfxs/Documents/Projects/CFXS/CFXS-Phase-DSP",
+                "--out",
+                "/home/cfxs/Documents/Projects/CFXS/CFXS-Phase-DSP",
                 "--configure",
                 // "--clean=CFXS-Build-Test",
                 "--build=*",

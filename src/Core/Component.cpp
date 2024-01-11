@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <CommandUtils.hpp>
 #include <mutex>
+#include <ostream>
 #include <stdexcept>
 #include <thread>
 #include <vector>
@@ -14,11 +15,14 @@
 #include "Core/Compiler.hpp"
 #include "Core/Linker.hpp"
 #include "Core/SourceEntry.hpp"
+#include "FilesystemUtils.hpp"
 #include "FunctionWorker.hpp"
 #include "RegexUtils.hpp"
 #include <fstream>
+#include <sstream>
 
 #include "LuaBackend.hpp"
+#include "lauxlib.h"
 
 ////////////////////////////////////
 // File modified cache
@@ -95,7 +99,7 @@ static void prepare_and_push_flags(std::vector<std::string>& flags, const std::s
     }
 }
 
-static void try_merge_lib_content(Compiler* compiler,
+static void try_merge_lib_content(const Compiler* compiler,
                                   std::vector<std::string>& compile_args,
                                   const Component* lib,
                                   Component::Visibility check_visibilities) {
@@ -125,6 +129,217 @@ static void try_merge_lib_content(Compiler* compiler,
     }
 }
 
+static Compiler* get_compiler_from_extension(const std::filesystem::path& path,
+                                             std::shared_ptr<Compiler> c_compiler,
+                                             std::shared_ptr<Compiler> cpp_compiler,
+                                             std::shared_ptr<Compiler> asm_compiler) {
+    Compiler* compiler;
+    auto ext = path.extension().string();
+    // convert ext to lower case
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](char c) {
+        return std::tolower(c);
+    });
+
+    if (ext == ".c" || ext == ".h") {
+        compiler = c_compiler.get();
+        if (!compiler) {
+            Log.error("C Compiler not set");
+            throw std::runtime_error("C Compiler not set");
+        }
+    } else if (ext == ".cpp" || ext == ".hpp" || ext == ".cc" || ext == ".cxx" || ext == ".c++") {
+        compiler = cpp_compiler.get();
+        if (!compiler) {
+            Log.error("C++ Compiler not set");
+            throw std::runtime_error("C Compiler not set");
+        }
+    } else if (ext == ".asm" || ext == ".s") {
+        compiler = asm_compiler.get();
+        if (!compiler) {
+            Log.error("ASM Compiler not set");
+            throw std::runtime_error("C Compiler not set");
+        }
+    } else {
+        throw std::runtime_error("Unsupported file type");
+    }
+
+    return compiler;
+}
+
+std::filesystem::path Component::get_source_output_directory(const SourceFilePath& sfp) {
+    if (!sfp.explicit_output_directory.empty())
+        return sfp.explicit_output_directory;
+
+    if (sfp.is_external) {
+        return get_local_output_directory() / "External_" / std::to_string(std::filesystem::hash_value(sfp.path.parent_path()));
+    } else {
+        return get_local_output_directory() / std::filesystem::relative(sfp.path.parent_path(), get_root_path());
+    }
+}
+
+void Component::process_source_file_path(const SourceFilePath& e,
+                                         std::shared_ptr<Compiler> c_compiler,
+                                         std::shared_ptr<Compiler> cpp_compiler,
+                                         std::shared_ptr<Compiler> asm_compiler) {
+    const auto output_dir = get_source_output_directory(e);
+    const auto* compiler  = get_compiler_from_extension(e.path, c_compiler, cpp_compiler, asm_compiler);
+
+    const auto src_name = e.path.filename().string();
+    // path to output build files to
+    const auto obj_path = output_dir / (src_name + (e.is_precompiled_header_file ? compiler->get_precompile_header_extension() :
+                                                                                   compiler->get_object_extension()));
+
+    // temporary and dependency file paths
+    const auto dep_path    = output_dir / (src_name + compiler->get_dependency_extension());
+    const auto ts_temp     = output_dir / (src_name + ".tmp");
+    const auto ts_dep_temp = output_dir / (src_name + ".dep.tmp");
+
+    // initialize output directory for temp and build files
+    if (!std::filesystem::exists(output_dir))
+        std::filesystem::create_directories(output_dir);
+
+    bool need_build = false;
+
+    if (!FilesystemUtils::all_exist(ts_temp, ts_dep_temp, dep_path, obj_path)) {
+        need_build = true;
+        // create and write modify empty file ts_temp
+        s_filesystem_mutex.lock();
+        try {
+            std::ofstream ts_temp_file(ts_temp);
+            ts_temp_file.close();
+            std::ofstream ts_dep_temp_file(ts_dep_temp);
+            ts_dep_temp_file.close();
+        } catch (const std::exception& e) {
+            Log.error("[{}] Failed to create timestamp file at \"{}\": {}", get_name(), ts_temp, e.what());
+            throw std::runtime_error("Failed to create timestamp file");
+        }
+        s_filesystem_mutex.unlock();
+    } else {
+        auto src_modified_time     = std::filesystem::last_write_time(e.path);  // source file
+        auto ts_mark_modified_time = std::filesystem::last_write_time(ts_temp); // modified time tracker
+
+        const bool source_modified = src_modified_time > ts_mark_modified_time;
+
+        if (source_modified) {
+            need_build = true;
+            // set ts_temp write time to src_modified_time
+            s_filesystem_mutex.lock();
+            try {
+                std::filesystem::last_write_time(ts_temp, src_modified_time);
+            } catch (const std::exception& e) {
+                Log.error("[{}] Failed to set timestamp file \"{}\" time: {}", get_name(), ts_temp, e.what());
+                throw std::runtime_error("Failed to set timestamp file time");
+            }
+            s_filesystem_mutex.unlock();
+        } else {
+            const auto ts_dep_modified_time = std::filesystem::last_write_time(ts_dep_temp);
+
+            // iterate deps
+            // parse dep_path file
+            compiler->iterate_dependency_file(dep_path, [&](std::string_view path) -> bool {
+                if (e.path == path)
+                    return false; // ignore "this" compile unit
+                if (!std::filesystem::exists(path))
+                    return false;
+                // check if dep file is newer than obj file
+                auto dependency_modified_time = get_file_modified_time(path);
+                if (dependency_modified_time > ts_dep_modified_time) { // always check to write latest change
+                    // set ts_temp write time to src_modified_time
+                    s_filesystem_mutex.lock();
+                    try {
+                        // std::filesystem::last_write_time(ts_dep_temp, dependency_modified_time);
+                        std::ofstream ts_dep_temp_file(ts_dep_temp);
+                        ts_dep_temp_file.close();
+                    } catch (const std::exception& e) {
+                        Log.error("[{}] Failed to set timestamp file \"{}\" time: {}", get_name(), ts_temp, e.what());
+                        throw std::runtime_error("Failed to set timestamp file time");
+                    }
+                    s_filesystem_mutex.unlock();
+                    need_build = true;
+                    return true; // break
+                }
+
+                return false; // dont break
+            });
+        }
+    }
+
+    if (!need_build)
+        return;
+
+    // create compile entry
+    auto compile_entry          = std::make_unique<CompileEntry>();
+    compile_entry->source_entry = std::make_unique<SourceEntry>(compiler, e.path, output_dir, obj_path, e.is_precompiled_header_file);
+    const auto& source_entry    = *compile_entry->source_entry;
+
+    if (!std::filesystem::exists(source_entry.get_output_directory())) {
+        // Generate output_directory if it does not exist
+        s_filesystem_mutex.lock();
+        try {
+            std::filesystem::create_directories(source_entry.get_output_directory());
+        } catch (const std::exception& e) {
+            Log.error("Failed to create output dir [{}]: {}", source_entry.get_output_directory(), e.what());
+            throw e;
+        }
+        s_filesystem_mutex.unlock();
+    }
+
+    // path to output build files to
+    const auto output_path = source_entry.get_output_directory() / source_entry.get_source_file_path().filename().string();
+
+    // initial args are defined from the specific compiler implementation
+    compile_entry->compile_args = compiler->get_options();
+
+    compiler->load_compile_and_output_flags(
+        compile_entry->compile_args, source_entry.get_source_file_path(), output_path, source_entry.is_pch()); // compile and write object
+
+    compiler->load_dependency_flags(compile_entry->compile_args, output_path); // dependency file output
+
+    // [Local paths/definitions/options]
+    // include paths
+    for (const auto& val : get_include_paths()) {
+        compiler->push_include_path(compile_entry->compile_args, val.value.string());
+    }
+    // compile definitions
+    for (const auto& val : get_definitions()) {
+        compiler->push_compile_definition(compile_entry->compile_args, val.value);
+    }
+    // append custom options
+    for (const auto& val : get_compile_options()) {
+        prepare_and_push_flags(compile_entry->compile_args, val.value);
+    }
+
+    // [Library paths/definitions/options]
+    for (const auto* lib : get_libraries()) {
+        try_merge_lib_content(compiler, compile_entry->compile_args, lib, Visibility::PUBLIC);
+    }
+
+    // Merge global defs
+    // include paths
+    for (const auto& val : e_global_include_paths) {
+        compiler->push_include_path(compile_entry->compile_args, val.string());
+    }
+    // compile definitions
+    for (const auto& val : e_global_definitions) {
+        compiler->push_compile_definition(compile_entry->compile_args, val);
+    }
+    // append custom options
+    std::vector<std::string>* opts = nullptr;
+    switch (compiler->get_language()) {
+        case Compiler::Language::C: opts = &e_global_c_compile_options; break;
+        case Compiler::Language::CPP: opts = &e_global_cpp_compile_options; break;
+        case Compiler::Language::ASM: opts = &e_global_asm_compile_options; break;
+        default: opts = nullptr;
+    }
+    if (opts) {
+        for (const auto& val : *opts) {
+            prepare_and_push_flags(compile_entry->compile_args, val);
+        }
+    }
+
+    compile_entry->compiler = compiler;
+    m_compile_entries.emplace_back(std::move(compile_entry));
+}
+
 void Component::configure(std::shared_ptr<Compiler> c_compiler,
                           std::shared_ptr<Compiler> cpp_compiler,
                           std::shared_ptr<Compiler> asm_compiler,
@@ -135,206 +350,67 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
     Log.info("Configure [{}]", get_name());
     const auto configure_t1 = std::chrono::high_resolution_clock::now();
 
-    for (auto& src : m_requested_sources) {
-        if (src[0] == '.') {
-            src = std::filesystem::weakly_canonical(get_root_path() / src).string();
+    // Add requested sources to path vector
+    auto source_file_paths = get_source_file_paths();
+
+    const auto& pch = get_precompiled_header();
+    // XXX: TEMPORARY:
+    bool have_cpp_files = false;
+    for (auto& s : m_requested_sources) {
+        if (s.ends_with(".cpp")) {
+            have_cpp_files = true;
+            break;
         }
     }
-    std::vector<SourceFilePath> source_file_paths;
 
-    // Add requested sources to path vector
-    load_source_file_paths(source_file_paths);
+    if (!pch.empty()) {
+        const auto* compiler    = have_cpp_files ? cpp_compiler.get() : c_compiler.get();
+        const auto pch_name     = have_cpp_files ? "pch.hpp" : "pch.h";
+        const auto output_dir   = get_local_output_directory() / "pch";
+        const auto output_obj   = output_dir / (pch_name + compiler->get_precompile_header_extension());
+        const auto gen_src_path = output_dir / pch_name;
+
+        if (!std::filesystem::exists(output_dir))
+            std::filesystem::create_directories(output_dir);
+
+        std::stringstream gen_src;
+        gen_src << "// cfxs-build precompile header file" << std::endl;
+        gen_src << compiler->get_system_header_pragma() << std::endl;
+        for (const auto& inc : pch) {
+            gen_src << "#include " << inc << std::endl;
+        }
+        gen_src << std::endl;
+
+        bool need_update_pch = true;
+        if (FilesystemUtils::all_exist(gen_src_path, output_obj)) {
+            // check if gen_src is byte-byte equal to file at gen_src_path
+            std::ifstream gen_src_file(gen_src_path);
+            std::stringstream gen_src_file_stream;
+            gen_src_file_stream << gen_src_file.rdbuf();
+            gen_src_file.close();
+            need_update_pch = gen_src_file_stream.str() != gen_src.str();
+        }
+
+        if (need_update_pch) {
+            Log.debug("[{}] Write PCH", get_name());
+            std::ofstream gen_src_file(gen_src_path);
+            gen_src_file << gen_src.rdbuf();
+            gen_src_file.close();
+        }
+
+        SourceFilePath sfp(gen_src_path, false, output_dir, true);
+        process_source_file_path(sfp, c_compiler, cpp_compiler, asm_compiler);
+
+        // Add pch flag
+        // TODO: proper compiler check
+        if ((compiler->get_type() == Compiler::Type::GNU) || (compiler->get_type() == Compiler::Type::CLANG))
+            m_compile_options.emplace_back(Visibility::PRIVATE, "-Winvalid-pch");
+        m_compile_options.emplace_back(Visibility::PRIVATE, compiler->get_pch_include_flags(gen_src_path));
+    }
 
     // iterate all sources
     for (const auto& e : source_file_paths) {
-        std::filesystem::path output_dir;
-        if (e.is_external) {
-            output_dir = get_local_output_directory() / "External_" / std::to_string(std::filesystem::hash_value(e.path.parent_path()));
-        } else {
-            output_dir = get_local_output_directory() / std::filesystem::relative(e.path.parent_path(), get_root_path());
-        }
-
-        Compiler* compiler;
-        auto ext = e.path.extension().string();
-        // convert ext to lower case
-        std::transform(ext.begin(), ext.end(), ext.begin(), [](char c) {
-            return std::tolower(c);
-        });
-
-        if (ext == ".c") {
-            compiler = c_compiler.get();
-            if (!compiler) {
-                Log.error("C Compiler not set");
-                throw std::runtime_error("C Compiler not set");
-            }
-        } else if (ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c++") {
-            compiler = cpp_compiler.get();
-            if (!compiler) {
-                Log.error("C++ Compiler not set");
-                throw std::runtime_error("C Compiler not set");
-            }
-        } else if (ext == ".asm" || ext == ".s") {
-            compiler = asm_compiler.get();
-            if (!compiler) {
-                Log.error("ASM Compiler not set");
-                throw std::runtime_error("C Compiler not set");
-            }
-        } else {
-            throw std::runtime_error("Unsupported file type");
-        }
-
-        // path to output build files to
-        const auto ts_temp     = output_dir / (e.path.filename().string() + ".tmp");
-        const auto ts_dep_temp = output_dir / (e.path.filename().string() + ".dep.tmp");
-        const auto obj_path    = output_dir / (e.path.filename().string() + std::string(compiler->get_object_extension()));
-        const auto dep_path    = output_dir / (e.path.filename().string() + std::string(compiler->get_dependency_extension()));
-
-        // initialize output directory for temp and build files
-        if (!std::filesystem::exists(output_dir)) {
-            std::filesystem::create_directories(output_dir);
-        }
-
-        bool need_build = false;
-
-        if (!std::filesystem::exists(ts_temp) || !std::filesystem::exists(ts_dep_temp) || !std::filesystem::exists(dep_path) ||
-            !std::filesystem::exists(obj_path)) {
-            need_build = true;
-            // create and write modify empty file ts_temp
-            s_filesystem_mutex.lock();
-            try {
-                std::ofstream ts_temp_file(ts_temp);
-                ts_temp_file.close();
-                std::ofstream ts_dep_temp_file(ts_dep_temp);
-                ts_dep_temp_file.close();
-            } catch (const std::exception& e) {
-                Log.error("[{}] Failed to create timestamp file at \"{}\": {}", get_name(), ts_temp, e.what());
-                throw std::runtime_error("Failed to create timestamp file");
-            }
-            s_filesystem_mutex.unlock();
-        } else {
-            auto src_modified_time     = std::filesystem::last_write_time(e.path);  // source file
-            auto ts_mark_modified_time = std::filesystem::last_write_time(ts_temp); // modified time tracker
-
-            const bool source_modified = src_modified_time > ts_mark_modified_time;
-
-            if (source_modified) {
-                need_build = true;
-                // set ts_temp write time to src_modified_time
-                s_filesystem_mutex.lock();
-                try {
-                    std::filesystem::last_write_time(ts_temp, src_modified_time);
-                } catch (const std::exception& e) {
-                    Log.error("[{}] Failed to set timestamp file \"{}\" time: {}", get_name(), ts_temp, e.what());
-                    throw std::runtime_error("Failed to set timestamp file time");
-                }
-                s_filesystem_mutex.unlock();
-            } else {
-                const auto ts_dep_modified_time = std::filesystem::last_write_time(ts_dep_temp);
-
-                // iterate deps
-                // parse dep_path file
-                compiler->iterate_dependency_file(dep_path, [&](std::string_view path) -> bool {
-                    if (e.path == path)
-                        return false; // ignore "this" compile unit
-                    if (!std::filesystem::exists(path))
-                        return false;
-                    // check if dep file is newer than obj file
-                    auto dependency_modified_time = get_file_modified_time(path);
-                    if (dependency_modified_time > ts_dep_modified_time) { // always check to write latest change
-                        // set ts_temp write time to src_modified_time
-                        s_filesystem_mutex.lock();
-                        try {
-                            // std::filesystem::last_write_time(ts_dep_temp, dependency_modified_time);
-                            std::ofstream ts_dep_temp_file(ts_dep_temp);
-                            ts_dep_temp_file.close();
-                        } catch (const std::exception& e) {
-                            Log.error("[{}] Failed to set timestamp file \"{}\" time: {}", get_name(), ts_temp, e.what());
-                            throw std::runtime_error("Failed to set timestamp file time");
-                        }
-                        s_filesystem_mutex.unlock();
-                        need_build = true;
-                        return true; // break
-                    }
-
-                    return false; // dont break
-                });
-            }
-        }
-
-        if (!need_build)
-            continue;
-
-        // create compile entry
-        auto compile_entry          = std::make_unique<CompileEntry>();
-        compile_entry->source_entry = std::make_unique<SourceEntry>(compiler, e.path, output_dir);
-        const auto& source_entry    = *compile_entry->source_entry;
-
-        if (!std::filesystem::exists(source_entry.get_output_directory())) {
-            // Generate output_directory if it does not exist
-            s_filesystem_mutex.lock();
-            try {
-                std::filesystem::create_directories(source_entry.get_output_directory());
-            } catch (const std::exception& e) {
-                Log.error("Failed to create output dir [{}]: {}", source_entry.get_output_directory(), e.what());
-                throw e;
-            }
-            s_filesystem_mutex.unlock();
-        }
-
-        // path to output build files to
-        const auto output_path = source_entry.get_output_directory() / source_entry.get_source_file_path().filename().string();
-
-        // initial args are defined from the specific compiler implementation
-        compile_entry->compile_args = compiler->get_options();
-
-        compiler->load_compile_and_output_flags(
-            compile_entry->compile_args, source_entry.get_source_file_path(), output_path); // compile and write object
-        compiler->load_dependency_flags(compile_entry->compile_args, output_path);          // dependency file output
-
-        // [Local paths/definitions/options]
-        // include paths
-        for (const auto& val : get_include_paths()) {
-            compiler->push_include_path(compile_entry->compile_args, val.value.string());
-        }
-        // compile definitions
-        for (const auto& val : get_definitions()) {
-            compiler->push_compile_definition(compile_entry->compile_args, val.value);
-        }
-        // append custom options
-        for (const auto& val : get_compile_options()) {
-            prepare_and_push_flags(compile_entry->compile_args, val.value);
-        }
-
-        // [Library paths/definitions/options]
-        for (const auto* lib : get_libraries()) {
-            try_merge_lib_content(compiler, compile_entry->compile_args, lib, Visibility::PUBLIC);
-        }
-
-        // Merge global defs
-        // include paths
-        for (const auto& val : e_global_include_paths) {
-            compiler->push_include_path(compile_entry->compile_args, val.string());
-        }
-        // compile definitions
-        for (const auto& val : e_global_definitions) {
-            compiler->push_compile_definition(compile_entry->compile_args, val);
-        }
-        // append custom options
-        std::vector<std::string>* opts = nullptr;
-        switch (compiler->get_language()) {
-            case Compiler::Language::C: opts = &e_global_c_compile_options; break;
-            case Compiler::Language::CPP: opts = &e_global_cpp_compile_options; break;
-            case Compiler::Language::ASM: opts = &e_global_asm_compile_options; break;
-            default: opts = nullptr;
-        }
-        if (opts) {
-            for (const auto& val : *opts) {
-                prepare_and_push_flags(compile_entry->compile_args, val);
-            }
-        }
-
-        compile_entry->compiler = compiler;
-        m_compile_entries.emplace_back(std::move(compile_entry));
+        process_source_file_path(e, c_compiler, cpp_compiler, asm_compiler);
     }
 
     const auto configure_t2 = std::chrono::high_resolution_clock::now();
@@ -483,6 +559,13 @@ void Component::build() {
                         }
                     });
 
+                    if (compile_entries[current_index]->source_entry->is_pch()) {
+                        // wait for pch compilation to finish
+                        while (w->is_busy()) {
+                            std::this_thread::sleep_for(std::chrono::microseconds(100));
+                        }
+                    }
+
                     compile_entry_seq_index++;
                     break;
                 }
@@ -510,12 +593,13 @@ void Component::build() {
         Log.info("Archive [{}]", get_name());
         // Create link command and execute to link all compile_entries object files into library file
         std::vector<std::string> ar_flags;
-        m_archiver->load_archive_flags(ar_flags,
-                                       get_local_output_directory() / (get_name() + std::string(m_archiver->get_archive_extension())));
+        m_archiver->load_archive_flags(ar_flags, get_local_output_directory() / (get_name() + m_archiver->get_archive_extension()));
         for (const auto& ce : get_compile_entries()) {
+            if (ce->source_entry->is_pch())
+                continue; // do not archive pch output
             obj_paths.push_back(std::filesystem::weakly_canonical(
                 ce->source_entry->get_output_directory() /
-                (ce->source_entry->get_source_file_path().filename().string() + std::string(ce->compiler->get_object_extension()))));
+                (ce->source_entry->get_source_file_path().filename().string() + ce->compiler->get_object_extension())));
         }
         const auto arg_file = get_local_output_directory() / (get_name() + "_ar_args.txt");
         // delete arg_file
@@ -525,11 +609,11 @@ void Component::build() {
         // write cmd_entries line by line to arg file
         std::ofstream stream_arg_file(arg_file);
         for (const auto& ce : obj_paths) {
-            stream_arg_file << "\"" << ce.string() << "\""
-                            << " ";
+            stream_arg_file << FilesystemUtils::safe_path_string(ce.string()) << " ";
         }
         stream_arg_file.close();
-        m_archiver->load_input_flag_extension_file(ar_flags, arg_file);
+        if (!arg_file.empty())
+            m_archiver->load_input_flag_extension_file(ar_flags, arg_file);
 
         const auto [ret, msg] = execute_with_args(m_archiver->get_location(), ar_flags);
         if (ret != 0) {
@@ -545,17 +629,19 @@ void Component::build() {
         // create executable file from all lib and object files from this Component
         std::vector<std::string> link_flags;
 
-        // expand linker script path
-        if (get_linker_script_path().is_relative()) {
-            // if relative path, make it absolute and canonical
-            m_linker_script_path = std::filesystem::weakly_canonical(get_root_path() / m_linker_script_path);
-        } else {
-            // make canonical
-            m_linker_script_path = std::filesystem::weakly_canonical(m_linker_script_path);
-        }
-        if (!std::filesystem::exists(m_linker_script_path)) {
-            Log.error("[{}] Linker script not found: {}", get_name(), m_linker_script_path);
-            throw std::runtime_error("Linker script not found");
+        if (!m_linker_script_path.empty()) {
+            // expand linker script path
+            if (get_linker_script_path().is_relative()) {
+                // if relative path, make it absolute and canonical
+                m_linker_script_path = std::filesystem::weakly_canonical(get_root_path() / m_linker_script_path);
+            } else {
+                // make canonical
+                m_linker_script_path = std::filesystem::weakly_canonical(m_linker_script_path);
+            }
+            if (!std::filesystem::exists(m_linker_script_path)) {
+                Log.error("[{}] Linker script not found: {}", get_name(), m_linker_script_path);
+                throw std::runtime_error("Linker script not found");
+            }
         }
 
         m_linker->load_link_flags(link_flags,
@@ -563,9 +649,11 @@ void Component::build() {
                                   get_linker_script_path());
 
         for (const auto& ce : get_compile_entries()) {
+            if (ce->source_entry->is_pch())
+                continue; // do not link precompiled headers
             obj_paths.push_back(std::filesystem::weakly_canonical(
                 ce->source_entry->get_output_directory() /
-                (ce->source_entry->get_source_file_path().filename().string() + std::string(ce->compiler->get_object_extension()))));
+                (ce->source_entry->get_source_file_path().filename().string() + ce->compiler->get_object_extension())));
         }
 
         const auto arg_file = get_local_output_directory() / (get_name() + "_link_args.txt");
@@ -576,10 +664,11 @@ void Component::build() {
         // write object paths to arg file
         std::ofstream stream_arg_file(arg_file);
         for (const auto& ce : obj_paths) {
-            stream_arg_file << ce.string() << " ";
+            stream_arg_file << FilesystemUtils::safe_path_string(ce.string()) << " ";
         }
         stream_arg_file.close();
-        m_linker->load_input_flag_extension_file(link_flags, arg_file);
+        if (!arg_file.empty())
+            m_linker->load_input_flag_extension_file(link_flags, arg_file);
 
         for (const auto& lib : library_paths) {
             m_linker->load_input_flags(link_flags, lib);
@@ -594,7 +683,11 @@ void Component::build() {
 
         const auto [ret, msg] = execute_with_args(m_linker->get_location(), link_flags);
         if (ret != 0) {
-            Log.error("Failed to link [{}]:\n{}", get_name(), msg);
+            std::string lfstr;
+            for (auto& a : link_flags) {
+                lfstr += a + " ";
+            }
+            Log.error("Failed to link [{}]:\n{}\nCommand: {}", get_name(), msg, lfstr);
             throw std::runtime_error("Failed to link");
         }
     }
@@ -604,9 +697,14 @@ void Component::build() {
     Log.trace("Build done in {:.3}s", build_ms / 1000.0f);
 }
 
-void Component::load_source_file_paths(std::vector<SourceFilePath>& source_file_paths) {
+std::vector<Component::SourceFilePath> Component::get_source_file_paths() {
+    std::vector<SourceFilePath> source_file_paths;
     // Add requested paths
-    for (const auto& path : m_requested_sources) {
+    for (auto& path : m_requested_sources) {
+        // if path is relative, convert to absolute from component root directory
+        if (path[0] == '.')
+            path = std::filesystem::weakly_canonical(get_root_path() / path).string();
+
         // if path contains wildcards
         if (path.contains("*")) {
             // currently the only valid wildcards are *.extension for current folder match or **.extension for recursive match
@@ -681,6 +779,8 @@ void Component::load_source_file_paths(std::vector<SourceFilePath>& source_file_
                                                }),
                                 source_file_paths.end());
     }
+
+    return source_file_paths;
 }
 
 void Component::bind_add_sources(lua_State* L) {
@@ -946,4 +1046,43 @@ void Component::add_user(Component* user) {
         return;
 
     m_used_by.push_back(user);
+}
+
+void Component::bind_create_precompiled_header(lua_State* L) {
+    if (!m_precompiled_header.empty()) {
+        luaL_error(L, "Precompiled header already created for this component");
+        throw std::runtime_error("Precompiled header already created");
+    }
+
+    const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
+
+    if (!LuaBackend::is_valid_visibility(arg_visibility)) {
+        luaL_error(L,
+                   "Invalid precompiled header visibility argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_visibility.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_CREATE_PRECOMPILED_HEADER));
+        throw std::runtime_error("Invalid precompiled header visibility argument");
+    }
+
+    auto arg_includes = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(1));
+    if (arg_includes.isTable()) {
+        for (int i = 1; i <= arg_includes.length(); i++) {
+            auto src = arg_includes.rawget(i);
+            if (src.isString()) {
+                m_precompiled_header.emplace_back(src.tostring());
+                m_visibility_precompile_headers = LuaBackend::string_to_visibility(arg_visibility.tostring());
+                if (m_visibility_precompile_headers == Visibility::PUBLIC)
+                    throw std::runtime_error("Not implemented");
+            } else {
+                luaL_error(L, "Precompiled header include #%d is not a string [%s]", i, lua_typename(L, src.type()));
+                throw std::runtime_error("Precompiled header include is not a string");
+            }
+        }
+    } else {
+        luaL_error(L,
+                   "Invalid precompiled header list argument: type \"%s\"\n%s",
+                   lua_typename(L, arg_includes.type()),
+                   LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_CREATE_PRECOMPILED_HEADER));
+        throw std::runtime_error("Invalid precompiled header list argument");
+    }
 }

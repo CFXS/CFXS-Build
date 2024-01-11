@@ -2,6 +2,7 @@
 #include <CommandUtils.hpp>
 #include <stdexcept>
 #include <fstream>
+#include "FilesystemUtils.hpp"
 
 static std::string to_string(Compiler::Standard standard) {
     switch (standard) {
@@ -155,16 +156,16 @@ void Compiler::load_dependency_flags(std::vector<std::string>& flags, const std:
     if (get_type() == Type::GNU || get_type() == Type::CLANG) {
         flags.push_back("-MMD"); // Generate header dependency list (ignore system headers, but allow user angle brackets)
         flags.push_back("-MF");  // Write to specific file
-        flags.push_back(out_path.string() + ".dep");
+        flags.push_back(FilesystemUtils::safe_path_string(out_path.string() + ".dep"));
     } else if (get_type() == Type::MSVC) {
         flags.push_back("/showIncludes"); // Generate header dependency list
         flags.push_back("/Fo");           // Write to specific file
-        flags.push_back(out_path.string());
+        flags.push_back(FilesystemUtils::safe_path_string(out_path));
     } else if (get_type() == Type::IAR) {
         if (get_language() == Language::ASM)
             return;
         flags.push_back("--dependencies"); // Write to specific file
-        flags.push_back(out_path.string() + ".dep");
+        flags.push_back(FilesystemUtils::safe_path_string(out_path.string() + ".dep"));
     } else {
         throw std::runtime_error("Unsupported compiler");
     }
@@ -172,21 +173,25 @@ void Compiler::load_dependency_flags(std::vector<std::string>& flags, const std:
 
 void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
                                              const std::filesystem::path& source_path,
-                                             const std::filesystem::path& obj_path) const {
+                                             const std::filesystem::path& obj_path,
+                                             bool is_pch) const {
+    const auto source = FilesystemUtils::safe_path_string(source_path);
+
     if (get_type() == Type::GNU || get_type() == Type::CLANG) {
         flags.push_back("-c"); // Compile only
-        flags.push_back(source_path.string());
+        flags.push_back(source);
         flags.push_back("-o"); // Write to specific file
-        flags.push_back(obj_path.string() + ".o");
+        flags.push_back(
+            FilesystemUtils::safe_path_string(obj_path.string() + (is_pch ? get_precompile_header_extension() : get_object_extension())));
     } else if (get_type() == Type::MSVC) {
         flags.push_back("/c");  // Compile only
-        flags.push_back(source_path.string());
+        flags.push_back(source);
         flags.push_back("/Fo"); // Write to specific file
         flags.push_back(obj_path.string());
     } else if (get_type() == Type::IAR) {
         if (get_language() != Language::ASM)
             flags.push_back("--silent"); // Do not generate compile spam
-        flags.push_back(source_path.string());
+        flags.push_back(source);
         flags.push_back("-o");           // Write to specific file
         flags.push_back(obj_path.string() + ".o");
     } else {
@@ -245,7 +250,7 @@ void Compiler::push_compile_definition(std::vector<std::string>& flags, const st
     }
 }
 
-std::string_view Compiler::get_object_extension() const {
+std::string Compiler::get_object_extension() const {
     if (get_type() == Type::GNU || get_type() == Type::CLANG) {
         return ".o";
     } else if (get_type() == Type::MSVC) {
@@ -257,7 +262,7 @@ std::string_view Compiler::get_object_extension() const {
     }
 }
 
-std::string_view Compiler::get_dependency_extension() const {
+std::string Compiler::get_dependency_extension() const {
     if (get_type() == Type::GNU || get_type() == Type::CLANG || get_type() == Type::IAR) {
         return ".dep";
     } else if (get_type() == Type::MSVC) {
@@ -267,6 +272,52 @@ std::string_view Compiler::get_dependency_extension() const {
     }
 
     return "";
+}
+
+std::string Compiler::get_precompile_header_extension() const {
+    if (get_type() == Type::GNU) {
+        return ".gch";
+    } else if (get_type() == Type::CLANG) {
+        // TODO: functions for compiling and including precompiled headers is different than gcc
+        throw std::runtime_error("Not implemented - need to check docs");
+        return ".pch";
+    } else if (get_type() == Type::IAR) {
+        throw std::runtime_error("Not implemented - not supported, need to find good enough workaround with --preinclude");
+    } else if (get_type() == Type::MSVC) {
+        throw std::runtime_error("Not implemented");
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
+
+    return "";
+}
+
+std::string Compiler::get_system_header_pragma() const {
+    if (get_type() == Type::GNU) {
+        return "#pragma GCC system_header";
+    } else if (get_type() == Type::CLANG) {
+        return "#pragma clang system_header";
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
+}
+
+std::string Compiler::get_pch_include_flags(const std::filesystem::path& pch_gen_path) const {
+    const auto file_path   = FilesystemUtils::safe_path_string(pch_gen_path);
+    const auto search_path = FilesystemUtils::safe_path_string(pch_gen_path.parent_path());
+
+    if (get_type() == Type::GNU) {
+        // return "-I" + search_path + " -include " + file_path;
+        return "-include " + file_path;
+    } else if (get_type() == Type::CLANG) {
+        throw std::runtime_error("Not implemented");
+    } else if (get_type() == Type::IAR) {
+        throw std::runtime_error("Not implemented - not supported, need to find good enough workaround with --preinclude");
+    } else if (get_type() == Type::MSVC) {
+        throw std::runtime_error("Not implemented");
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
 }
 
 void Compiler::iterate_dependency_file(const std::filesystem::path& dependency_file,

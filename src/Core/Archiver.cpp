@@ -94,7 +94,7 @@ void Archiver::load_input_flag_extension_file(std::vector<std::string>& args, co
     }
 }
 
-std::string_view Archiver::get_archive_extension() const {
+std::string Archiver::get_archive_extension() const {
     switch (get_type()) {
         case Type::GNU: return ".a";
         case Type::CLANG: return ".a";

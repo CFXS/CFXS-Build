@@ -1,5 +1,6 @@
 #include "Linker.hpp"
 #include "CommandUtils.hpp"
+#include "FilesystemUtils.hpp"
 
 static std::string to_string(Linker::Type type) {
     switch (type) {
@@ -42,33 +43,36 @@ Linker::Linker(const std::string& linker) : m_location(linker) {
 void Linker::load_link_flags(std::vector<std::string>& args,
                              const std::filesystem::path& output_file,
                              const std::filesystem::path& linker_script) const {
+    const auto out_path         = FilesystemUtils::safe_path_string(output_file.string());
+    const auto link_script_path = FilesystemUtils::safe_path_string(linker_script.string());
+
     switch (get_type()) {
         case Type::GNU:
             args.push_back("-o");
-            args.push_back(output_file.string());
-            if (!linker_script.empty()) {
+            args.push_back(out_path);
+            if (!link_script_path.empty()) {
                 args.push_back("-T");
-                args.push_back(linker_script.string());
+                args.push_back(link_script_path);
             }
             break;
         case Type::CLANG:
             args.push_back("-o");
-            args.push_back(output_file.string());
-            if (!linker_script.empty()) {
+            args.push_back(out_path);
+            if (!link_script_path.empty()) {
                 args.push_back("-T");
-                args.push_back(linker_script.string());
+                args.push_back(link_script_path);
             }
             break;
         case Type::MSVC:
             args.push_back("/OUT:");
-            args.push_back(output_file.string());
+            args.push_back(out_path);
             break;
         case Type::IAR:
             args.push_back("-o");
-            args.push_back(output_file.string());
-            if (!linker_script.empty()) {
+            args.push_back(out_path);
+            if (!link_script_path.empty()) {
                 args.push_back("--config");
-                args.push_back(linker_script.string());
+                args.push_back(link_script_path);
             }
             break;
         default: Log.error("Linker \"{}\" is not supported", get_location()); throw std::runtime_error("Linker not supported");
@@ -76,26 +80,30 @@ void Linker::load_link_flags(std::vector<std::string>& args,
 }
 
 void Linker::load_input_flags(std::vector<std::string>& args, const std::filesystem::path& input_object) const {
+    const auto input_path = FilesystemUtils::safe_path_string(input_object.string());
+
     switch (get_type()) {
-        case Type::GNU: args.push_back(input_object.string()); break;
-        case Type::CLANG: args.push_back(input_object.string()); break;
-        case Type::MSVC: args.push_back(input_object.string()); break;
-        case Type::IAR: args.push_back(input_object.string()); break;
+        case Type::GNU: args.push_back(input_path); break;
+        case Type::CLANG: args.push_back(input_path); break;
+        case Type::MSVC: args.push_back(input_path); break;
+        case Type::IAR: args.push_back(input_path); break;
         default: Log.error("Linker \"{}\" is not supported", get_location()); throw std::runtime_error("Linker not supported");
     }
 }
 
 void Linker::load_input_flag_extension_file(std::vector<std::string>& args, const std::filesystem::path& input_ext_file) const {
+    const auto input_ext_path = FilesystemUtils::safe_path_string(input_ext_file.string());
+
     // commandline extension files
     switch (get_type()) {
         case Type::GNU:
         case Type::CLANG: {
-            args.push_back("@" + input_ext_file.string());
+            args.push_back("@" + input_ext_path);
             break;
         };
         case Type::IAR: {
             args.push_back("-f"); // command line extension without dependency
-            args.push_back(input_ext_file.string());
+            args.push_back(input_ext_path);
             break;
         };
         default: throw std::runtime_error("Linker command line extension not supported");
