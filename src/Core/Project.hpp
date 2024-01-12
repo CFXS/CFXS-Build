@@ -20,6 +20,8 @@ private: // .cfxs-build Lua bindings
     // Global
     static void bind_cfxs_print(const std::string& str);
     static bool bind_exists(const std::string& path);
+    static std::string bind_get_current_directory_path(lua_State*);
+    static std::string bind_get_current_script_path(lua_State*);
 
     // Import
     static void bind_import(lua_State* L);

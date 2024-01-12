@@ -14,6 +14,7 @@
 #include <regex>
 #include <CommandUtils.hpp>
 #include <stdexcept>
+#include <vector>
 
 // folder inside of build path to write build files to
 #define BUILD_TEMP_LOCATION    "components"
@@ -294,6 +295,8 @@ void Project::initialize_lua() {
 
     bridge.addFunction<void, const std::string&>("__cfxs_print", TO_FUNCTION(bind_cfxs_print));
     bridge.addFunction<bool, const std::string&>("exists", TO_FUNCTION(bind_exists));
+    bridge.addFunction<std::string, lua_State*>("get_current_directory_path", TO_FUNCTION(bind_get_current_directory_path));
+    bridge.addFunction<std::string, lua_State*>("get_current_script_path", TO_FUNCTION(bind_get_current_script_path));
 
     bridge.addFunction<void, lua_State*>("import", TO_FUNCTION(bind_import));
     bridge.addFunction<void, lua_State*>("import_git", TO_FUNCTION(bind_import_git));
@@ -327,6 +330,10 @@ bool Project::bind_exists(const std::string& path_str) {
     const auto p                     = path.is_relative() ? s_script_path_stack.back() / path : path;
     return std::filesystem::exists(p);
 }
+
+std::string Project::bind_get_current_directory_path(lua_State*) { return s_script_path_stack.back().string(); }
+
+std::string Project::bind_get_current_script_path(lua_State*) { return s_source_location_stack.back().string(); }
 
 // Compiler config
 void Project::bind_set_c_compiler(const std::string& compiler, const std::string& standard) {
