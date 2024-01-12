@@ -113,7 +113,7 @@ void Project::configure() {
 
     try {
         // execute root_buildfile into lua state
-        if (luaL_dofile(s_MainLuaState, source_location.string().c_str())) {
+        if (const bool failed = luaL_dofile(s_MainLuaState, source_location.string().c_str())) {
             // get and log lua error callstack
             print_traceback(source_location);
             exit(-1);
@@ -386,7 +386,7 @@ void Project::bind_import(lua_State* L) {
     }
 
     try {
-        const bool res = luaL_dofile_with_n_args(s_MainLuaState, source_location.string().c_str(), extra_arg_count, [&]() {
+        const bool failed = luaL_dofile_with_n_args(s_MainLuaState, source_location.string().c_str(), extra_arg_count, [&]() {
             if (extra_arg_count) {
                 if (extra_arg_count > 1) {
                     lua_pushstring(s_MainLuaState, "Currently only 1 import argument is supported");
@@ -397,7 +397,7 @@ void Project::bind_import(lua_State* L) {
             }
             return 0;
         });
-        if (res) {
+        if (failed) {
             // get and log lua error callstack
             print_traceback(source_location);
             exit(-1);
