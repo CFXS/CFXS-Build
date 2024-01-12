@@ -344,7 +344,6 @@ void Project::bind_set_asm_compiler(const std::string& compiler) {
 // Import
 void Project::bind_import(lua_State* L) {
     const auto arg_count       = lua_gettop(L);
-    Log.warn("import args {}", arg_count);
     const auto extra_arg_count = arg_count - 1;
 
     auto arg_path = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
