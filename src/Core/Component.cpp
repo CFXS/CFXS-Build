@@ -1038,7 +1038,7 @@ void Component::bind_add_link_options(lua_State* L) {
 
 // TODO: this is supposed to be a shared_ptr. Find a way to make it shared through Lua.
 void Component::add_library(Component* component) {
-    Log.debug("[{}] add library [{}]", get_name(), component->get_name());
+    Log.trace("[{}] add library [{}]", get_name(), component->get_name());
 
     // skip duplicates
     if (std::find(get_libraries().begin(), get_libraries().end(), component) != get_libraries().end())
