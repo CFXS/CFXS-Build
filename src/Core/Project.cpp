@@ -293,6 +293,7 @@ void Project::initialize_lua() {
     bridge.addFunction<void, const std::string& /*path*/>("set_archiver", TO_FUNCTION(bind_set_archiver));
 
     bridge.addFunction<void, const std::string&>("__cfxs_print", TO_FUNCTION(bind_cfxs_print));
+    bridge.addFunction<bool, const std::string&>("exists", TO_FUNCTION(bind_exists));
 
     bridge.addFunction<void, lua_State*>("import", TO_FUNCTION(bind_import));
     bridge.addFunction<void, lua_State*>("import_git", TO_FUNCTION(bind_import_git));
@@ -321,6 +322,12 @@ void Project::bind_cfxs_print(const std::string& str) {
     Log.info("[" ANSI_MAGENTA "Script" ANSI_RESET "] {}", str); //
 }
 
+bool Project::bind_exists(const std::string& path_str) {
+    const std::filesystem::path path = path_str;
+    const auto p                     = path.is_relative() ? s_script_path_stack.back() / path : path;
+    return std::filesystem::exists(p);
+}
+
 // Compiler config
 void Project::bind_set_c_compiler(const std::string& compiler, const std::string& standard) {
     s_c_compiler = std::make_shared<Compiler>(Compiler::Language::C, compiler, standard); //
@@ -337,6 +344,7 @@ void Project::bind_set_asm_compiler(const std::string& compiler) {
 // Import
 void Project::bind_import(lua_State* L) {
     const auto arg_count       = lua_gettop(L);
+    Log.warn("import args {}", arg_count);
     const auto extra_arg_count = arg_count - 1;
 
     auto arg_path = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
@@ -477,11 +485,11 @@ void Project::bind_import_git(lua_State* L) {
             throw std::runtime_error("Import git existing target directory is not a git repository root directory");
         }
 
-        if (git.have_changes()) {
-            Log.warn("Not updating git repository \"{}\" - uncommitted changes\n    ({})", ext_path, url);
+        if (GlobalConfig::skip_git_import_update()) {
+            Log.trace("Skip repository update [{}]\n    ({})", ext_path, url);
         } else {
-            if (GlobalConfig::skip_git_import_update()) {
-                Log.trace("Skip repository update [{}]\n    ({})", ext_path, url);
+            if (git.have_changes()) {
+                Log.warn("Not updating git repository \"{}\" - uncommitted changes\n    ({})", ext_path, url);
             } else {
                 Log.trace("Pull repository updates [{}]\n    ({})", ext_path, url);
                 // git.fetch();
@@ -499,17 +507,17 @@ void Project::bind_import_git(lua_State* L) {
         }
     }
 
-    // pop base args from this call, leave additional args for push to import
-    for (int i = 0; i < 2; i++)
-        lua_pop(L, -1);
-
-    lua_pushstring(L, ext_str.c_str());
+    if (arg_count > 2) {
+        lua_insert(L, -3);                  // move arg to top
+        lua_settop(L, 1);                   // cut everything except arg
+        lua_pushstring(L, ext_str.c_str()); // push path
+        lua_insert(L, -2);                  // move path to top
+    } else {
+        lua_settop(L, 0);                   // cut everything
+        lua_pushstring(L, ext_str.c_str()); // push path
+    }
+    // call import(path, [arg])
     bind_import(L);
-    lua_pop(L, 1);
-
-    // push back fake base args from this call to not break dofile
-    for (int i = 0; i < 2; i++)
-        lua_pushnil(L);
 }
 
 // Linker config
