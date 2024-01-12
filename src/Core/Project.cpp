@@ -116,6 +116,7 @@ void Project::configure() {
         if (luaL_dofile(s_MainLuaState, source_location.string().c_str())) {
             // get and log lua error callstack
             print_traceback(source_location);
+            exit(-1);
             throw std::runtime_error("Failed to execute script");
         } else {
             for (auto& comp : s_components) {
@@ -132,8 +133,8 @@ void Project::configure() {
         for (const auto& comp : s_components) {
             for (const auto& ce : comp->get_compile_entries()) {
                 const auto& source_entry = *ce->source_entry;
-                const auto dir           = source_entry.get_output_directory().string();
-                const auto source        = source_entry.get_source_file_path().string();
+                const auto dir           = replace_string(source_entry.get_output_directory().string(), "\\", "\\\\");
+                const auto source        = replace_string(source_entry.get_source_file_path().string(), "\\", "\\\\");
                 // const auto obj           = source_entry.get_object_path().string();
 
                 const auto cmd = replace_string(container_to_string(ce->compile_args), "\"", "\\\"");
@@ -151,9 +152,6 @@ void Project::configure() {
             compile_commands.pop_back();
             compile_commands.pop_back();
         }
-
-        std::regex regex(R"(\\\\)");
-        compile_commands = std::regex_replace(compile_commands, regex, R"(\\\\\\)");
 
         std::ofstream compile_commands_file(s_project_path / "cfxs_compile_commands.json");
         if (compile_commands_file.is_open()) {
@@ -377,6 +375,7 @@ void Project::bind_import(lua_State* L) {
         if (res) {
             // get and log lua error callstack
             print_traceback(source_location);
+            exit(-1);
             throw std::runtime_error("Failed to execute script");
         }
     } catch (const std::runtime_error& e) {
@@ -406,7 +405,7 @@ void Project::bind_import_git(lua_State* L) {
         throw std::runtime_error("Invalid import git argument");
     }
 
-    auto url          = arg_url.tostring();
+    auto url = arg_url.tostring();
     // trim spaces from start and end
     url = url.substr(url.find_first_not_of(" \t"));
     url = url.substr(0, url.find_last_not_of(" \t") + 1);

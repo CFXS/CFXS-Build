@@ -102,10 +102,12 @@ private:
     std::filesystem::path get_source_output_directory(const SourceFilePath& sfp);
 
     /// Process source path and add to compile list if needed
-    void process_source_file_path(const SourceFilePath& sfp,
+    /// Return true if added to compile list
+    bool process_source_file_path(const SourceFilePath& sfp,
                                   std::shared_ptr<Compiler> c_compiler,
                                   std::shared_ptr<Compiler> cpp_compiler,
-                                  std::shared_ptr<Compiler> asm_compiler);
+                                  std::shared_ptr<Compiler> asm_compiler,
+                                  bool force_compile);
 
 private:
     static void iterate_libs(const Component* comp, std::vector<std::string>& list);
@@ -130,7 +132,6 @@ private:
 
     // Precompilled header
     std::vector<std::string> m_precompiled_header; // list of header paths to precompile
-    Visibility m_visibility_precompile_headers;
 
     // Definitions and options
     std::vector<ScopedValue<std::filesystem::path>> m_include_paths;

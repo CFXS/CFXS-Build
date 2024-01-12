@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+#include "CommandUtils.hpp"
 
 namespace FilesystemUtils {
 
@@ -12,11 +13,13 @@ namespace FilesystemUtils {
         if (str.empty())
             return str;
 
-        if (!str.starts_with('\"') && str.contains(' ')) {
-            return "\"" + str + "\"";
+        const auto str_mod = replace_string(str, "\\", "\\\\");
+
+        if (!str_mod.starts_with('\"') && str_mod.contains(' ')) {
+            return "\"" + str_mod + "\"";
         }
 
-        return str;
+        return str_mod;
     }
 
 } // namespace FilesystemUtils

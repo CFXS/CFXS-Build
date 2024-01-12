@@ -160,7 +160,7 @@ void Compiler::load_dependency_flags(std::vector<std::string>& flags, const std:
     } else if (get_type() == Type::MSVC) {
         flags.push_back("/showIncludes"); // Generate header dependency list
         flags.push_back("/Fo");           // Write to specific file
-        flags.push_back(FilesystemUtils::safe_path_string(out_path));
+        flags.push_back(FilesystemUtils::safe_path_string(out_path.string()));
     } else if (get_type() == Type::IAR) {
         if (get_language() == Language::ASM)
             return;
@@ -175,7 +175,7 @@ void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
                                              const std::filesystem::path& source_path,
                                              const std::filesystem::path& obj_path,
                                              bool is_pch) const {
-    const auto source = FilesystemUtils::safe_path_string(source_path);
+    const auto source = FilesystemUtils::safe_path_string(source_path.string());
 
     if (get_type() == Type::GNU || get_type() == Type::CLANG) {
         flags.push_back("-c"); // Compile only
@@ -200,7 +200,7 @@ void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
 }
 
 void Compiler::push_include_path(std::vector<std::string>& flags, const std::string& include_directory) const {
-    auto inc = include_directory;
+    auto inc = FilesystemUtils::safe_path_string(include_directory);
     if (inc.find(' ') != std::string::npos) {
         inc = "\\\"" + inc + "\\\"";
     }
@@ -303,8 +303,8 @@ std::string Compiler::get_system_header_pragma() const {
 }
 
 std::string Compiler::get_pch_include_flags(const std::filesystem::path& pch_gen_path) const {
-    const auto file_path   = FilesystemUtils::safe_path_string(pch_gen_path);
-    const auto search_path = FilesystemUtils::safe_path_string(pch_gen_path.parent_path());
+    const auto file_path   = FilesystemUtils::safe_path_string(pch_gen_path.string());
+    const auto search_path = FilesystemUtils::safe_path_string(pch_gen_path.parent_path().string());
 
     if (get_type() == Type::GNU) {
         // return "-I" + search_path + " -include " + file_path;
@@ -337,9 +337,9 @@ void Compiler::iterate_dependency_file(const std::filesystem::path& dependency_f
         std::getline(dep_file, line); // skip first line
         while (std::getline(dep_file, line)) {
             // trim line spaces from beginning and remove potential " \" at the end of the line
-            const auto last_backslash = line.find_last_of('\\');
+            const auto backslash_terminated = line.ends_with(" \\");
             std::string_view line_sv(line.data() + line.find_first_not_of(' '),
-                                     line.data() + (last_backslash != std::string::npos ? (last_backslash - 1) : line.length()));
+                                     line.data() + (backslash_terminated ? (line.length() - 2) : line.length()));
 
             const bool should_return = callback(line_sv);
             if (should_return)

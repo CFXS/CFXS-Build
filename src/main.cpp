@@ -85,13 +85,13 @@ int main(int argc, char **argv) {
         .help("Specify number of parallel threads to use (not specified or 0 = all)") //
         .nargs(1);                                                                    //
 
-    args.add_argument("-c")                     //
-        .help("Generate compile_commands.json") //
-        .flag();                                //
+    args.add_argument("-c")                                                           //
+        .help("Generate compile_commands.json")                                       //
+        .flag();                                                                      //
 
-    args.add_argument("-t")               //
-        .help("Print trace log messages") //
-        .flag();                          //
+    args.add_argument("-t")                                                           //
+        .help("Print trace log messages")                                             //
+        .flag();                                                                      //
 
     try {
         args.parse_args(argc, argv);
