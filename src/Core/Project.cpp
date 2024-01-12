@@ -336,7 +336,10 @@ void Project::bind_set_asm_compiler(const std::string& compiler) {
 
 // Import
 void Project::bind_import(lua_State* L) {
-    auto arg_path = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(1, 0));
+    const auto arg_count       = lua_gettop(L);
+    const auto extra_arg_count = arg_count - 1;
+
+    auto arg_path = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
     if (!arg_path.isString()) {
         luaL_error(L,
                    "Invalid import path: type \"%s\"\n%s",
@@ -370,8 +373,30 @@ void Project::bind_import(lua_State* L) {
         return;
     }
 
+    // check if s_source_location_stack contains source_location (exclusing last entry)
+    const auto it = std::find_if(s_source_location_stack.begin(), s_source_location_stack.end() - 1, [&](const auto& path) {
+        return path == source_location;
+    });
+    if (it != s_source_location_stack.end() - 1) {
+        luaL_error(s_MainLuaState,
+                   "Recursive import detected: \"%s\" -> \"%s\"",
+                   s_source_location_stack.back().string().c_str(),
+                   source_location.string().c_str());
+        throw std::runtime_error("recursive import cycle");
+    }
+
     try {
-        const bool res = luaL_dofile(s_MainLuaState, source_location.string().c_str());
+        const bool res = luaL_dofile_with_n_args(s_MainLuaState, source_location.string().c_str(), extra_arg_count, [&]() {
+            if (extra_arg_count) {
+                if (extra_arg_count > 1) {
+                    lua_pushstring(s_MainLuaState, "Currently only 1 import argument is supported");
+                    return 1; // error
+                }
+                // swap argument and function
+                lua_insert(s_MainLuaState, -2); // move function to top
+            }
+            return 0;
+        });
         if (res) {
             // get and log lua error callstack
             print_traceback(source_location);
@@ -388,8 +413,11 @@ void Project::bind_import(lua_State* L) {
 }
 
 void Project::bind_import_git(lua_State* L) {
-    auto arg_url    = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(2, 0));
-    auto arg_branch = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(2, 1));
+    const auto arg_count = lua_gettop(L);
+
+    auto arg_url    = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
+    auto arg_branch = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 1));
+
     if (!arg_url.isString()) {
         luaL_error(L,
                    "Invalid import external url: type \"%s\"\n%s",
@@ -471,9 +499,17 @@ void Project::bind_import_git(lua_State* L) {
         }
     }
 
+    // pop base args from this call, leave additional args for push to import
+    for (int i = 0; i < 2; i++)
+        lua_pop(L, -1);
+
     lua_pushstring(L, ext_str.c_str());
     bind_import(L);
     lua_pop(L, 1);
+
+    // push back fake base args from this call to not break dofile
+    for (int i = 0; i < 2; i++)
+        lua_pushnil(L);
 }
 
 // Linker config
@@ -541,7 +577,9 @@ Component& Project::bind_create_library(const std::string& name) {
 }
 
 void Project::bind_add_global_include_paths(lua_State* L) {
-    const auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(1, 0));
+    const auto arg_count = lua_gettop(L);
+
+    const auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
@@ -579,7 +617,9 @@ void Project::bind_add_global_include_paths(lua_State* L) {
 }
 
 void Project::bind_add_global_definitions(lua_State* L) {
-    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(1, 0));
+    const auto arg_count = lua_gettop(L);
+
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
@@ -606,7 +646,9 @@ void Project::bind_add_global_definitions(lua_State* L) {
 }
 
 void Project::bind_add_global_compile_options(lua_State* L) {
-    const auto arg_language = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(2, 0));
+    const auto arg_count = lua_gettop(L);
+
+    const auto arg_language = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
 
     if (!LuaBackend::is_valid_language(arg_language)) {
         luaL_error(L,
@@ -635,7 +677,7 @@ void Project::bind_add_global_compile_options(lua_State* L) {
         throw std::runtime_error("Add global compile definitions - invalid language");
     }
 
-    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(2, 1));
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 1));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
@@ -666,7 +708,9 @@ void Project::bind_add_global_compile_options(lua_State* L) {
 }
 
 void Project::bind_add_global_link_options(lua_State* L) {
-    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(1, 0));
+    const auto arg_count = lua_gettop(L);
+
+    auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
