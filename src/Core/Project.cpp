@@ -133,20 +133,16 @@ void Project::configure() {
     if (GlobalConfig::generate_compile_commands()) {
         std::string compile_commands;
         for (const auto& comp : s_components) {
-            for (const auto& ce : comp->get_compile_entries()) {
-                const auto& source_entry = *ce->source_entry;
-                const auto dir           = replace_string(source_entry.get_output_directory().string(), "\\", "\\\\");
-                const auto source        = replace_string(source_entry.get_source_file_path().string(), "\\", "\\\\");
-                // const auto obj           = source_entry.get_object_path().string();
-
-                const auto cmd = replace_string(container_to_string(ce->compile_args), "\"", "\\\"");
-
-                compile_commands += "{\n";
-                compile_commands += ("    \"directory\": \"" + dir + "\",\n");
-                compile_commands += ("    \"command\": \"" + ce->compiler->get_location() + " " + cmd + "\",\n");
-                compile_commands += ("    \"file\": \"" + source + "\"\n");
-                // compile_commands += ("    \"output\": \"" + obj + "\"\n");
-                compile_commands += ("},\n");
+            for (const auto& obj_path : comp->get_output_object_paths()) {
+                const auto cmd_path = obj_path.string() + ".cmd";
+                // append contents of cmd_entry to compile_commands
+                if (std::filesystem::exists(cmd_path)) {
+                    std::ifstream cmd_file(cmd_path);
+                    std::stringstream buffer;
+                    buffer << cmd_file.rdbuf();
+                    compile_commands += buffer.str();
+                    cmd_file.close();
+                }
             }
         }
         if (compile_commands.length()) {

@@ -191,6 +191,11 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     const auto obj_path = output_dir / (src_name + (e.is_precompiled_header_file ? compiler->get_precompile_header_extension() :
                                                                                    compiler->get_object_extension()));
 
+    // do not add precompiled header - it is not actually linked
+    if (!e.is_precompiled_header_file) {
+        m_output_object_paths.push_back(obj_path);
+    }
+
     // temporary and dependency file paths
     const auto dep_path    = output_dir / (src_name + compiler->get_dependency_extension());
     const auto ts_temp     = output_dir / (src_name + ".tmp");
@@ -520,6 +525,20 @@ void Component::build() {
                         const auto& compile_entry = compile_entries[current_index];
 
                         const auto t_start    = std::chrono::high_resolution_clock::now();
+
+                        // write command file @ output_dir/cmd.txt
+                        const auto dir    = replace_string(compile_entry->source_entry->get_output_directory().string(), "\\", "\\\\");
+                        const auto source = replace_string(compile_entry->source_entry->get_source_file_path().string(), "\\", "\\\\");
+                        const auto cmd    = replace_string(container_to_string(compile_entry->compile_args), "\"", "\\\"");
+                        std::ofstream cmd_file(compile_entry->source_entry->get_object_path().string() + ".cmd",
+                                               std::ios::out | std::ios::trunc);
+                        cmd_file << "{\n";
+                        cmd_file << ("    \"directory\": \"" + dir + "\",\n");
+                        cmd_file << ("    \"command\": \"" + compile_entry->compiler->get_location() + " " + cmd + "\",\n");
+                        cmd_file << ("    \"file\": \"" + source + "\"\n");
+                        cmd_file << ("},\n");
+                        cmd_file.close();
+
                         const auto [ret, msg] = s_compile(compile_entry);
 
                         // don't show successful outputs from commands after the first failed one
@@ -600,12 +619,8 @@ void Component::build() {
         // Create link command and execute to link all compile_entries object files into library file
         std::vector<std::string> ar_flags;
         m_archiver->load_archive_flags(ar_flags, get_local_output_directory() / (get_name() + m_archiver->get_archive_extension()));
-        for (const auto& ce : get_compile_entries()) {
-            if (ce->source_entry->is_pch())
-                continue; // do not archive pch output
-            obj_paths.push_back(std::filesystem::weakly_canonical(
-                ce->source_entry->get_output_directory() /
-                (ce->source_entry->get_source_file_path().filename().string() + ce->compiler->get_object_extension())));
+        for (const auto& obj : get_output_object_paths()) {
+            obj_paths.push_back(std::filesystem::weakly_canonical(obj));
         }
         const auto arg_file = get_local_output_directory() / (get_name() + "_ar_args.txt");
         // delete arg_file
@@ -654,12 +669,8 @@ void Component::build() {
                                   get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension())),
                                   get_linker_script_path());
 
-        for (const auto& ce : get_compile_entries()) {
-            if (ce->source_entry->is_pch())
-                continue; // do not link precompiled headers
-            obj_paths.push_back(std::filesystem::weakly_canonical(
-                ce->source_entry->get_output_directory() /
-                (ce->source_entry->get_source_file_path().filename().string() + ce->compiler->get_object_extension())));
+        for (const auto& obj : get_output_object_paths()) {
+            obj_paths.push_back(std::filesystem::weakly_canonical(obj));
         }
 
         const auto arg_file = get_local_output_directory() / (get_name() + "_link_args.txt");

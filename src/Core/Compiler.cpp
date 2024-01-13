@@ -81,7 +81,7 @@ Compiler::Compiler(Language language, const std::string& location, const std::st
         m_type = Type::GNU;
         m_flags.push_back("-fdiagnostics-color=always");
         m_flags.push_back("-Dgcc");
-        m_flags.push_back("-fmax-errors=100");
+        m_flags.push_back("-fmax-errors=10");
     } else if (compiler_version_string.contains("clang")) {
         m_type = Type::CLANG;
         m_flags.push_back("-fdiagnostics-color=always");

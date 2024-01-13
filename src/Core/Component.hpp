@@ -94,6 +94,8 @@ public:
     Visibility get_visibility_mask_definitions() const { return m_visibility_mask_definitions; }
     Visibility get_visibility_mask_compile_options() const { return m_visibility_mask_compile_options; }
 
+    const std::vector<std::filesystem::path>& get_output_object_paths() const { return m_output_object_paths; }
+
 private:
     /// Get vector of processed source file paths
     std::vector<SourceFilePath> get_source_file_paths();
@@ -146,6 +148,7 @@ private:
     std::shared_ptr<Linker> m_linker;
     std::filesystem::path m_linker_script_path;
     std::vector<std::string> m_link_options;
+    std::vector<std::filesystem::path> m_output_object_paths; // All compiled .o file paths related to this component
 };
 
 inline const char* to_string(Component::Type type) {
