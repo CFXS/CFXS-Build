@@ -345,6 +345,8 @@ bool Component::process_source_file_path(const SourceFilePath& e,
         }
     }
 
+    compile_entry->compiler = compiler;
+
     // write command file @ output_dir/cmd.txt
     const auto dir    = replace_string(compile_entry->source_entry->get_output_directory().string(), "\\", "\\\\");
     const auto source = replace_string(compile_entry->source_entry->get_source_file_path().string(), "\\", "\\\\");
@@ -357,7 +359,6 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     cmd_file << ("},\n");
     cmd_file.close();
 
-    compile_entry->compiler = compiler;
     m_compile_entries.emplace_back(std::move(compile_entry));
     return true;
 }
