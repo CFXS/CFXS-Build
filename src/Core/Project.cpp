@@ -134,7 +134,7 @@ void Project::configure() {
         std::string compile_commands;
         for (const auto& comp : s_components) {
             for (const auto& obj_path : comp->get_output_object_paths()) {
-                const auto cmd_path = obj_path.string() + ".cmd";
+                const auto cmd_path = obj_path.string() + ".txt";
                 // append contents of cmd_entry to compile_commands
                 if (std::filesystem::exists(cmd_path)) {
                     std::ifstream cmd_file(cmd_path);

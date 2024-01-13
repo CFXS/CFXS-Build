@@ -345,6 +345,18 @@ bool Component::process_source_file_path(const SourceFilePath& e,
         }
     }
 
+    // write command file @ output_dir/cmd.txt
+    const auto dir    = replace_string(compile_entry->source_entry->get_output_directory().string(), "\\", "\\\\");
+    const auto source = replace_string(compile_entry->source_entry->get_source_file_path().string(), "\\", "\\\\");
+    const auto cmd    = replace_string(container_to_string(compile_entry->compile_args), "\"", "\\\"");
+    std::ofstream cmd_file(compile_entry->source_entry->get_object_path().string() + ".txt", std::ios::out | std::ios::trunc);
+    cmd_file << "{\n";
+    cmd_file << ("    \"directory\": \"" + dir + "\",\n");
+    cmd_file << ("    \"command\": \"" + compile_entry->compiler->get_location() + " " + cmd + "\",\n");
+    cmd_file << ("    \"file\": \"" + source + "\"\n");
+    cmd_file << ("},\n");
+    cmd_file.close();
+
     compile_entry->compiler = compiler;
     m_compile_entries.emplace_back(std::move(compile_entry));
     return true;
@@ -523,21 +535,7 @@ void Component::build() {
 
                     w->execute([this, current_index, &mutex_compiled_index, &compile_entries, &compiling, &error_reported]() {
                         const auto& compile_entry = compile_entries[current_index];
-
                         const auto t_start    = std::chrono::high_resolution_clock::now();
-
-                        // write command file @ output_dir/cmd.txt
-                        const auto dir    = replace_string(compile_entry->source_entry->get_output_directory().string(), "\\", "\\\\");
-                        const auto source = replace_string(compile_entry->source_entry->get_source_file_path().string(), "\\", "\\\\");
-                        const auto cmd    = replace_string(container_to_string(compile_entry->compile_args), "\"", "\\\"");
-                        std::ofstream cmd_file(compile_entry->source_entry->get_object_path().string() + ".cmd",
-                                               std::ios::out | std::ios::trunc);
-                        cmd_file << "{\n";
-                        cmd_file << ("    \"directory\": \"" + dir + "\",\n");
-                        cmd_file << ("    \"command\": \"" + compile_entry->compiler->get_location() + " " + cmd + "\",\n");
-                        cmd_file << ("    \"file\": \"" + source + "\"\n");
-                        cmd_file << ("},\n");
-                        cmd_file.close();
 
                         const auto [ret, msg] = s_compile(compile_entry);
 
