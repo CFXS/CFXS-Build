@@ -468,6 +468,8 @@ void Component::iterate_libs(const Component* comp, std::vector<std::string>& li
     }
 }
 
+extern int e_total_project_source_count;
+extern int e_current_abs_source_index;
 void Component::build() {
     const auto build_t1 = std::chrono::high_resolution_clock::now();
 
@@ -494,7 +496,7 @@ void Component::build() {
         auto workers = FunctionWorker::create_workers(GlobalConfig::number_of_worker_threads());
 
         size_t compile_entry_seq_index = 0; // current source entry index to compile
-        int current_compiled_index     = 1; // currently compiled index (only for counting compiled files)
+        // int current_compiled_index     = 1; // currently compiled index (only for counting compiled files)
         std::mutex mutex_compiled_index;    // mutex for output ordering
         bool error_reported = false;        // a source has reported a failed compilation
         bool compiling      = true;         // still trying to compile all sources
@@ -514,13 +516,7 @@ void Component::build() {
                     if (w->is_busy())
                         continue;
 
-                    w->execute([this,
-                                current_index,
-                                &mutex_compiled_index,
-                                &compile_entries,
-                                &current_compiled_index,
-                                &compiling,
-                                &error_reported]() {
+                    w->execute([this, current_index, &mutex_compiled_index, &compile_entries, &compiling, &error_reported]() {
                         const auto& compile_entry = compile_entries[current_index];
 
                         const auto t_start    = std::chrono::high_resolution_clock::now();
@@ -541,9 +537,9 @@ void Component::build() {
                         mutex_compiled_index.lock();
                         Log.info("[{}{}/{} ({}%) {:.03f}s{}] ({}{}{}) {} {}{}{}{}" ANSI_RESET,
                                  success ? ANSI_GREEN : ANSI_RED,
-                                 current_compiled_index,
-                                 get_compile_entries().size(),
-                                 (int)(100.0f / get_compile_entries().size() * current_compiled_index),
+                                 e_current_abs_source_index,
+                                 e_total_project_source_count,
+                                 (int)(100.0f / e_total_project_source_count * e_current_abs_source_index),
                                  compile_time_ms / 1000.0f,
                                  ANSI_RESET,
                                  ANSI_LIGHT_GRAY,
@@ -560,7 +556,7 @@ void Component::build() {
                                 cmd += flag + " ";
                             Log.error("command: {}", cmd);
                         }
-                        current_compiled_index++;
+                        e_current_abs_source_index++;
                         mutex_compiled_index.unlock();
 
                         if (!success) {

@@ -21,4 +21,9 @@ public:
     // Default = false
     // Flag: -t
     static bool log_trace();
+
+    // Log script printf locations
+    // Default = false
+    // Flag: --printf-sources
+    static bool log_script_printf_locations();
 };

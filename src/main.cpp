@@ -46,6 +46,9 @@ bool GlobalConfig::generate_compile_commands() { return s_generate_compile_comma
 static bool s_log_trace = false;
 bool GlobalConfig::log_trace() { return s_log_trace; }
 
+static bool s_log_script_printf_locations = false;
+bool GlobalConfig::log_script_printf_locations() { return s_log_script_printf_locations; }
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv) {
@@ -93,6 +96,10 @@ int main(int argc, char **argv) {
         .help("Print trace log messages")                                             //
         .flag();                                                                      //
 
+    args.add_argument("--printf-sources")    //
+        .help("Log script printf locations") //
+        .flag();                             //
+
     try {
         args.parse_args(argc, argv);
     } catch (const std::runtime_error &err) {
@@ -133,6 +140,10 @@ int main(int argc, char **argv) {
     try {
         if (args["--skip-git-import-update"] == true) {
             s_config_skip_git_import_update = true;
+        }
+
+        if (args["--printf-sources"] == true) {
+            s_log_script_printf_locations = true;
         }
 
         if (args["-c"] == true) {

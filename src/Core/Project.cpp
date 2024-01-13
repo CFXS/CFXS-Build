@@ -6,6 +6,7 @@
 #include "Core/Archiver.hpp"
 #include "Core/Component.hpp"
 #include "Core/GIT.hpp"
+#include "Core/GlobalConfig.hpp"
 #include "lauxlib.h"
 #include <lua.hpp>
 #include "LuaBackend.hpp"
@@ -171,14 +172,18 @@ void Project::configure() {
     Log.info("Project configure done in {:.3f}s", ms / 1000.0f);
 }
 
+int e_total_project_source_count = 0;
+int e_current_abs_source_index   = 1;
 void Project::build(const std::vector<std::string>& components) {
     Log.info("Build Project");
     const auto t1 = std::chrono::high_resolution_clock::now();
 
+    std::vector<std::shared_ptr<Component>> components_to_build;
+
     if (std::find(components.begin(), components.end(), "*") != components.end()) {
         // reverse iterate and build components (reverse will preserve linked/added dependency availability order)
         for (auto it = s_components.rbegin(); it != s_components.rend(); ++it) {
-            (*it)->build();
+            components_to_build.push_back(*it);
         }
     } else {
         for (auto& c : components) {
@@ -186,12 +191,21 @@ void Project::build(const std::vector<std::string>& components) {
                 return comp->get_name() == c;
             });
             if (comp != s_components.end()) {
-                (*comp)->build();
+                components_to_build.push_back(*comp);
             } else {
                 Log.error("Component \"{}\" does not exist", c);
                 throw std::runtime_error("Component does not exist");
             }
         }
+    }
+
+    e_total_project_source_count = 0;
+    e_current_abs_source_index   = 1;
+    for (auto& c : components_to_build) {
+        e_total_project_source_count += c->get_compile_entries().size();
+    }
+    for (auto& c : components_to_build) {
+        c->build();
     }
 
     const auto t2 = std::chrono::high_resolution_clock::now();
@@ -322,7 +336,19 @@ void Project::initialize_lua() {
 }
 
 void Project::bind_cfxs_print(const std::string& str) {
-    Log.info("[" ANSI_MAGENTA "Script" ANSI_RESET "] {}", str); //
+    if (GlobalConfig::log_script_printf_locations()) {
+        const auto current_script = s_source_location_stack.back();
+
+        // get current code line number from s_MainLuaState
+        lua_Debug ar;
+        lua_getstack(s_MainLuaState, 2, &ar); // 2 instead of 1 to skip print argument at top of stack
+        lua_getinfo(s_MainLuaState, "nSl", &ar);
+        const auto line = ar.currentline;
+
+        Log.info(ANSI_GRAY "<{}:{}>:" ANSI_RESET, current_script, line);
+    }
+
+    Log.info("[" ANSI_MAGENTA "Script" ANSI_RESET "] {}", str);
 }
 
 bool Project::bind_exists(const std::string& path_str) {
@@ -365,7 +391,7 @@ void Project::bind_import(lua_State* L) {
     const auto path_str = arg_path.tostring();
 
     std::filesystem::path fpath(path_str);
-    // default import is Folder with implicit .cfxs-build
+    // default import is Folder containing .cfxs-build
     if (fpath.extension() == "") {
         fpath /= ".cfxs-build";
     }
@@ -374,16 +400,18 @@ void Project::bind_import(lua_State* L) {
 
     if (std::filesystem::path(path_str).is_relative()) {
         s_script_path_stack.push_back(std::filesystem::weakly_canonical((s_script_path_stack.back() / fpath).parent_path()));
-        s_source_location_stack.push_back(std::filesystem::weakly_canonical((s_script_path_stack.back() / fpath)));
+        s_source_location_stack.push_back(s_script_path_stack.back() / filename);
     } else {
         s_script_path_stack.push_back(std::filesystem::weakly_canonical(std::filesystem::path(fpath).parent_path()));
-        s_source_location_stack.push_back(std::filesystem::weakly_canonical(std::filesystem::path(fpath)));
+        s_source_location_stack.push_back(s_script_path_stack.back() / filename);
     }
 
-    const auto source_location = s_script_path_stack.back() / filename;
+    const auto source_location = s_source_location_stack.back();
 
     if (!std::filesystem::exists(source_location)) {
         luaL_error(s_MainLuaState, "File not found: \"%s\"", source_location.string().c_str());
+        s_script_path_stack.pop_back();
+        s_source_location_stack.pop_back();
         return;
     }
 
