@@ -219,10 +219,10 @@ void Compiler::push_include_path(std::vector<std::string>& flags, const std::str
 void Compiler::push_compile_definition(std::vector<std::string>& flags, const std::string& compile_definition) const {
     // escape "\" in compile_definition and wrap value after DEFINITION_NAME= in escaped quotes if value contains spaces
     // replace all '"' with "\\"" safely without entering an infinite loop
-    // std::string escaped_compile_definition = replace_string(compile_definition, "\"", "\\\"");
-
+    std::string escaped_compile_definition = compile_definition;
     // replace all "\\" with "\\\\"
-    std::string escaped_compile_definition = replace_string(compile_definition, "\\", "\\\\\\");
+    escaped_compile_definition = replace_string(escaped_compile_definition, "\"", "\\\"");
+    escaped_compile_definition = replace_string(escaped_compile_definition, "\\", "\\\\");
 
     auto eq_pos     = escaped_compile_definition.find('=');
     std::string def = "";
@@ -230,7 +230,7 @@ void Compiler::push_compile_definition(std::vector<std::string>& flags, const st
         auto part_2 = escaped_compile_definition.substr(eq_pos + 1);
         if (part_2.find(' ') != std::string::npos) {
             if (part_2.starts_with('\"') && part_2.ends_with('\"'))
-                def = escaped_compile_definition.substr(0, eq_pos + 1) + "\"" + part_2.substr(1, part_2.length() - 2) + "\"";
+                def = escaped_compile_definition.substr(0, eq_pos + 1) + part_2.substr(1, part_2.length() - 2);
             else
                 def = escaped_compile_definition.substr(0, eq_pos + 1) + "\"" + part_2 + "\"";
         } else {

@@ -172,7 +172,7 @@ std::filesystem::path Component::get_source_output_directory(const SourceFilePat
         return sfp.explicit_output_directory;
 
     if (sfp.is_external) {
-        return get_local_output_directory() / "External_" / std::to_string(std::filesystem::hash_value(sfp.path.parent_path()));
+        return get_local_output_directory() / "extern" / std::to_string(std::filesystem::hash_value(sfp.path.parent_path()));
     } else {
         return get_local_output_directory() / std::filesystem::relative(sfp.path.parent_path(), get_root_path());
     }
@@ -326,7 +326,7 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     for (const auto& val : e_global_definitions) {
         compiler->push_compile_definition(compile_entry->compile_args, val);
     }
-    // append custom options
+    // append global custom options
     std::vector<std::string>* opts = nullptr;
     switch (compiler->get_language()) {
         case Compiler::Language::C: opts = &e_global_c_compile_options; break;
