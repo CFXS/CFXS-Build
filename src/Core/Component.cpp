@@ -584,12 +584,12 @@ void Component::build() {
                                  compile_unit_path,
                                  msg.empty() ? (ANSI_RESET "") : (ANSI_RESET "\n"),
                                  msg);
-                        if (!success) {
-                            std::string cmd;
-                            for (auto& flag : compile_entry->compile_args)
-                                cmd += flag + " ";
-                            Log.error("command: {}", cmd);
-                        }
+                        // if (!success) {
+                        //     std::string cmd;
+                        //     for (auto& flag : compile_entry->compile_args)
+                        //         cmd += flag + " ";
+                        //     Log.error("command: {}", cmd);
+                        // }
                         e_current_abs_source_index++;
                         mutex_compiled_index.unlock();
 
