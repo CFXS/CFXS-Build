@@ -246,7 +246,6 @@ void Compiler::push_compile_definition(std::vector<std::string>& flags, const st
                 def = escaped_compile_definition.substr(0, eq_pos + 1) + part_2;
             }
         }
-        Log.error("DEF {}", def);
     } else {
         def = escaped_compile_definition;
     }
