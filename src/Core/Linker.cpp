@@ -24,7 +24,7 @@ Linker::Linker(const std::string& linker) : m_location(linker) {
 
     const auto linker_version_string = get_program_version_string(get_location());
 
-    if (linker_version_string.contains("GNU")) {
+    if (linker_version_string.contains("GNU") || linker_version_string.contains("gcc")) {
         m_type = Type::GNU;
     } else if (linker_version_string.contains("clang")) {
         m_type = Type::CLANG;

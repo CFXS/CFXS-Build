@@ -37,7 +37,7 @@ static std::string get_standard_compile_flag(Compiler::Type type, Compiler::Stan
             case Compiler::Standard::CPP14: return "-std=c++14";
             case Compiler::Standard::CPP17: return "-std=c++17";
             case Compiler::Standard::CPP20: return "-std=c++20";
-            case Compiler::Standard::CPP23: return type == Compiler::Type::CLANG ? "-std=c++2b" : "-std=c++23";
+            case Compiler::Standard::CPP23: return "-std=c++2b";
             default: throw std::runtime_error("Unsupported standard");
         }
     } else if (type == Compiler::Type::MSVC) {
