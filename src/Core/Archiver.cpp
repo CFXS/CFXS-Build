@@ -26,7 +26,7 @@ Archiver::Archiver(const std::string& ar) : m_location(ar) {
 
     if (ar_version_string.contains("GNU")) {
         m_type = Type::GNU;
-    } else if (ar_version_string.contains("clang")) {
+    } else if (ar_version_string.contains("LLVM")) {
         m_type = Type::CLANG;
     } else if (ar_version_string.contains("Microsoft")) {
         m_type = Type::MSVC;
@@ -47,7 +47,7 @@ void Archiver::load_archive_flags(std::vector<std::string>& args, const std::fil
             args.push_back(output_file.string());
             break;
         case Type::CLANG:
-            args.push_back("-o");
+            args.push_back("rcs"); // generate lib
             args.push_back(output_file.string());
             break;
         case Type::MSVC:

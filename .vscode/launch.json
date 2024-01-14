@@ -14,6 +14,7 @@
                 // "--clean=CFXS-Build-Test",
                 "--build=*",
                 "--skip-git-import-update",
+                "--parallel=1",
                 "-c",
                 "-t",
             ],

@@ -350,7 +350,8 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     // write command file @ output_dir/cmd.txt
     const auto dir    = replace_string(compile_entry->source_entry->get_output_directory().string(), "\\", "\\\\");
     const auto source = replace_string(compile_entry->source_entry->get_source_file_path().string(), "\\", "\\\\");
-    const auto cmd    = replace_string(container_to_string(compile_entry->compile_args), "\"", "\\\"");
+    const auto cmd_p1 = replace_string(container_to_string(compile_entry->compile_args), "\\", "\\\\");
+    const auto cmd    = replace_string(cmd_p1, "\"", "\\\"");
     std::ofstream cmd_file(compile_entry->source_entry->get_object_path().string() + ".txt", std::ios::out | std::ios::trunc);
     cmd_file << "{\n";
     cmd_file << ("    \"directory\": \"" + dir + "\",\n");
@@ -638,6 +639,13 @@ void Component::build() {
         const auto [ret, msg] = execute_with_args(m_archiver->get_location(), ar_flags);
         if (ret != 0) {
             Log.error("Failed to archive [{}]:\n{}", get_name(), msg);
+            // print archive command
+            std::string arstr;
+            for (auto& a : ar_flags) {
+                arstr += a + " ";
+            }
+            Log.error("Command: {}", arstr);
+
             throw std::runtime_error("Failed to archive");
         }
     } else {

@@ -37,7 +37,7 @@ static std::string get_standard_compile_flag(Compiler::Type type, Compiler::Stan
             case Compiler::Standard::CPP14: return "-std=c++14";
             case Compiler::Standard::CPP17: return "-std=c++17";
             case Compiler::Standard::CPP20: return "-std=c++20";
-            case Compiler::Standard::CPP23: return "-std=c++23";
+            case Compiler::Standard::CPP23: return type == Compiler::Type::CLANG ? "-std=c++2b" : "-std=c++23";
             default: throw std::runtime_error("Unsupported standard");
         }
     } else if (type == Compiler::Type::MSVC) {
@@ -180,6 +180,9 @@ void Compiler::load_compile_and_output_flags(std::vector<std::string>& flags,
     if (get_type() == Type::GNU || get_type() == Type::CLANG) {
         flags.push_back("-c"); // Compile only
         flags.push_back(source);
+        if (is_pch && get_type() == Type::CLANG) {
+            flags.push_back("-emit-pch");
+        }
         flags.push_back("-o"); // Write to specific file
         flags.push_back(
             FilesystemUtils::safe_path_string(obj_path.string() + (is_pch ? get_precompile_header_extension() : get_object_extension())));
@@ -221,8 +224,8 @@ void Compiler::push_compile_definition(std::vector<std::string>& flags, const st
     // replace all '"' with "\\"" safely without entering an infinite loop
     std::string escaped_compile_definition = compile_definition;
     // replace all "\\" with "\\\\"
-    escaped_compile_definition = replace_string(escaped_compile_definition, "\"", "\\\"");
     escaped_compile_definition = replace_string(escaped_compile_definition, "\\", "\\\\");
+    escaped_compile_definition = replace_string(escaped_compile_definition, "\"", "\\\"");
 
     auto eq_pos     = escaped_compile_definition.find('=');
     std::string def = "";
@@ -279,7 +282,7 @@ std::string Compiler::get_precompile_header_extension() const {
         return ".gch";
     } else if (get_type() == Type::CLANG) {
         // TODO: functions for compiling and including precompiled headers is different than gcc
-        throw std::runtime_error("Not implemented - need to check docs");
+        // throw std::runtime_error("Not implemented - need to check docs");
         return ".pch";
     } else if (get_type() == Type::IAR) {
         throw std::runtime_error("Not implemented - not supported, need to find good enough workaround with --preinclude");
@@ -310,7 +313,7 @@ std::string Compiler::get_pch_include_flags(const std::filesystem::path& pch_gen
         // return "-I" + search_path + " -include " + file_path;
         return "-include " + file_path;
     } else if (get_type() == Type::CLANG) {
-        throw std::runtime_error("Not implemented");
+        return "-include-pch " + file_path + ".pch";
     } else if (get_type() == Type::IAR) {
         throw std::runtime_error("Not implemented - not supported, need to find good enough workaround with --preinclude");
     } else if (get_type() == Type::MSVC) {
