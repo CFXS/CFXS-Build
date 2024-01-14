@@ -225,20 +225,28 @@ void Compiler::push_compile_definition(std::vector<std::string>& flags, const st
     std::string escaped_compile_definition = compile_definition;
     // replace all "\\" with "\\\\"
     escaped_compile_definition = replace_string(escaped_compile_definition, "\\", "\\\\");
-    escaped_compile_definition = replace_string(escaped_compile_definition, "\"", "\\\"");
+    // escaped_compile_definition = replace_string(escaped_compile_definition, "\"", "\\\"");
 
     auto eq_pos     = escaped_compile_definition.find('=');
     std::string def = "";
     if (eq_pos != std::string::npos) {
         auto part_2 = escaped_compile_definition.substr(eq_pos + 1);
-        if (part_2.find(' ') != std::string::npos) {
-            if (part_2.starts_with('\"') && part_2.ends_with('\"'))
-                def = escaped_compile_definition.substr(0, eq_pos + 1) + part_2.substr(1, part_2.length() - 2);
-            else
+        const bool have_space = part_2.find(' ') != std::string::npos;
+        if (have_space) {
+            if (part_2.starts_with('\"') && part_2.ends_with('\"')) {
+                def = escaped_compile_definition.substr(0, eq_pos + 1) + "\"" + part_2.substr(1, part_2.length() - 2) + "\"";
+            } else {
                 def = escaped_compile_definition.substr(0, eq_pos + 1) + "\"" + part_2 + "\"";
+            }
         } else {
-            def = escaped_compile_definition.substr(0, eq_pos + 1) + part_2;
+            // not very efficient - but undo quoting escape
+            if (part_2.starts_with("\\\"") && part_2.ends_with("\\\"")) {
+                def = escaped_compile_definition.substr(0, eq_pos + 1) + "\"" + part_2 + "\"";
+            } else {
+                def = escaped_compile_definition.substr(0, eq_pos + 1) + part_2;
+            }
         }
+        Log.error("DEF {}", def);
     } else {
         def = escaped_compile_definition;
     }

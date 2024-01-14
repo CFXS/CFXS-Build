@@ -351,7 +351,22 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     const auto dir    = replace_string(compile_entry->source_entry->get_output_directory().string(), "\\", "\\\\");
     const auto source = replace_string(compile_entry->source_entry->get_source_file_path().string(), "\\", "\\\\");
     const auto cmd_p1 = replace_string(container_to_string(compile_entry->compile_args), "\\", "\\\\");
-    const auto cmd    = replace_string(cmd_p1, "\"", "\\\"");
+    // make cmd_p1 a valid json string and escape for compiler string macros
+    std::string cmd;
+    bool second = false;
+    for (const auto& c : cmd_p1) {
+        if (c == '"') {
+            if (second) {
+                cmd += "\\\\\\\"\\\"";
+            } else {
+                cmd += "\\\"\\\\\\\"";
+            }
+            second = !second;
+        } else {
+            cmd += c;
+        }
+    }
+
     std::ofstream cmd_file(compile_entry->source_entry->get_object_path().string() + ".txt", std::ios::out | std::ios::trunc);
     cmd_file << "{\n";
     cmd_file << ("    \"directory\": \"" + dir + "\",\n");
