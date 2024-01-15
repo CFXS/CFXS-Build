@@ -29,15 +29,20 @@
 static std::map<size_t, std::filesystem::file_time_type> s_file_modified_cache;
 static std::mutex s_mutex_file_modified_cache;
 
-std::filesystem::file_time_type get_file_modified_time(const std::filesystem::path& path) {
-    const auto hash = std::hash<std::string>{}(path.string());
+uint32_t s_fmc_hits   = 0;
+uint32_t s_fmc_misses = 0;
+
+std::filesystem::file_time_type get_file_modified_time(std::string_view path) {
+    const auto hash = std::hash<std::string_view>{}(path);
 
     std::lock_guard<std::mutex> _lock(s_mutex_file_modified_cache);
 
     const auto it = s_file_modified_cache.find(hash);
     if (it != s_file_modified_cache.end()) {
+        s_fmc_hits++;
         return it->second;
     } else {
+        s_fmc_misses++;
         const auto mod_time         = std::filesystem::last_write_time(path);
         s_file_modified_cache[hash] = mod_time;
         return mod_time;

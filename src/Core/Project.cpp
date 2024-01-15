@@ -188,6 +188,10 @@ void Project::configure() {
 
 int e_total_project_source_count = 0;
 int e_current_abs_source_index   = 1;
+
+extern uint32_t s_fmc_hits;
+extern uint32_t s_fmc_misses;
+
 void Project::build(const std::vector<std::string>& components) {
     Log.info("Build Project");
     const auto t1 = std::chrono::high_resolution_clock::now();
@@ -225,6 +229,9 @@ void Project::build(const std::vector<std::string>& components) {
     const auto t2 = std::chrono::high_resolution_clock::now();
     auto ms       = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
     Log.info("Project build done in {:.3f}s", ms / 1000.0f);
+    Log.info("FMC Stats");
+    Log.info(" - Hit  {}", s_fmc_hits);
+    Log.info(" - Miss {}", s_fmc_misses);
 }
 
 void Project::clean(const std::vector<std::string>& components) {
