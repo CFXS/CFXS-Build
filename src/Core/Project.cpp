@@ -116,7 +116,7 @@ void Project::configure() {
 
     try {
         // execute root_buildfile into lua state
-        if (const bool failed = luaL_dofile(s_MainLuaState, source_location.string().c_str())) {
+        if (luaL_dofile(s_MainLuaState, source_location.string().c_str())) {
             // get and log lua error callstack
             print_traceback(source_location);
             exit(-1);

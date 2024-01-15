@@ -45,7 +45,7 @@ else()
     # target_compile_options(cfxs-build PRIVATE "-fsanitize=thread")
     # target_link_options(cfxs-build PRIVATE "-fsanitize=thread")
     target_link_options(cfxs-build PUBLIC "-static-libstdc++" "-static")
-    target_compile_options(cfxs-build PRIVATE "-fdiagnostics-color=always" "-Wall" "-Wextra")
+    target_compile_options(cfxs-build PRIVATE "-fdiagnostics-color=always" "-Wall" "-Wextra" "-Werror")
 endif()
 
 FetchContent_Declare(

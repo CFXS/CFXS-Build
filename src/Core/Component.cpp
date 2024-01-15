@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <thread>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include "Core/Archiver.hpp"
 #include "Core/Compiler.hpp"
 #include "Core/Linker.hpp"
@@ -26,7 +26,7 @@
 
 ////////////////////////////////////
 // File modified cache
-static std::map<size_t, std::filesystem::file_time_type> s_file_modified_cache;
+static std::unordered_map<size_t, std::filesystem::file_time_type> s_file_modified_cache;
 static std::mutex s_mutex_file_modified_cache;
 
 uint32_t s_fmc_hits   = 0;
@@ -625,12 +625,14 @@ void Component::build() {
                                  compile_unit_path,
                                  msg.empty() ? (ANSI_RESET "") : (ANSI_RESET "\n"),
                                  msg);
-                        if (!success) {
-                            std::string cmd;
-                            for (auto& flag : compile_entry->compile_args)
-                                cmd += flag + " ";
-                            Log.error("command: {}", cmd);
-                        }
+
+                        // if (!success) {
+                        //     std::string cmd;
+                        //     for (auto& flag : compile_entry->compile_args)
+                        //         cmd += flag + " ";
+                        //     Log.error("command: {}", cmd);
+                        // }
+
                         e_current_abs_source_index++;
                         mutex_compiled_index.unlock();
 

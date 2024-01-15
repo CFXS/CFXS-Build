@@ -25,11 +25,11 @@ namespace FilesystemUtils {
     inline bool path_contains(const std::filesystem::path& path, const std::filesystem::path& search) {
         auto s_path   = path.string();
         auto s_search = search.string();
-        for (int i = 0; i < s_path.length(); i++) {
+        for (size_t i = 0; i < s_path.length(); i++) {
             if (s_path.data()[i] == '\\')
                 s_path.data()[i] = '/';
         }
-        for (int i = 0; i < s_search.length(); i++) {
+        for (size_t i = 0; i < s_search.length(); i++) {
             if (s_search.data()[i] == '\\')
                 s_search.data()[i] = '/';
         }

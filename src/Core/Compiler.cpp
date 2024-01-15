@@ -356,7 +356,12 @@ std::vector<std::string> Compiler::get_stdlib_paths() const {
                     break;
                 }
                 if (line.starts_with(" ")) {
-                    paths.push_back(std::filesystem::weakly_canonical(line.substr(1, line.length() - 2)).string());
+                    auto path = line.substr(1);
+                    // remove all non-characters from end of path
+                    while (!path.empty() && (path.back() == ' ' || path.back() == '\n' || path.back() == '\r' || path.back() == '\t')) {
+                        path.pop_back();
+                    }
+                    paths.push_back(std::filesystem::weakly_canonical(path).string());
                 }
             } else {
                 if (line.starts_with("#include <...> search starts here:")) {
