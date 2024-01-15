@@ -5,7 +5,7 @@ public:
     enum class Type { UNKNOWN, GNU, CLANG, MSVC, IAR };
 
 public:
-    Archiver(const std::string& ar);
+    Archiver(const std::string& ar, bool known_good = false, const std::string& known_version = {});
     ~Archiver();
 
     Type get_type() const { return m_type; }

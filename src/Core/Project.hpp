@@ -32,9 +32,16 @@ private: // .cfxs-build Lua bindings
     static void bind_set_cpp_compiler(const std::string& compiler, const std::string& standard);
     static void bind_set_asm_compiler(const std::string& compiler);
 
+    static void bind_set_c_compiler_known(const std::string& version, const std::string& compiler, const std::string& standard);
+    static void bind_set_cpp_compiler_known(const std::string& version, const std::string& compiler, const std::string& standard);
+    static void bind_set_asm_compiler_known(const std::string& version, const std::string& compiler);
+
     // Linker config
     static void bind_set_linker(const std::string& linker);
     static void bind_set_archiver(const std::string& linker);
+
+    static void bind_set_linker_known(const std::string& version, const std::string& linker);
+    static void bind_set_archiver_known(const std::string& version, const std::string& linker);
 
     static Component& bind_create_executable(const std::string& name);
     static Component& bind_create_library(const std::string& name);

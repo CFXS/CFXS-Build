@@ -707,7 +707,9 @@ void Component::build() {
             throw std::runtime_error("Failed to archive");
         }
     } else {
-        Log.trace("Link [{}]", get_name());
+        Log.info("Link [{}]", get_name());
+        const auto t1 = std::chrono::high_resolution_clock::now();
+
         // recursively iterate all libraries of get_libraries() and add .a paths to vector
         std::vector<std::string> library_paths;
         iterate_libs(this, library_paths);
@@ -776,6 +778,10 @@ void Component::build() {
             Log.error("Failed to link [{}]:\n{}\nCommand: {}", get_name(), msg, lfstr);
             throw std::runtime_error("Failed to link");
         }
+
+        const auto t2 = std::chrono::high_resolution_clock::now();
+        auto ms       = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        Log.info(" - Link done in {:.3}s", ms / 1000.0f);
     }
 
     const auto build_t2 = std::chrono::high_resolution_clock::now();

@@ -14,15 +14,15 @@ static std::string to_string(Linker::Type type) {
 
 Linker::~Linker() { Log.trace("Delete Linker"); }
 
-Linker::Linker(const std::string& linker) : m_location(linker) {
-    Log.trace("Create linker \"{}\"", get_location());
+Linker::Linker(const std::string& linker, bool known_good, const std::string& known_version) : m_location(linker) {
+    Log.trace("Create linker \"{}\"", known_version, get_location());
 
-    if (!is_valid_program(get_location())) {
+    if (!known_good && !is_valid_program(get_location())) {
         Log.error("Linker \"{}\" not found", get_location());
         throw std::runtime_error("Linker not found");
     }
 
-    const auto linker_version_string = get_program_version_string(get_location());
+    const auto linker_version_string = known_version.empty() ? get_program_version_string(get_location()) : known_version;
 
     if (linker_version_string.contains("GNU") || linker_version_string.contains("gcc")) {
         m_type = Type::GNU;

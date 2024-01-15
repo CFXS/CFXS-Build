@@ -14,15 +14,15 @@ static std::string to_string(Archiver::Type type) {
 
 Archiver::~Archiver() { Log.trace("Delete Archiver"); }
 
-Archiver::Archiver(const std::string& ar) : m_location(ar) {
+Archiver::Archiver(const std::string& ar, bool known_good, const std::string& known_version) : m_location(ar) {
     Log.trace("Create archiver \"{}\"", get_location());
 
-    if (!is_valid_program(get_location())) {
+    if (!known_good && !is_valid_program(get_location())) {
         Log.error("Archiver \"{}\" not found", get_location());
         throw std::runtime_error("Archiver not found");
     }
 
-    const auto ar_version_string = get_program_version_string(get_location());
+    const auto ar_version_string = known_version.empty() ? get_program_version_string(get_location()) : known_version;
 
     if (ar_version_string.contains("GNU")) {
         m_type = Type::GNU;

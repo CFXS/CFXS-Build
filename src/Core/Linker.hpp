@@ -5,7 +5,7 @@ public:
     enum class Type { UNKNOWN, GNU, CLANG, MSVC, IAR };
 
 public:
-    Linker(const std::string& linker);
+    Linker(const std::string& linker, bool known_good = false, const std::string& known_version = {});
     ~Linker();
 
     Type get_type() const { return m_type; }

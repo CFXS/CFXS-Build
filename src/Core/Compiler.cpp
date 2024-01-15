@@ -66,16 +66,20 @@ static std::string get_standard_compile_flag(Compiler::Type type, Compiler::Stan
 
 Compiler::~Compiler() { Log.trace("Delete {} Compiler", to_string(get_language())); }
 
-Compiler::Compiler(Language language, const std::string& location, const std::string& standard_num) :
+Compiler::Compiler(Language language,
+                   const std::string& location,
+                   const std::string& standard_num,
+                   bool known_good,
+                   const std::string& known_version) :
     m_language(language), m_location(location) {
     Log.trace("Create {} compiler \"{}\" with standard \"{}\"", to_string(get_language()), get_location(), standard_num);
 
-    if (!is_valid_program(get_location())) {
+    if (!known_good && !is_valid_program(get_location())) {
         Log.error("{} Compiler \"{}\" not found", to_string(get_language()), get_location());
         throw std::runtime_error("Compiler not found");
     }
 
-    const auto compiler_version_string = get_program_version_string(get_location());
+    const auto compiler_version_string = known_version.empty() ? get_program_version_string(get_location()) : known_version;
 
     if (compiler_version_string.contains("GNU") || compiler_version_string.contains("gcc") || compiler_version_string.contains("g++")) {
         m_type = Type::GNU;

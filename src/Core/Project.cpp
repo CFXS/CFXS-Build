@@ -321,6 +321,17 @@ void Project::initialize_lua() {
     bridge.addFunction<void, const std::string& /*path*/>("set_linker", TO_FUNCTION(bind_set_linker));
     bridge.addFunction<void, const std::string& /*path*/>("set_archiver", TO_FUNCTION(bind_set_archiver));
 
+    bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/, const std::string& /*std*/>(
+        "set_c_compiler_known", TO_FUNCTION(bind_set_c_compiler_known));
+    bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/, const std::string& /*std*/>(
+        "set_cpp_compiler_known", TO_FUNCTION(bind_set_cpp_compiler_known));
+    bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/>("set_asm_compiler_known",
+                                                                                          TO_FUNCTION(bind_set_asm_compiler_known));
+    bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/>("set_linker_known",
+                                                                                          TO_FUNCTION(bind_set_linker_known));
+    bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/>("set_archiver_known",
+                                                                                          TO_FUNCTION(bind_set_archiver_known));
+
     bridge.addFunction<void, const std::string&>("__cfxs_print", TO_FUNCTION(bind_cfxs_print));
     bridge.addFunction<bool, const std::string&>("exists", TO_FUNCTION(bind_exists));
     bridge.addFunction<std::string, lua_State*>("get_current_directory_path", TO_FUNCTION(bind_get_current_directory_path));
@@ -387,6 +398,18 @@ void Project::bind_set_cpp_compiler(const std::string& compiler, const std::stri
 
 void Project::bind_set_asm_compiler(const std::string& compiler) {
     s_asm_compiler = std::make_shared<Compiler>(Compiler::Language::ASM, compiler, "ASM"); //
+}
+
+void Project::bind_set_c_compiler_known(const std::string& version, const std::string& compiler, const std::string& standard) {
+    s_c_compiler = std::make_shared<Compiler>(Compiler::Language::C, compiler, standard, true, version); //
+}
+
+void Project::bind_set_cpp_compiler_known(const std::string& version, const std::string& compiler, const std::string& standard) {
+    s_cpp_compiler = std::make_shared<Compiler>(Compiler::Language::CPP, compiler, standard, true, version); //
+}
+
+void Project::bind_set_asm_compiler_known(const std::string& version, const std::string& compiler) {
+    s_asm_compiler = std::make_shared<Compiler>(Compiler::Language::ASM, compiler, "ASM", true, version); //
 }
 
 // Import
@@ -576,6 +599,14 @@ void Project::bind_set_linker(const std::string& linker) {
 
 void Project::bind_set_archiver(const std::string& ar) {
     s_archiver = std::make_shared<Archiver>(ar); //
+}
+
+void Project::bind_set_linker_known(const std::string& version, const std::string& linker) {
+    s_linker = std::make_shared<Linker>(linker, true, version); //
+}
+
+void Project::bind_set_archiver_known(const std::string& version, const std::string& ar) {
+    s_archiver = std::make_shared<Archiver>(ar, true, version); //
 }
 
 // Component creation
