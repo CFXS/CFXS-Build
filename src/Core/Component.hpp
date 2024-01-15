@@ -56,7 +56,7 @@ public:
     void bind_add_definitions(lua_State* L);
     void bind_add_compile_options(lua_State* L);
     void bind_set_linker_script(lua_State* L);
-    void bind_add_library(lua_State* L);
+    void bind_add_libraries(lua_State* L);
     void bind_add_link_options(lua_State* L);
     void bind_create_precompiled_header(lua_State* L);
 
@@ -95,6 +95,8 @@ public:
     Visibility get_visibility_mask_compile_options() const { return m_visibility_mask_compile_options; }
 
     const std::vector<std::filesystem::path>& get_output_object_paths() const { return m_output_object_paths; }
+
+    const std::vector<std::string>& get_additional_libraries() const { return m_additional_libraries; }
 
 private:
     /// Get vector of processed source file paths
@@ -149,6 +151,8 @@ private:
     std::filesystem::path m_linker_script_path;
     std::vector<std::string> m_link_options;
     std::vector<std::filesystem::path> m_output_object_paths; // All compiled .o file paths related to this component
+
+    std::vector<std::string> m_additional_libraries;
 };
 
 inline const char* to_string(Component::Type type) {

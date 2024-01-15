@@ -363,11 +363,14 @@ std::vector<std::string> Compiler::get_stdlib_paths() const {
 
         return paths;
     } else if (get_type() == Type::MSVC) {
-        throw std::runtime_error("Not implemented");
+        throw std::runtime_error("Not implemented (get_stdlib_paths)");
     } else if (get_type() == Type::IAR) {
-        throw std::runtime_error("Not implemented");
+        return {
+            "C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench 8.2\\arm\\inc\\c",
+            "C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench 8.2\\arm\\inc\\cpp",
+        };
     } else {
-        throw std::runtime_error("Unsupported compiler");
+        throw std::runtime_error("Unsupported compiler (get_stdlib_paths)");
     }
 }
 

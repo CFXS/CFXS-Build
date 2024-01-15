@@ -498,6 +498,10 @@ void Component::iterate_libs(const Component* comp, std::vector<std::string>& li
                 lib->get_local_output_directory() / (lib->get_name() + std::string(lib->m_archiver->get_archive_extension()));
             list.push_back(lib_path.string());
             iterate_libs(lib, list);
+
+            for (const auto& a : lib->get_additional_libraries()) {
+                list.push_back(a);
+            }
         }
     }
 }
@@ -584,12 +588,12 @@ void Component::build() {
                                  compile_unit_path,
                                  msg.empty() ? (ANSI_RESET "") : (ANSI_RESET "\n"),
                                  msg);
-                        // if (!success) {
-                        //     std::string cmd;
-                        //     for (auto& flag : compile_entry->compile_args)
-                        //         cmd += flag + " ";
-                        //     Log.error("command: {}", cmd);
-                        // }
+                        if (!success) {
+                            std::string cmd;
+                            for (auto& flag : compile_entry->compile_args)
+                                cmd += flag + " ";
+                            Log.error("command: {}", cmd);
+                        }
                         e_current_abs_source_index++;
                         mutex_compiled_index.unlock();
 
@@ -633,7 +637,14 @@ void Component::build() {
         Log.trace("Archive [{}]", get_name());
         // Create link command and execute to link all compile_entries object files into library file
         std::vector<std::string> ar_flags;
-        m_archiver->load_archive_flags(ar_flags, get_local_output_directory() / (get_name() + m_archiver->get_archive_extension()));
+        const auto arch_out_path = get_local_output_directory() / (get_name() + m_archiver->get_archive_extension());
+
+        // delete archive if exists
+        if (std::filesystem::exists(arch_out_path)) {
+            std::filesystem::remove(arch_out_path);
+        }
+
+        m_archiver->load_archive_flags(ar_flags, arch_out_path);
         for (const auto& obj : get_output_object_paths()) {
             obj_paths.push_back(std::filesystem::weakly_canonical(obj));
         }
@@ -687,9 +698,13 @@ void Component::build() {
             }
         }
 
-        m_linker->load_link_flags(link_flags,
-                                  get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension())),
-                                  get_linker_script_path());
+        const auto out_file = get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension()));
+        // delete out_file if exists
+        if (std::filesystem::exists(out_file)) {
+            std::filesystem::remove(out_file);
+        }
+
+        m_linker->load_link_flags(link_flags, out_file, get_linker_script_path());
 
         for (const auto& obj : get_output_object_paths()) {
             obj_paths.push_back(std::filesystem::weakly_canonical(obj));
@@ -1000,7 +1015,9 @@ void Component::bind_set_linker_script(lua_State* L) {
     }
 }
 
-void Component::bind_add_library(lua_State* L) {
+extern std::vector<std::filesystem::path> s_script_path_stack;
+extern std::vector<std::filesystem::path> s_source_location_stack;
+void Component::bind_add_libraries(lua_State* L) {
     auto arg_libs = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
 
     if (arg_libs.isTable()) {
@@ -1021,6 +1038,14 @@ void Component::bind_add_library(lua_State* L) {
                     throw std::runtime_error("Added component not a library");
                 }
                 add_library(component);
+            } else if (get_type() == Type::LIBRARY && arg_libs.isString()) {
+                // add lib path
+                std::filesystem::path lib_path = arg_libs.tostring();
+                // convert to absolute if relative
+                if (lib_path.is_relative()) {
+                    lib_path = std::filesystem::weakly_canonical(s_script_path_stack.back() / lib_path);
+                }
+                m_additional_libraries.push_back(lib_path.string());
             } else {
                 luaL_error(L, "Component #%d is not a valid library [%s]", i, lua_typename(L, lib.type()));
                 throw std::runtime_error("Add invalid library");
@@ -1038,6 +1063,17 @@ void Component::bind_add_library(lua_State* L) {
                 throw std::runtime_error("Added component not a library");
             }
             add_library(component);
+        } else if (get_type() == Type::LIBRARY && arg_libs.isString()) {
+            // add lib path
+            std::filesystem::path lib_path = arg_libs.tostring();
+            // convert to absolute if relative
+            if (lib_path.is_relative()) {
+                lib_path = std::filesystem::weakly_canonical(s_script_path_stack.back() / lib_path);
+            }
+            m_additional_libraries.push_back(lib_path.string());
+        } else {
+            luaL_error(L, "Invalid library");
+            throw std::runtime_error("Add invalid library");
         }
     }
 }
