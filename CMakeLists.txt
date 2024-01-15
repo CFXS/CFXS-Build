@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 # Enable fetch content and disable updates
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
