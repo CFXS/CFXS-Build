@@ -43,6 +43,12 @@ public:
         T value;
     };
 
+    struct CompileOptionReplacement {
+        std::string match;
+        std::string search;
+        std::string replace;
+    };
+
 public:
     Component(Type type,
               const std::string& name,
@@ -59,6 +65,7 @@ public:
     void bind_add_libraries(lua_State* L);
     void bind_add_link_options(lua_State* L);
     void bind_create_precompiled_header(lua_State* L);
+    void bind_set_compile_option_replacement(lua_State* L);
 
     void configure(std::shared_ptr<Compiler> c_compiler,
                    std::shared_ptr<Compiler> cpp_compiler,
@@ -113,6 +120,8 @@ private:
                                   std::shared_ptr<Compiler> asm_compiler,
                                   bool force_compile);
 
+    const std::vector<CompileOptionReplacement>& get_compile_option_replacements() const { return m_compile_option_replacements; }
+
 private:
     static void iterate_libs(const Component* comp, std::vector<std::string>& list);
 
@@ -129,6 +138,8 @@ private:
 
     // Compile
     std::vector<std::unique_ptr<CompileEntry>> m_compile_entries;
+
+    std::vector<CompileOptionReplacement> m_compile_option_replacements;
 
     // add_sources method
     std::vector<std::string> m_requested_sources;        // requested sources

@@ -186,13 +186,14 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     const auto output_dir = get_source_output_directory(e);
     const auto* compiler  = get_compiler_from_extension(e.path, c_compiler, cpp_compiler, asm_compiler);
 
+    const bool is_pch   = e.is_precompiled_header_file;
     const auto src_name = e.path.filename().string();
     // path to output build files to
-    const auto obj_path = output_dir / (src_name + (e.is_precompiled_header_file ? compiler->get_precompile_header_extension() :
-                                                                                   compiler->get_object_extension()));
+    const auto obj_path =
+        output_dir / (src_name + (is_pch ? compiler->get_precompile_header_extension() : compiler->get_object_extension()));
 
     // do not add precompiled header - it is not actually linked
-    if (!e.is_precompiled_header_file) {
+    if (!is_pch) {
         m_output_object_paths.push_back(obj_path);
     }
 
@@ -303,6 +304,23 @@ bool Component::process_source_file_path(const SourceFilePath& e,
 
     compiler->load_dependency_flags(compile_entry->compile_args, output_path);                                 // dependency file output
 
+    // Compile option replacement setup
+    const auto option_replacement = [&](const std::string_view& opt) -> std::string {
+        if (is_pch)
+            return std::string(opt);
+
+        for (const auto& rep : get_compile_option_replacements()) {
+            if (opt == rep.search) {
+                const bool is_star = rep.match[0] == '*';
+                if (is_star || FilesystemUtils::path_contains(e.path, rep.match)) {
+                    return rep.replace;
+                }
+            }
+        }
+
+        return std::string(opt);
+    };
+
     // [Local paths/definitions/options]
     // include paths
     for (const auto& val : get_include_paths()) {
@@ -314,7 +332,8 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     }
     // append custom options
     for (const auto& val : get_compile_options()) {
-        prepare_and_push_flags(compile_entry->compile_args, val.value);
+        auto v = option_replacement(val.value);
+        prepare_and_push_flags(compile_entry->compile_args, v);
     }
 
     // [Library paths/definitions/options]
@@ -341,7 +360,8 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     }
     if (opts) {
         for (const auto& val : *opts) {
-            prepare_and_push_flags(compile_entry->compile_args, val);
+            auto v = option_replacement(val);
+            prepare_and_push_flags(compile_entry->compile_args, v);
         }
     }
 
@@ -1146,5 +1166,17 @@ void Component::bind_create_precompiled_header(lua_State* L) {
                    lua_typename(L, arg_includes.type()),
                    LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_CREATE_PRECOMPILED_HEADER));
         throw std::runtime_error("Invalid precompiled header list argument");
+    }
+}
+
+void Component::bind_set_compile_option_replacement(lua_State* L) {
+    auto arg_match   = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
+    auto arg_search  = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(1));
+    auto arg_replace = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(2));
+
+    if (arg_match.isString() && arg_search.isString() && arg_replace.isString()) {
+        m_compile_option_replacements.emplace_back(arg_match.tostring(), arg_search.tostring(), arg_replace.tostring());
+    } else {
+        luaL_error(L, "Invalid compile option replacement args");
     }
 }

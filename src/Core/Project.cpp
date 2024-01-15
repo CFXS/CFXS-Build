@@ -346,6 +346,7 @@ void Project::initialize_lua() {
         .addFunction("add_libraries", &Component::bind_add_libraries)
         .addFunction("add_link_options", &Component::bind_add_link_options)
         .addFunction("create_precompiled_header", &Component::bind_create_precompiled_header)
+        .addFunction("set_compile_option_replacement", &Component::bind_set_compile_option_replacement)
         .endClass();
 }
 
