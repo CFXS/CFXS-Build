@@ -23,3 +23,14 @@ namespace FilesystemUtils {
     }
 
 } // namespace FilesystemUtils
+
+template<typename T>
+std::string path_container_to_string_with_prefix(const T& cont, const std::string& prefix) {
+    std::string result;
+    for (const auto& e : cont) {
+        result += prefix + "\\\"" + e + "\\\" ";
+    }
+    if (result.length())
+        result.pop_back(); // remove trailing space
+    return result;
+}

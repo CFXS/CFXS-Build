@@ -45,6 +45,8 @@ public:
     std::string get_precompile_header_extension() const;
     std::string get_system_header_pragma() const;
 
+    std::vector<std::string> get_stdlib_paths() const;
+
 private:
     Type m_type;
     Language m_language;

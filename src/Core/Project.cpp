@@ -14,6 +14,7 @@
 #include "lua.h"
 #include <regex>
 #include <CommandUtils.hpp>
+#include <FilesystemUtils.hpp>
 #include <stdexcept>
 #include <vector>
 
@@ -129,6 +130,14 @@ void Project::configure() {
         throw e;
     }
 
+    auto c_paths   = s_c_compiler->get_stdlib_paths();
+    auto cpp_paths = s_cpp_compiler->get_stdlib_paths();
+
+    for (auto& p : c_paths)
+        p = replace_string(p, "\\", "\\\\");
+    for (auto& p : cpp_paths)
+        p = replace_string(p, "\\", "\\\\");
+
     // create single compile_commands for all components in s_project_path
     if (GlobalConfig::generate_compile_commands()) {
         std::string compile_commands;
@@ -140,7 +149,16 @@ void Project::configure() {
                     std::ifstream cmd_file(cmd_path);
                     std::stringstream buffer;
                     buffer << cmd_file.rdbuf();
-                    compile_commands += buffer.str();
+
+                    std::string paths;
+                    if (obj_path.filename().string().contains("cpp")) {
+                        paths = path_container_to_string_with_prefix(cpp_paths, "-I");
+                    } else {
+                        paths = path_container_to_string_with_prefix(c_paths, "-I");
+                    }
+
+                    auto cm = replace_string(buffer.str(), "${POST_OPTIONS}", paths);
+                    compile_commands += cm;
                     cmd_file.close();
                 }
             }

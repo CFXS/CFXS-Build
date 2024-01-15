@@ -230,7 +230,7 @@ void Compiler::push_compile_definition(std::vector<std::string>& flags, const st
     auto eq_pos     = escaped_compile_definition.find('=');
     std::string def = "";
     if (eq_pos != std::string::npos) {
-        auto part_2 = escaped_compile_definition.substr(eq_pos + 1);
+        auto part_2           = escaped_compile_definition.substr(eq_pos + 1);
         const bool have_space = part_2.find(' ') != std::string::npos;
         if (have_space) {
             if (part_2.starts_with('\"') && part_2.ends_with('\"')) {
@@ -300,6 +300,75 @@ std::string Compiler::get_precompile_header_extension() const {
     }
 
     return "";
+}
+
+std::vector<std::string> Compiler::get_stdlib_paths() const {
+    if (get_type() == Type::GNU || get_type() == Type::CLANG) {
+        std::vector<std::string> args;
+
+#ifdef WINDOWS_BUILD
+        static constexpr bool is_windows = true;
+#else
+        static constexpr bool is_windows = false;
+#endif
+
+        if (get_language() == Language::CPP) {
+            args = {"-E", "-Wp,-v", "-xc++", is_windows ? "NUL" : "/dev/null"};
+        } else if (get_language() == Language::C) {
+            args = {"-E", "-Wp,-v", "-xc", is_windows ? "NUL" : "/dev/null"};
+        } else {
+            throw std::runtime_error("Unsupported language");
+        }
+        auto [ret, output] = execute_with_args(get_location(), args);
+        if (ret) {
+            throw std::runtime_error("Failed to get stdlib paths");
+        }
+
+        /* Command output:
+            # 0 "NUL"
+            # 0 "<built-in>"
+            # 0 "<command-line>"
+            # 1 "NUL"
+            ignoring duplicate directory "c:/program files (x86)/arm gnu toolchain arm-none-eabi/12.2 mpacbti-rel1/lib/gcc/../../lib/gcc/arm-none-eabi/12.2.1/include"
+            ignoring nonexistent directory "c:\program files (x86)\arm gnu toolchain arm-none-eabi\12.2 mpacbti-rel1\bin\../arm-none-eabi/data/jenkins/workspace/GNU-toolchain/arm-12-mpacbti/build-mingw-arm-none-eabi/install/lib/gcc/arm-none-eabi/12.2.1/../../../../include"
+            ignoring duplicate directory "c:/program files (x86)/arm gnu toolchain arm-none-eabi/12.2 mpacbti-rel1/lib/gcc/../../lib/gcc/arm-none-eabi/12.2.1/include-fixed"
+            ignoring duplicate directory "c:/program files (x86)/arm gnu toolchain arm-none-eabi/12.2 mpacbti-rel1/lib/gcc/../../lib/gcc/arm-none-eabi/12.2.1/../../../../arm-none-eabi/include"
+            ignoring nonexistent directory "c:\program files (x86)\arm gnu toolchain arm-none-eabi\12.2 mpacbti-rel1\bin\../arm-none-eabi/usr/include"
+            #include "..." search starts here:
+            #include <...> search starts here:
+            c:\program files (x86)\arm gnu toolchain arm-none-eabi\12.2 mpacbti-rel1\bin\../lib/gcc/arm-none-eabi/12.2.1/include
+            c:\program files (x86)\arm gnu toolchain arm-none-eabi\12.2 mpacbti-rel1\bin\../lib/gcc/arm-none-eabi/12.2.1/include-fixed
+            c:\program files (x86)\arm gnu toolchain arm-none-eabi\12.2 mpacbti-rel1\bin\../lib/gcc/arm-none-eabi/12.2.1/../../../../arm-none-eabi/include
+            End of search list.
+        */
+        std::vector<std::string> paths;
+        // iterate command output line by line, add paths after "#include <...> search starts here:" to paths vector
+        std::string line;
+        bool start = false;
+        std::stringstream ss_output(output);
+        while (std::getline(ss_output, line)) {
+            if (start) {
+                if (line.starts_with("End of search list.")) {
+                    break;
+                }
+                if (line.starts_with(" ")) {
+                    paths.push_back(std::filesystem::weakly_canonical(line.substr(1, line.length() - 2)).string());
+                }
+            } else {
+                if (line.starts_with("#include <...> search starts here:")) {
+                    start = true;
+                }
+            }
+        }
+
+        return paths;
+    } else if (get_type() == Type::MSVC) {
+        throw std::runtime_error("Not implemented");
+    } else if (get_type() == Type::IAR) {
+        throw std::runtime_error("Not implemented");
+    } else {
+        throw std::runtime_error("Unsupported compiler");
+    }
 }
 
 std::string Compiler::get_system_header_pragma() const {

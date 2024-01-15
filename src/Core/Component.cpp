@@ -370,7 +370,7 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     std::ofstream cmd_file(compile_entry->source_entry->get_object_path().string() + ".txt", std::ios::out | std::ios::trunc);
     cmd_file << "{\n";
     cmd_file << ("    \"directory\": \"" + dir + "\",\n");
-    cmd_file << ("    \"command\": \"" + compile_entry->compiler->get_location() + " " + cmd + "\",\n");
+    cmd_file << ("    \"command\": \"" + compile_entry->compiler->get_location() + " " + cmd + " ${POST_OPTIONS}\",\n");
     cmd_file << ("    \"file\": \"" + source + "\"\n");
     cmd_file << ("},\n");
     cmd_file.close();
@@ -531,9 +531,9 @@ void Component::build() {
 
         size_t compile_entry_seq_index = 0; // current source entry index to compile
         // int current_compiled_index     = 1; // currently compiled index (only for counting compiled files)
-        std::mutex mutex_compiled_index;    // mutex for output ordering
-        bool error_reported = false;        // a source has reported a failed compilation
-        bool compiling      = true;         // still trying to compile all sources
+        std::mutex mutex_compiled_index; // mutex for output ordering
+        bool error_reported = false;     // a source has reported a failed compilation
+        bool compiling      = true;      // still trying to compile all sources
 
         while (compiling) {
             if (compile_entry_seq_index == compile_entries.size()) {
@@ -552,7 +552,7 @@ void Component::build() {
 
                     w->execute([this, current_index, &mutex_compiled_index, &compile_entries, &compiling, &error_reported]() {
                         const auto& compile_entry = compile_entries[current_index];
-                        const auto t_start    = std::chrono::high_resolution_clock::now();
+                        const auto t_start        = std::chrono::high_resolution_clock::now();
 
                         const auto [ret, msg] = s_compile(compile_entry);
 
