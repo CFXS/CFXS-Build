@@ -331,9 +331,15 @@ bool Component::process_source_file_path(const SourceFilePath& e,
         compiler->push_compile_definition(compile_entry->compile_args, val.value);
     }
     // append custom options
-    for (const auto& val : get_compile_options()) {
-        auto v = option_replacement(val.value);
-        prepare_and_push_flags(compile_entry->compile_args, v);
+    if (get_compile_option_replacements().empty()) {
+        for (const auto& val : get_compile_options()) {
+            prepare_and_push_flags(compile_entry->compile_args, val.value);
+        }
+    } else {
+        for (const auto& val : get_compile_options()) {
+            auto v = option_replacement(val.value);
+            prepare_and_push_flags(compile_entry->compile_args, v);
+        }
     }
 
     // [Library paths/definitions/options]
@@ -359,9 +365,15 @@ bool Component::process_source_file_path(const SourceFilePath& e,
         default: opts = nullptr;
     }
     if (opts) {
-        for (const auto& val : *opts) {
-            auto v = option_replacement(val);
-            prepare_and_push_flags(compile_entry->compile_args, v);
+        if (get_compile_option_replacements().empty()) {
+            for (const auto& val : *opts) {
+                prepare_and_push_flags(compile_entry->compile_args, val);
+            }
+        } else {
+            for (const auto& val : *opts) {
+                auto v = option_replacement(val);
+                prepare_and_push_flags(compile_entry->compile_args, v);
+            }
         }
     }
 
