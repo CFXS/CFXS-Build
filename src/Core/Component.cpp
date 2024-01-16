@@ -24,6 +24,9 @@
 #include "LuaBackend.hpp"
 #include "lauxlib.h"
 
+extern std::vector<std::filesystem::path> s_script_path_stack;
+extern std::vector<std::filesystem::path> s_source_location_stack;
+
 ////////////////////////////////////
 // File modified cache
 static std::unordered_map<size_t, std::filesystem::file_time_type> s_file_modified_cache;
@@ -889,7 +892,12 @@ void Component::bind_add_sources(lua_State* L) {
             m_requested_source_filters.push_back(src.substr(1)); // remove ! prefix
         } else {
             Log.trace("[{}] Add source: {}", get_name(), src);
-            m_requested_sources.push_back(src);
+            // convert to absolute path from s_script_path_stack if relative
+            if (src[0] == '.') {
+                m_requested_sources.push_back(std::filesystem::weakly_canonical(s_script_path_stack.back() / src).string());
+            } else {
+                m_requested_sources.push_back(src);
+            }
         }
     };
 
@@ -930,7 +938,14 @@ void Component::bind_add_include_paths(lua_State* L) {
             if (src.isString()) {
                 const auto visibility_value     = LuaBackend::string_to_visibility(arg_visibility.tostring());
                 m_visibility_mask_include_paths = m_visibility_mask_include_paths | visibility_value;
-                m_include_paths.emplace_back(visibility_value, src.tostring());
+
+                // convert to absolute path from s_script_path_stack if relative
+                if (src[0] == '.') {
+                    m_include_paths.emplace_back(visibility_value,
+                                                 std::filesystem::weakly_canonical(s_script_path_stack.back() / src).string());
+                } else {
+                    m_include_paths.emplace_back(visibility_value, src.tostring());
+                }
             } else {
                 luaL_error(L, "Include directory #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Include directory is not a string");
@@ -939,7 +954,14 @@ void Component::bind_add_include_paths(lua_State* L) {
     } else if (arg_sources.isString()) {
         const auto visibility_value     = LuaBackend::string_to_visibility(arg_visibility.tostring());
         m_visibility_mask_include_paths = m_visibility_mask_include_paths | visibility_value;
-        m_include_paths.emplace_back(visibility_value, arg_sources.tostring());
+        const auto str                  = arg_sources.tostring();
+
+        // convert to absolute path from s_script_path_stack if relative
+        if (str[0] == '.') {
+            m_include_paths.emplace_back(visibility_value, std::filesystem::weakly_canonical(s_script_path_stack.back() / str).string());
+        } else {
+            m_include_paths.emplace_back(visibility_value, str);
+        }
     } else {
         luaL_error(L,
                    "Invalid include paths argument: type \"%s\"\n%s",
@@ -1060,8 +1082,6 @@ void Component::bind_set_linker_script(lua_State* L) {
     }
 }
 
-extern std::vector<std::filesystem::path> s_script_path_stack;
-extern std::vector<std::filesystem::path> s_source_location_stack;
 void Component::bind_add_libraries(lua_State* L) {
     auto arg_libs = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
 
