@@ -833,9 +833,10 @@ std::vector<Component::SourceFilePath> Component::get_source_file_paths() {
 
                 try {
                     // recurse file_path.parent_path and add files to source_file_paths that match file_path.extension
+                    const auto ext = file_path.extension();
                     for (const auto& entry : std::filesystem::recursive_directory_iterator(file_path.parent_path())) {
-                        if (entry.path().extension() == file_path.extension()) {
-                            source_file_paths.push_back({entry.path(), false});
+                        if (entry.path().extension() == ext) {
+                            source_file_paths.emplace_back(entry.path(), false);
                         }
                     }
                 } catch (const std::exception& e) {
@@ -848,7 +849,7 @@ std::vector<Component::SourceFilePath> Component::get_source_file_paths() {
                     // check all files in file_path.parent_path non recursively and add files to source_file_paths that match file_path.extension
                     for (const auto& entry : std::filesystem::directory_iterator(file_path.parent_path())) {
                         if (entry.path().extension() == file_path.extension()) {
-                            source_file_paths.push_back({entry.path(), !is_inside_root_path});
+                            source_file_paths.emplace_back(entry.path(), !is_inside_root_path);
                         }
                     }
                 } catch (const std::exception& e) {
@@ -860,7 +861,7 @@ std::vector<Component::SourceFilePath> Component::get_source_file_paths() {
             // source is not in wildcard form
             if (std::filesystem::exists(path)) {
                 const bool is_inside_root_path = std::filesystem::path(path).parent_path().string().starts_with(get_root_path().string());
-                source_file_paths.push_back({path, !is_inside_root_path});
+                source_file_paths.emplace_back(path, !is_inside_root_path);
             } else {
                 Log.error("[{}] Source \"{}\" not found", get_name(), path);
                 throw std::runtime_error("Source not found");
