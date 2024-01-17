@@ -500,7 +500,7 @@ void Component::configure(std::shared_ptr<Compiler> c_compiler,
     }
 
     // iterate all sources
-    std::for_each(std::execution::par_unseq, source_file_paths.begin(), source_file_paths.end(), [&](const SourceFilePath& e) {
+    std::for_each(std::execution::par, source_file_paths.begin(), source_file_paths.end(), [&](const SourceFilePath& e) {
         process_source_file_path(e, c_compiler, cpp_compiler, asm_compiler, pch_updated);
     });
 
