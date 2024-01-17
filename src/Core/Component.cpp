@@ -54,8 +54,6 @@ std::filesystem::file_time_type get_file_modified_time(std::string_view path) {
 
 ////////////////////////////////////
 
-static std::mutex s_filesystem_mutex;
-
 extern std::vector<std::string> e_global_c_compile_options;
 extern std::vector<std::string> e_global_cpp_compile_options;
 extern std::vector<std::string> e_global_definitions;
@@ -315,7 +313,7 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     compiler->load_compile_and_output_flags(
         compile_entry->compile_args, source_entry.get_source_file_path(), output_path, source_entry.is_pch()); // compile and write object
 
-    compiler->load_dependency_flags(compile_entry->compile_args, output_path);                                 // dependency file output
+    compiler->load_dependency_flags(compile_entry->compile_args, output_path); // dependency file output
 
     // Compile option replacement setup
     const auto option_replacement = [&](const std::string_view& opt) -> std::string {
