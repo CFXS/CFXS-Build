@@ -26,6 +26,9 @@ public:
     // Set branch @ commit
     bool checkout(const std::string& branch) const;
 
+    std::string get_current_branch() const;
+    std::string get_current_short_hash() const;
+
     const std::filesystem::path& get_working_directory() const { return m_working_directory; }
 
 private:

@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include "Core/Archiver.hpp"
 #include "Core/Compiler.hpp"
+#include "Core/GIT.hpp"
 #include "Core/Linker.hpp"
 #include "Core/SourceEntry.hpp"
 #include "FilesystemUtils.hpp"
@@ -886,7 +887,7 @@ std::vector<Component::SourceFilePath> Component::get_source_file_paths() {
     return source_file_paths;
 }
 
-void Component::bind_add_sources(lua_State* L) {
+void Component::lua_add_sources(lua_State* L) {
     const auto push_source = [&](const std::string& src) {
         if (src.length() && src[0] == '!') {
             // Log.trace("[{}] Add filter: {}", get_name(), src);
@@ -921,7 +922,7 @@ void Component::bind_add_sources(lua_State* L) {
     }
 }
 
-void Component::bind_add_include_paths(lua_State* L) {
+void Component::lua_add_include_paths(lua_State* L) {
     const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
 
     if (!LuaBackend::is_valid_visibility(arg_visibility)) {
@@ -987,7 +988,7 @@ void Component::bind_add_include_paths(lua_State* L) {
     // m_include_paths.erase(std::unique(m_include_paths.begin(), m_include_paths.end()), m_include_paths.end());
 }
 
-void Component::bind_add_definitions(lua_State* L) {
+void Component::lua_add_definitions(lua_State* L) {
     const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
 
     if (!LuaBackend::is_valid_visibility(arg_visibility)) {
@@ -1028,7 +1029,7 @@ void Component::bind_add_definitions(lua_State* L) {
     // m_definitions.erase(std::unique(m_definitions.begin(), m_definitions.end()), m_definitions.end());
 }
 
-void Component::bind_add_compile_options(lua_State* L) {
+void Component::lua_add_compile_options(lua_State* L) {
     const auto arg_visibility = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
 
     if (!LuaBackend::is_valid_visibility(arg_visibility)) {
@@ -1069,7 +1070,7 @@ void Component::bind_add_compile_options(lua_State* L) {
     // m_compile_options.erase(std::unique(m_compile_options.begin(), m_compile_options.end()), m_compile_options.end());
 }
 
-void Component::bind_set_linker_script(lua_State* L) {
+void Component::lua_set_linker_script(lua_State* L) {
     auto script_path = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
     if (script_path.isString()) {
         Log.trace("[{}] Set linker script: {}", get_name(), script_path.tostring());
@@ -1083,7 +1084,7 @@ void Component::bind_set_linker_script(lua_State* L) {
     }
 }
 
-void Component::bind_add_libraries(lua_State* L) {
+void Component::lua_add_libraries(lua_State* L) {
     auto arg_libs = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
 
     if (arg_libs.isTable()) {
@@ -1144,7 +1145,7 @@ void Component::bind_add_libraries(lua_State* L) {
     }
 }
 
-void Component::bind_add_link_options(lua_State* L) {
+void Component::lua_add_link_options(lua_State* L) {
     auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
     if (arg_sources.isTable()) {
         for (int i = 1; i <= arg_sources.length(); i++) {
@@ -1189,7 +1190,20 @@ void Component::add_user(Component* user) {
     m_used_by.push_back(user);
 }
 
-void Component::bind_create_precompiled_header(lua_State* L) {
+luabridge::LuaRef Component::lua_get_git_info(lua_State* L) {
+    GIT git(get_root_path());
+    if (!git.is_git_repository()) {
+        luaL_error(L, "Not a git repository");
+    }
+
+    // push table containing keys "branch" and "short_hash" to lua stack
+    luabridge::LuaRef git_info = luabridge::newTable(L);
+    git_info["branch"]         = git.get_current_branch();
+    git_info["short_hash"]     = git.get_current_short_hash();
+    return git_info;
+}
+
+void Component::lua_create_precompiled_header(lua_State* L) {
     if (!m_precompiled_header.empty()) {
         luaL_error(L, "Precompiled header already created for this component");
         throw std::runtime_error("Precompiled header already created");
@@ -1215,7 +1229,7 @@ void Component::bind_create_precompiled_header(lua_State* L) {
     }
 }
 
-void Component::bind_set_compile_option_replacement(lua_State* L) {
+void Component::lua_set_compile_option_replacement(lua_State* L) {
     auto arg_match   = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
     auto arg_search  = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(1));
     auto arg_replace = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(2));

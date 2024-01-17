@@ -319,54 +319,55 @@ void Project::initialize_lua() {
 
     auto bridge = luabridge::getGlobalNamespace(L);
 
-    bridge.addFunction<void, const std::string& /*path*/, const std::string& /*std*/>("set_c_compiler", TO_FUNCTION(bind_set_c_compiler));
+    bridge.addFunction<void, const std::string& /*path*/, const std::string& /*std*/>("set_c_compiler", TO_FUNCTION(lua_set_c_compiler));
     bridge.addFunction<void, const std::string& /*path*/, const std::string& /*std*/>("set_cpp_compiler",
-                                                                                      TO_FUNCTION(bind_set_cpp_compiler));
-    bridge.addFunction<void, const std::string& /*path*/>("set_asm_compiler", TO_FUNCTION(bind_set_asm_compiler));
-    bridge.addFunction<void, const std::string& /*path*/>("set_linker", TO_FUNCTION(bind_set_linker));
-    bridge.addFunction<void, const std::string& /*path*/>("set_archiver", TO_FUNCTION(bind_set_archiver));
+                                                                                      TO_FUNCTION(lua_set_cpp_compiler));
+    bridge.addFunction<void, const std::string& /*path*/>("set_asm_compiler", TO_FUNCTION(lua_set_asm_compiler));
+    bridge.addFunction<void, const std::string& /*path*/>("set_linker", TO_FUNCTION(lua_set_linker));
+    bridge.addFunction<void, const std::string& /*path*/>("set_archiver", TO_FUNCTION(lua_set_archiver));
 
     bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/, const std::string& /*std*/>(
-        "set_c_compiler_known", TO_FUNCTION(bind_set_c_compiler_known));
+        "set_c_compiler_known", TO_FUNCTION(lua_set_c_compiler_known));
     bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/, const std::string& /*std*/>(
-        "set_cpp_compiler_known", TO_FUNCTION(bind_set_cpp_compiler_known));
+        "set_cpp_compiler_known", TO_FUNCTION(lua_set_cpp_compiler_known));
     bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/>("set_asm_compiler_known",
-                                                                                          TO_FUNCTION(bind_set_asm_compiler_known));
+                                                                                          TO_FUNCTION(lua_set_asm_compiler_known));
     bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/>("set_linker_known",
-                                                                                          TO_FUNCTION(bind_set_linker_known));
+                                                                                          TO_FUNCTION(lua_set_linker_known));
     bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/>("set_archiver_known",
-                                                                                          TO_FUNCTION(bind_set_archiver_known));
+                                                                                          TO_FUNCTION(lua_set_archiver_known));
 
-    bridge.addFunction<void, const std::string&>("__cfxs_print", TO_FUNCTION(bind_cfxs_print));
-    bridge.addFunction<bool, const std::string&>("exists", TO_FUNCTION(bind_exists));
-    bridge.addFunction<std::string, lua_State*>("get_current_directory_path", TO_FUNCTION(bind_get_current_directory_path));
-    bridge.addFunction<std::string, lua_State*>("get_current_script_path", TO_FUNCTION(bind_get_current_script_path));
+    bridge.addFunction<void, const std::string&>("__cfxs_print", TO_FUNCTION(lua_cfxs_print));
+    bridge.addFunction<bool, const std::string&>("exists", TO_FUNCTION(lua_exists));
+    bridge.addFunction<std::string, lua_State*>("get_current_directory_path", TO_FUNCTION(lua_get_current_directory_path));
+    bridge.addFunction<std::string, lua_State*>("get_current_script_path", TO_FUNCTION(lua_get_current_script_path));
 
-    bridge.addFunction<void, lua_State*>("import", TO_FUNCTION(bind_import));
-    bridge.addFunction<void, lua_State*>("import_git", TO_FUNCTION(bind_import_git));
+    bridge.addFunction<void, lua_State*>("import", TO_FUNCTION(lua_import));
+    bridge.addFunction<void, lua_State*>("import_git", TO_FUNCTION(lua_import_git));
 
-    bridge.addFunction<void, lua_State*>("add_global_include_paths", TO_FUNCTION(bind_add_global_include_paths));
-    bridge.addFunction<void, lua_State*>("add_global_definitions", TO_FUNCTION(bind_add_global_definitions));
-    bridge.addFunction<void, lua_State*>("add_global_compile_options", TO_FUNCTION(bind_add_global_compile_options));
-    bridge.addFunction<void, lua_State*>("add_global_link_options", TO_FUNCTION(bind_add_global_link_options));
+    bridge.addFunction<void, lua_State*>("add_global_include_paths", TO_FUNCTION(lua_add_global_include_paths));
+    bridge.addFunction<void, lua_State*>("add_global_definitions", TO_FUNCTION(lua_add_global_definitions));
+    bridge.addFunction<void, lua_State*>("add_global_compile_options", TO_FUNCTION(lua_add_global_compile_options));
+    bridge.addFunction<void, lua_State*>("add_global_link_options", TO_FUNCTION(lua_add_global_link_options));
 
-    bridge.addFunction<Component&, const std::string&>("create_executable", TO_FUNCTION(bind_create_executable));
-    bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(bind_create_library));
+    bridge.addFunction<Component&, const std::string&>("create_executable", TO_FUNCTION(lua_create_executable));
+    bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(lua_create_library));
 
     bridge.beginClass<Component>("$Component")
-        .addFunction("add_sources", &Component::bind_add_sources)
-        .addFunction("add_include_paths", &Component::bind_add_include_paths)
-        .addFunction("add_definitions", &Component::bind_add_definitions)
-        .addFunction("add_compile_options", &Component::bind_add_compile_options)
-        .addFunction("set_linker_script", &Component::bind_set_linker_script)
-        .addFunction("add_libraries", &Component::bind_add_libraries)
-        .addFunction("add_link_options", &Component::bind_add_link_options)
-        .addFunction("create_precompiled_header", &Component::bind_create_precompiled_header)
-        .addFunction("set_compile_option_replacement", &Component::bind_set_compile_option_replacement)
+        .addFunction("add_sources", &Component::lua_add_sources)
+        .addFunction("add_include_paths", &Component::lua_add_include_paths)
+        .addFunction("add_definitions", &Component::lua_add_definitions)
+        .addFunction("add_compile_options", &Component::lua_add_compile_options)
+        .addFunction("set_linker_script", &Component::lua_set_linker_script)
+        .addFunction("add_libraries", &Component::lua_add_libraries)
+        .addFunction("add_link_options", &Component::lua_add_link_options)
+        .addFunction("create_precompiled_header", &Component::lua_create_precompiled_header)
+        .addFunction("set_compile_option_replacement", &Component::lua_set_compile_option_replacement)
+        .addFunction("get_git_info", &Component::lua_get_git_info)
         .endClass();
 }
 
-void Project::bind_cfxs_print(const std::string& str) {
+void Project::lua_cfxs_print(const std::string& str) {
     if (GlobalConfig::log_script_printf_locations()) {
         const auto current_script = s_source_location_stack.back();
 
@@ -382,43 +383,43 @@ void Project::bind_cfxs_print(const std::string& str) {
     Log.info("[" ANSI_MAGENTA "Script" ANSI_RESET "] {}", str);
 }
 
-bool Project::bind_exists(const std::string& path_str) {
+bool Project::lua_exists(const std::string& path_str) {
     const std::filesystem::path path = path_str;
     const auto p                     = path.is_relative() ? s_script_path_stack.back() / path : path;
     return std::filesystem::exists(p);
 }
 
-std::string Project::bind_get_current_directory_path(lua_State*) { return s_script_path_stack.back().string(); }
+std::string Project::lua_get_current_directory_path(lua_State*) { return s_script_path_stack.back().string(); }
 
-std::string Project::bind_get_current_script_path(lua_State*) { return s_source_location_stack.back().string(); }
+std::string Project::lua_get_current_script_path(lua_State*) { return s_source_location_stack.back().string(); }
 
 // Compiler config
-void Project::bind_set_c_compiler(const std::string& compiler, const std::string& standard) {
+void Project::lua_set_c_compiler(const std::string& compiler, const std::string& standard) {
     s_c_compiler = std::make_shared<Compiler>(Compiler::Language::C, compiler, standard); //
 }
 
-void Project::bind_set_cpp_compiler(const std::string& compiler, const std::string& standard) {
+void Project::lua_set_cpp_compiler(const std::string& compiler, const std::string& standard) {
     s_cpp_compiler = std::make_shared<Compiler>(Compiler::Language::CPP, compiler, standard); //
 }
 
-void Project::bind_set_asm_compiler(const std::string& compiler) {
+void Project::lua_set_asm_compiler(const std::string& compiler) {
     s_asm_compiler = std::make_shared<Compiler>(Compiler::Language::ASM, compiler, "ASM"); //
 }
 
-void Project::bind_set_c_compiler_known(const std::string& version, const std::string& compiler, const std::string& standard) {
+void Project::lua_set_c_compiler_known(const std::string& version, const std::string& compiler, const std::string& standard) {
     s_c_compiler = std::make_shared<Compiler>(Compiler::Language::C, compiler, standard, true, version); //
 }
 
-void Project::bind_set_cpp_compiler_known(const std::string& version, const std::string& compiler, const std::string& standard) {
+void Project::lua_set_cpp_compiler_known(const std::string& version, const std::string& compiler, const std::string& standard) {
     s_cpp_compiler = std::make_shared<Compiler>(Compiler::Language::CPP, compiler, standard, true, version); //
 }
 
-void Project::bind_set_asm_compiler_known(const std::string& version, const std::string& compiler) {
+void Project::lua_set_asm_compiler_known(const std::string& version, const std::string& compiler) {
     s_asm_compiler = std::make_shared<Compiler>(Compiler::Language::ASM, compiler, "ASM", true, version); //
 }
 
 // Import
-void Project::bind_import(lua_State* L) {
+void Project::lua_import(lua_State* L) {
     const auto arg_count       = lua_gettop(L);
     const auto extra_arg_count = arg_count - 1;
 
@@ -497,7 +498,7 @@ void Project::bind_import(lua_State* L) {
     s_source_location_stack.pop_back();
 }
 
-void Project::bind_import_git(lua_State* L) {
+void Project::lua_import_git(lua_State* L) {
     const auto arg_count = lua_gettop(L);
 
     auto arg_url    = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
@@ -594,28 +595,28 @@ void Project::bind_import_git(lua_State* L) {
         lua_pushstring(L, ext_str.c_str()); // push path
     }
     // call import(path, [arg])
-    bind_import(L);
+    lua_import(L);
 }
 
 // Linker config
-void Project::bind_set_linker(const std::string& linker) {
+void Project::lua_set_linker(const std::string& linker) {
     s_linker = std::make_shared<Linker>(linker); //
 }
 
-void Project::bind_set_archiver(const std::string& ar) {
+void Project::lua_set_archiver(const std::string& ar) {
     s_archiver = std::make_shared<Archiver>(ar); //
 }
 
-void Project::bind_set_linker_known(const std::string& version, const std::string& linker) {
+void Project::lua_set_linker_known(const std::string& version, const std::string& linker) {
     s_linker = std::make_shared<Linker>(linker, true, version); //
 }
 
-void Project::bind_set_archiver_known(const std::string& version, const std::string& ar) {
+void Project::lua_set_archiver_known(const std::string& version, const std::string& ar) {
     s_archiver = std::make_shared<Archiver>(ar, true, version); //
 }
 
 // Component creation
-Component& Project::bind_create_executable(const std::string& name) {
+Component& Project::lua_create_executable(const std::string& name) {
     // valid filename match
     if (!RegexUtils::is_valid_component_name(name)) {
         luaL_error(s_MainLuaState,
@@ -642,7 +643,7 @@ Component& Project::bind_create_executable(const std::string& name) {
     return *comp.get();
 }
 
-Component& Project::bind_create_library(const std::string& name) {
+Component& Project::lua_create_library(const std::string& name) {
     // valid filename match
     if (!RegexUtils::is_valid_component_name(name)) {
         luaL_error(s_MainLuaState,
@@ -669,7 +670,7 @@ Component& Project::bind_create_library(const std::string& name) {
     return *comp.get();
 }
 
-void Project::bind_add_global_include_paths(lua_State* L) {
+void Project::lua_add_global_include_paths(lua_State* L) {
     const auto arg_count = lua_gettop(L);
 
     const auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
@@ -709,7 +710,7 @@ void Project::bind_add_global_include_paths(lua_State* L) {
     // m_include_paths.erase(std::unique(m_include_paths.begin(), m_include_paths.end()), m_include_paths.end());
 }
 
-void Project::bind_add_global_definitions(lua_State* L) {
+void Project::lua_add_global_definitions(lua_State* L) {
     const auto arg_count = lua_gettop(L);
 
     auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
@@ -738,7 +739,7 @@ void Project::bind_add_global_definitions(lua_State* L) {
     // m_definitions.erase(std::unique(m_definitions.begin(), m_definitions.end()), m_definitions.end());
 }
 
-void Project::bind_add_global_compile_options(lua_State* L) {
+void Project::lua_add_global_compile_options(lua_State* L) {
     const auto arg_count = lua_gettop(L);
 
     const auto arg_language = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));
@@ -800,7 +801,7 @@ void Project::bind_add_global_compile_options(lua_State* L) {
     // m_compile_options.erase(std::unique(m_compile_options.begin(), m_compile_options.end()), m_compile_options.end());
 }
 
-void Project::bind_add_global_link_options(lua_State* L) {
+void Project::lua_add_global_link_options(lua_State* L) {
     const auto arg_count = lua_gettop(L);
 
     auto arg_sources = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_BASIC_OFFSET(arg_count, 0));

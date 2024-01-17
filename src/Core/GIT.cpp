@@ -89,3 +89,33 @@ bool GIT::checkout(const std::string& branch) const {
 
     return true;
 }
+
+std::string GIT::get_current_branch() const {
+    // get current branch name
+    auto [exit_code, output] = execute_with_args("git", {"-C", get_working_directory().string(), "rev-parse", "--abbrev-ref", "HEAD"});
+    if (exit_code) {
+        Log.error("Git rev-parse failed:\n{}", output);
+        throw std::runtime_error("git command error");
+    }
+
+    // trim output start and end from spaces and whitespace
+    output.erase(0, output.find_first_not_of(" \t\n\r\f\v"));
+    output.erase(output.find_last_not_of(" \t\n\r\f\v") + 1);
+
+    return output;
+}
+
+std::string GIT::get_current_short_hash() const {
+    // get current commit hash
+    auto [exit_code, output] = execute_with_args("git", {"-C", get_working_directory().string(), "rev-parse", "--short", "HEAD"});
+    if (exit_code) {
+        Log.error("Git rev-parse failed:\n{}", output);
+        throw std::runtime_error("git command error");
+    }
+
+    // trim output start and end from spaces and whitespace
+    output.erase(0, output.find_first_not_of(" \t\n\r\f\v"));
+    output.erase(output.find_last_not_of(" \t\n\r\f\v") + 1);
+
+    return output;
+}

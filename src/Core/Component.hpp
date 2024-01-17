@@ -6,6 +6,9 @@
 #include "Compiler.hpp"
 #include "Linker.hpp"
 
+#include "lua.hpp"
+#include "LuaBridge/LuaBridge.h"
+
 struct lua_State;
 
 class Component {
@@ -57,15 +60,16 @@ public:
               const std::filesystem::path& local_output_directory);
     ~Component();
 
-    void bind_add_sources(lua_State* L);
-    void bind_add_include_paths(lua_State* L);
-    void bind_add_definitions(lua_State* L);
-    void bind_add_compile_options(lua_State* L);
-    void bind_set_linker_script(lua_State* L);
-    void bind_add_libraries(lua_State* L);
-    void bind_add_link_options(lua_State* L);
-    void bind_create_precompiled_header(lua_State* L);
-    void bind_set_compile_option_replacement(lua_State* L);
+    void lua_add_sources(lua_State* L);
+    void lua_add_include_paths(lua_State* L);
+    void lua_add_definitions(lua_State* L);
+    void lua_add_compile_options(lua_State* L);
+    void lua_set_linker_script(lua_State* L);
+    void lua_add_libraries(lua_State* L);
+    void lua_add_link_options(lua_State* L);
+    void lua_create_precompiled_header(lua_State* L);
+    void lua_set_compile_option_replacement(lua_State* L);
+    luabridge::LuaRef lua_get_git_info(lua_State* L);
 
     void configure(std::shared_ptr<Compiler> c_compiler,
                    std::shared_ptr<Compiler> cpp_compiler,
