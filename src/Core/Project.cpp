@@ -364,6 +364,7 @@ void Project::initialize_lua() {
         .addFunction("create_precompiled_header", &Component::lua_create_precompiled_header)
         .addFunction("set_compile_option_replacement", &Component::lua_set_compile_option_replacement)
         .addFunction("get_git_info", &Component::lua_get_git_info)
+        .addFunction("get_root_path", &Component::lua_get_root_path)
         .endClass();
 }
 
@@ -483,6 +484,7 @@ void Project::lua_import(lua_State* L) {
             }
             return 0;
         });
+
         if (failed) {
             // get and log lua error callstack
             print_traceback(source_location);

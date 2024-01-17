@@ -70,6 +70,7 @@ public:
     void lua_create_precompiled_header(lua_State* L);
     void lua_set_compile_option_replacement(lua_State* L);
     luabridge::LuaRef lua_get_git_info(lua_State* L);
+    std::string lua_get_root_path();
 
     void configure(std::shared_ptr<Compiler> c_compiler,
                    std::shared_ptr<Compiler> cpp_compiler,
@@ -139,6 +140,11 @@ private:
     // Component tree
     std::vector<Component*> m_libraries; // Libraries that this component has added
     std::vector<Component*> m_used_by;   // Components that added this component as a library
+
+    // Mutex
+    std::mutex m_mutex_output_object_paths;
+    std::mutex m_mutex_compile_entries;
+    std::mutex m_mutex_source_paths;
 
     // Compile
     std::vector<std::unique_ptr<CompileEntry>> m_compile_entries;
