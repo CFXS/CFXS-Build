@@ -57,7 +57,8 @@ public:
               const std::string& name,
               const std::filesystem::path& script_path,
               const std::filesystem::path& root_path,
-              const std::filesystem::path& local_output_directory);
+              const std::filesystem::path& local_output_directory,
+              const std::string& ns);
     ~Component();
 
     void lua_add_sources(lua_State* L);
@@ -110,6 +111,8 @@ public:
 
     const std::vector<std::string>& get_additional_libraries() const { return m_additional_libraries; }
 
+    const std::string& get_namespace() const { return m_namespace; }
+
 private:
     /// Get vector of processed source file paths
     std::vector<SourceFilePath> get_source_file_paths();
@@ -136,6 +139,8 @@ private:
     std::filesystem::path m_script_path;
     std::filesystem::path m_root_path;
     std::filesystem::path m_local_output_directory;
+
+    std::string m_namespace; // namespace this component was created in
 
     // Component tree
     std::vector<Component*> m_libraries; // Libraries that this component has added

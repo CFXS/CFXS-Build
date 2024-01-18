@@ -23,6 +23,8 @@ private: // .cfxs-build Lua bindings
     static std::string lua_get_current_directory_path(lua_State*);
     static std::string lua_get_current_script_path(lua_State*);
 
+    static void lua_set_namespace(const std::string& ns);
+
     // Import
     static void lua_import(lua_State* L);
     static void lua_import_git(lua_State* L);

@@ -102,17 +102,25 @@ inline std::pair<int, std::string> execute_with_args(const std::string& cmd, con
         throw std::runtime_error("Failed to execute");
     }
 
-    while (subprocess_alive(&process)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
     FILE* p_stdout = subprocess_stdout(&process);
 
     // read all contents of p_stdout to std::string
     std::string result;
-    char buf[256];
-    while (fgets(buf, sizeof(buf), p_stdout) != NULL) {
-        result += buf;
+
+    int t_diff = 0;
+    while (subprocess_alive(&process)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        t_diff++;
+
+        char buf[256];
+        while (fgets(buf, sizeof(buf), p_stdout) != NULL) {
+            result += buf;
+        }
+
+        if (!result.empty() && t_diff > 2000) {
+            break;
+        }
     }
 
     int process_ret = -1;

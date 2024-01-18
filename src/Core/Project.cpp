@@ -22,6 +22,8 @@
 #define BUILD_TEMP_LOCATION    "components"
 #define EXTERNAL_TEMP_LOCATION "external"
 
+std::string s_current_namespace = "";
+
 lua_State* s_MainLuaState;
 std::vector<std::shared_ptr<Component>> s_components;
 
@@ -37,12 +39,12 @@ std::shared_ptr<Compiler> s_asm_compiler;
 std::shared_ptr<Linker> s_linker;
 std::shared_ptr<Archiver> s_archiver;
 
-std::vector<std::string> e_global_c_compile_options;
-std::vector<std::string> e_global_cpp_compile_options;
-std::vector<std::string> e_global_definitions;
-std::vector<std::filesystem::path> e_global_include_paths;
-std::vector<std::string> e_global_asm_compile_options;
-std::vector<std::string> e_global_link_options;
+std::unordered_map<std::string, std::vector<std::string>> e_global_c_compile_options;
+std::unordered_map<std::string, std::vector<std::string>> e_global_cpp_compile_options;
+std::unordered_map<std::string, std::vector<std::string>> e_global_definitions;
+std::unordered_map<std::string, std::vector<std::filesystem::path>> e_global_include_paths;
+std::unordered_map<std::string, std::vector<std::string>> e_global_asm_compile_options;
+std::unordered_map<std::string, std::vector<std::string>> e_global_link_options;
 
 std::filesystem::file_time_type get_last_modified_time(const std::filesystem::path& path) { return std::filesystem::last_write_time(path); }
 
@@ -326,6 +328,8 @@ void Project::initialize_lua() {
     bridge.addFunction<void, const std::string& /*path*/>("set_linker", TO_FUNCTION(lua_set_linker));
     bridge.addFunction<void, const std::string& /*path*/>("set_archiver", TO_FUNCTION(lua_set_archiver));
 
+    bridge.addFunction<void, const std::string&>("set_namespace", TO_FUNCTION(lua_set_namespace));
+
     bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/, const std::string& /*std*/>(
         "set_c_compiler_known", TO_FUNCTION(lua_set_c_compiler_known));
     bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/, const std::string& /*std*/>(
@@ -393,6 +397,8 @@ bool Project::lua_exists(const std::string& path_str) {
 std::string Project::lua_get_current_directory_path(lua_State*) { return s_script_path_stack.back().string(); }
 
 std::string Project::lua_get_current_script_path(lua_State*) { return s_source_location_stack.back().string(); }
+
+void Project::lua_set_namespace(const std::string& ns) { s_current_namespace = ns.empty() ? "" : (ns + "_"); }
 
 // Compiler config
 void Project::lua_set_c_compiler(const std::string& compiler, const std::string& standard) {
@@ -618,7 +624,8 @@ void Project::lua_set_archiver_known(const std::string& version, const std::stri
 }
 
 // Component creation
-Component& Project::lua_create_executable(const std::string& name) {
+Component& Project::lua_create_executable(const std::string& base_name) {
+    const auto name = s_current_namespace + base_name;
     // valid filename match
     if (!RegexUtils::is_valid_component_name(name)) {
         luaL_error(s_MainLuaState,
@@ -640,12 +647,14 @@ Component& Project::lua_create_executable(const std::string& name) {
                                             name,
                                             s_source_location_stack.back(),
                                             s_script_path_stack.back(),
-                                            s_output_path / BUILD_TEMP_LOCATION / name);
+                                            s_output_path / BUILD_TEMP_LOCATION / name,
+                                            s_current_namespace);
     s_components.push_back(comp);
     return *comp.get();
 }
 
-Component& Project::lua_create_library(const std::string& name) {
+Component& Project::lua_create_library(const std::string& base_name) {
+    const auto name = s_current_namespace + base_name;
     // valid filename match
     if (!RegexUtils::is_valid_component_name(name)) {
         luaL_error(s_MainLuaState,
@@ -667,7 +676,8 @@ Component& Project::lua_create_library(const std::string& name) {
                                             name,
                                             s_source_location_stack.back(),
                                             s_script_path_stack.back(),
-                                            s_output_path / BUILD_TEMP_LOCATION / name);
+                                            s_output_path / BUILD_TEMP_LOCATION / name,
+                                            s_current_namespace);
     s_components.push_back(comp);
     return *comp.get();
 }
@@ -680,14 +690,14 @@ void Project::lua_add_global_include_paths(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                e_global_include_paths.emplace_back(src.tostring());
+                e_global_include_paths[s_current_namespace].emplace_back(src.tostring());
             } else {
                 luaL_error(L, "Include directory #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Include directory is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        e_global_include_paths.emplace_back(arg_sources.tostring());
+        e_global_include_paths[s_current_namespace].emplace_back(arg_sources.tostring());
     } else {
         luaL_error(L,
                    "Invalid include paths argument: type \"%s\"\n%s",
@@ -696,7 +706,7 @@ void Project::lua_add_global_include_paths(lua_State* L) {
         throw std::runtime_error("Invalid include paths argument");
     }
 
-    for (auto& dir : e_global_include_paths) {
+    for (auto& dir : e_global_include_paths[s_current_namespace]) {
         // check if dir is relative path
         if (dir.is_relative()) {
             // if relative path, make it absolute and canonical
@@ -720,14 +730,14 @@ void Project::lua_add_global_definitions(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                e_global_definitions.emplace_back(src.tostring());
+                e_global_definitions[s_current_namespace].emplace_back(src.tostring());
             } else {
                 luaL_error(L, "Definition #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Definition is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        e_global_definitions.emplace_back(arg_sources.tostring());
+        e_global_definitions[s_current_namespace].emplace_back(arg_sources.tostring());
     } else {
         luaL_error(L,
                    "Invalid definitions argument: type \"%s\"\n%s",
@@ -759,14 +769,14 @@ void Project::lua_add_global_compile_options(lua_State* L) {
     const auto val_str             = arg_language.tostring();
 
     if (val_str == "C") {
-        vec = &e_global_c_compile_options;
+        vec = &e_global_c_compile_options[s_current_namespace];
     } else if (val_str == "C++") {
-        vec = &e_global_cpp_compile_options;
+        vec = &e_global_cpp_compile_options[s_current_namespace];
     } else if (val_str == "C/C++") {
-        vec  = &e_global_c_compile_options;
-        vec2 = &e_global_cpp_compile_options;
+        vec  = &e_global_c_compile_options[s_current_namespace];
+        vec2 = &e_global_cpp_compile_options[s_current_namespace];
     } else if (val_str == "ASM") {
-        vec = &e_global_asm_compile_options;
+        vec = &e_global_asm_compile_options[s_current_namespace];
     }
 
     if (!vec) {
@@ -811,14 +821,14 @@ void Project::lua_add_global_link_options(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                e_global_link_options.emplace_back(src.tostring());
+                e_global_link_options[s_current_namespace].emplace_back(src.tostring());
             } else {
                 luaL_error(L, "Link option #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Link option is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        e_global_link_options.emplace_back(arg_sources.tostring());
+        e_global_link_options[s_current_namespace].emplace_back(arg_sources.tostring());
     } else {
         luaL_error(L,
                    "Invalid link options argument: type \"%s\"\n%s",

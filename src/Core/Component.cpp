@@ -54,23 +54,25 @@ std::filesystem::file_time_type get_file_modified_time(std::string_view path) {
 
 ////////////////////////////////////
 
-extern std::vector<std::string> e_global_c_compile_options;
-extern std::vector<std::string> e_global_cpp_compile_options;
-extern std::vector<std::string> e_global_definitions;
-extern std::vector<std::filesystem::path> e_global_include_paths;
-extern std::vector<std::string> e_global_asm_compile_options;
-extern std::vector<std::string> e_global_link_options;
+extern std::unordered_map<std::string, std::vector<std::string>> e_global_c_compile_options;
+extern std::unordered_map<std::string, std::vector<std::string>> e_global_cpp_compile_options;
+extern std::unordered_map<std::string, std::vector<std::string>> e_global_definitions;
+extern std::unordered_map<std::string, std::vector<std::filesystem::path>> e_global_include_paths;
+extern std::unordered_map<std::string, std::vector<std::string>> e_global_asm_compile_options;
+extern std::unordered_map<std::string, std::vector<std::string>> e_global_link_options;
 
 Component::Component(Type type,
                      const std::string& name,
                      const std::filesystem::path& script_path,
                      const std::filesystem::path& root_path,
-                     const std::filesystem::path& local_output_directory) :
+                     const std::filesystem::path& local_output_directory,
+                     const std::string& ns) :
     m_type(type),
     m_name(name),
     m_script_path(std::filesystem::weakly_canonical(script_path)),
     m_root_path(std::filesystem::weakly_canonical(root_path)),
-    m_local_output_directory(std::filesystem::weakly_canonical(local_output_directory)) {}
+    m_local_output_directory(std::filesystem::weakly_canonical(local_output_directory)),
+    m_namespace(ns) {}
 
 Component::~Component() {}
 
@@ -313,7 +315,7 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     compiler->load_compile_and_output_flags(
         compile_entry->compile_args, source_entry.get_source_file_path(), output_path, source_entry.is_pch()); // compile and write object
 
-    compiler->load_dependency_flags(compile_entry->compile_args, output_path); // dependency file output
+    compiler->load_dependency_flags(compile_entry->compile_args, output_path);                                 // dependency file output
 
     // Compile option replacement setup
     const auto option_replacement = [&](const std::string_view& opt) -> std::string {
@@ -360,19 +362,19 @@ bool Component::process_source_file_path(const SourceFilePath& e,
 
     // Merge global defs
     // include paths
-    for (const auto& val : e_global_include_paths) {
+    for (const auto& val : e_global_include_paths[get_namespace()]) {
         compiler->push_include_path(compile_entry->compile_args, val.string());
     }
     // compile definitions
-    for (const auto& val : e_global_definitions) {
+    for (const auto& val : e_global_definitions[get_namespace()]) {
         compiler->push_compile_definition(compile_entry->compile_args, val);
     }
     // append global custom options
     std::vector<std::string>* opts = nullptr;
     switch (compiler->get_language()) {
-        case Compiler::Language::C: opts = &e_global_c_compile_options; break;
-        case Compiler::Language::CPP: opts = &e_global_cpp_compile_options; break;
-        case Compiler::Language::ASM: opts = &e_global_asm_compile_options; break;
+        case Compiler::Language::C: opts = &e_global_c_compile_options[get_namespace()]; break;
+        case Compiler::Language::CPP: opts = &e_global_cpp_compile_options[get_namespace()]; break;
+        case Compiler::Language::ASM: opts = &e_global_asm_compile_options[get_namespace()]; break;
         default: opts = nullptr;
     }
     if (opts) {
@@ -619,7 +621,7 @@ void Component::build() {
             //     std::string cmd;
             //     for (auto& flag : compile_entry->compile_args)
             //         cmd += flag + " ";
-            //     Log.error("command: {}", cmd);
+            //     Log.critical("command: {}", cmd);
             // }
 
             e_current_abs_source_index++;
@@ -754,7 +756,7 @@ void Component::build() {
             prepare_and_push_flags(link_flags, flag);
         }
 
-        for (const auto& flag : e_global_link_options) {
+        for (const auto& flag : e_global_link_options[get_namespace()]) {
             prepare_and_push_flags(link_flags, flag);
         }
 
