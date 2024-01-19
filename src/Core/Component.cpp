@@ -775,6 +775,27 @@ void Component::build() {
         Log.info(" - Link done in {:.3}s", ms / 1000.0f);
     }
 
+    const auto& post_build_commands = get_commands("after-build");
+    if (!post_build_commands.empty()) {
+        for (int i = 0; const auto& commands : post_build_commands) {
+            if (commands.list.empty())
+                continue;
+
+            Log.info("[{}] after-build \"{}\"", get_name(), commands.name);
+            const auto [ret, msg] = execute_with_args("", commands.list);
+
+            if (ret != 0) {
+                std::string lstr;
+                for (auto& a : commands.list) {
+                    lstr += a + " ";
+                }
+                Log.error("[{}] after-build command failed:\n{}\nCommand: {}", get_name(), msg, lstr);
+                throw std::runtime_error("after-build command failed");
+            }
+            i++;
+        }
+    }
+
     const auto build_t2 = std::chrono::high_resolution_clock::now();
     auto build_ms       = std::chrono::duration_cast<std::chrono::milliseconds>(build_t2 - build_t1).count();
     Log.trace("Build done in {:.3}s", build_ms / 1000.0f);
@@ -907,8 +928,9 @@ void Component::lua_add_include_paths(lua_State* L) {
 
     if (!LuaBackend::is_valid_visibility(arg_visibility)) {
         luaL_error(L,
-                   "Invalid include paths visibility argument: type \"%s\"\n%s",
+                   "Invalid include paths visibility argument: type \"%s\" (%s)\n%s",
                    lua_typename(L, arg_visibility.type()),
+                   arg_visibility.tostring().c_str(),
                    LuaBackend::get_script_help_string(LuaBackend::HelpEntry::COMPONENT_ADD_INCLUDE_PATHS));
         throw std::runtime_error("Invalid include paths visibility argument");
     }
@@ -1184,6 +1206,7 @@ luabridge::LuaRef Component::lua_get_git_info(lua_State* L) {
 }
 
 std::string Component::lua_get_root_path() { return get_root_path().string(); }
+std::string Component::lua_get_output_path() { return get_local_output_directory().string(); }
 
 void Component::lua_create_precompiled_header(lua_State* L) {
     if (!m_precompiled_header.empty()) {
@@ -1221,4 +1244,37 @@ void Component::lua_set_compile_option_replacement(lua_State* L) {
     } else {
         luaL_error(L, "Invalid compile option replacement args");
     }
+}
+
+void Component::lua_add_command(lua_State* L) {
+    const auto arg_type        = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(0));
+    const auto arg_name        = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(1));
+    const auto arg_commandline = luabridge::LuaRef::fromStack(L, LUA_FUNCTION_ARG_COMPONENT_OFFSET(2));
+
+    if (!arg_type.isString() || arg_type.tostring() != "after-build") {
+        const auto str = arg_type.tostring();
+        luaL_error(L, "Invalid command type [%s] (types = \"after-build\")", str.c_str());
+        throw std::logic_error("Invalid command type");
+    }
+    if (!arg_name.isString()) {
+        luaL_error(L, "Invalid command name type [%s]", lua_typename(L, arg_name.type()));
+        throw std::logic_error("Invalid command type");
+    }
+    if (!arg_commandline.isTable()) {
+        luaL_error(L, "Command entry argument is not a table/list");
+        throw std::logic_error("Invalid command entry list type");
+    }
+
+    std::vector<std::string> cmd;
+    for (int i = 1; i <= arg_commandline.length(); i++) {
+        auto src = arg_commandline.rawget(i);
+        if (src.isString()) {
+            cmd.push_back(src.tostring());
+        } else {
+            luaL_error(L, "Command entry #%d is not a string [%s]", i, lua_typename(L, src.type()));
+            throw std::runtime_error("Command entry is not a string");
+        }
+    }
+
+    m_commands[arg_type.tostring()].push_back({arg_name.tostring(), cmd});
 }

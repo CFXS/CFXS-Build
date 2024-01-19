@@ -52,6 +52,11 @@ public:
         std::string replace;
     };
 
+    struct CommandEntry {
+        std::string name;
+        std::vector<std::string> list;
+    };
+
 public:
     Component(Type type,
               const std::string& name,
@@ -60,6 +65,8 @@ public:
               const std::filesystem::path& local_output_directory,
               const std::string& ns);
     ~Component();
+
+    void lua_add_command(lua_State* L);
 
     void lua_add_sources(lua_State* L);
     void lua_add_include_paths(lua_State* L);
@@ -72,6 +79,7 @@ public:
     void lua_set_compile_option_replacement(lua_State* L);
     luabridge::LuaRef lua_get_git_info(lua_State* L);
     std::string lua_get_root_path();
+    std::string lua_get_output_path();
 
     void configure(std::shared_ptr<Compiler> c_compiler,
                    std::shared_ptr<Compiler> cpp_compiler,
@@ -113,6 +121,8 @@ public:
 
     const std::string& get_namespace() const { return m_namespace; }
 
+    const std::vector<CommandEntry>& get_commands(const std::string& type) { return m_commands[type]; }
+
 private:
     /// Get vector of processed source file paths
     std::vector<SourceFilePath> get_source_file_paths();
@@ -141,6 +151,8 @@ private:
     std::filesystem::path m_local_output_directory;
 
     std::string m_namespace; // namespace this component was created in
+
+    std::unordered_map<std::string, std::vector<CommandEntry>> m_commands;
 
     // Component tree
     std::vector<Component*> m_libraries; // Libraries that this component has added

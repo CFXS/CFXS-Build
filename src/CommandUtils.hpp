@@ -84,7 +84,7 @@ inline std::string get_program_version_string(const std::string& location) {
 }
 
 inline std::pair<int, std::string> execute_with_args(const std::string& cmd, const std::vector<std::string>& args) {
-    std::vector<const char*> command_line = {cmd.c_str()};
+    std::vector<const char*> command_line = cmd.empty() ? std::vector<const char*>{} : std::vector<const char*>{cmd.c_str()};
     for (const auto& a : args) {
         command_line.push_back(a.c_str());
     }

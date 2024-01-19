@@ -354,17 +354,19 @@ void Project::initialize_lua() {
     bridge.addFunction<Component&, const std::string&>("create_library", TO_FUNCTION(lua_create_library));
 
     bridge.beginClass<Component>("$Component")
-        .addFunction("add_sources", &Component::lua_add_sources)
-        .addFunction("add_include_paths", &Component::lua_add_include_paths)
-        .addFunction("add_definitions", &Component::lua_add_definitions)
-        .addFunction("add_compile_options", &Component::lua_add_compile_options)
-        .addFunction("set_linker_script", &Component::lua_set_linker_script)
-        .addFunction("add_libraries", &Component::lua_add_libraries)
-        .addFunction("add_link_options", &Component::lua_add_link_options)
-        .addFunction("create_precompiled_header", &Component::lua_create_precompiled_header)
-        .addFunction("set_compile_option_replacement", &Component::lua_set_compile_option_replacement)
-        .addFunction("get_git_info", &Component::lua_get_git_info)
-        .addFunction("get_root_path", &Component::lua_get_root_path)
+        .addFunction("add_sources", /*********************/ &Component::lua_add_sources)
+        .addFunction("add_include_paths", /***************/ &Component::lua_add_include_paths)
+        .addFunction("add_definitions", /*****************/ &Component::lua_add_definitions)
+        .addFunction("add_compile_options", /*************/ &Component::lua_add_compile_options)
+        .addFunction("set_linker_script", /***************/ &Component::lua_set_linker_script)
+        .addFunction("add_libraries", /*******************/ &Component::lua_add_libraries)
+        .addFunction("add_link_options", /****************/ &Component::lua_add_link_options)
+        .addFunction("create_precompiled_header", /*******/ &Component::lua_create_precompiled_header)
+        .addFunction("set_compile_option_replacement", /**/ &Component::lua_set_compile_option_replacement)
+        .addFunction("get_git_info", /********************/ &Component::lua_get_git_info)
+        .addFunction("get_root_path", /*******************/ &Component::lua_get_root_path)
+        .addFunction("get_output_path", /*****************/ &Component::lua_get_output_path)
+        .addFunction("add_command", /*********************/ &Component::lua_add_command)
         .endClass();
 }
 
