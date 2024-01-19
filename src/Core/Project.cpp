@@ -321,25 +321,21 @@ void Project::initialize_lua() {
 
     auto bridge = luabridge::getGlobalNamespace(L);
 
-    bridge.addFunction<void, const std::string& /*path*/, const std::string& /*std*/>("set_c_compiler", TO_FUNCTION(lua_set_c_compiler));
-    bridge.addFunction<void, const std::string& /*path*/, const std::string& /*std*/>("set_cpp_compiler",
-                                                                                      TO_FUNCTION(lua_set_cpp_compiler));
-    bridge.addFunction<void, const std::string& /*path*/>("set_asm_compiler", TO_FUNCTION(lua_set_asm_compiler));
-    bridge.addFunction<void, const std::string& /*path*/>("set_linker", TO_FUNCTION(lua_set_linker));
-    bridge.addFunction<void, const std::string& /*path*/>("set_archiver", TO_FUNCTION(lua_set_archiver));
+    bridge.addFunction<void, const std::string&, const std::string&>("set_c_compiler", TO_FUNCTION(lua_set_c_compiler));
+    bridge.addFunction<void, const std::string&, const std::string&>("set_cpp_compiler", TO_FUNCTION(lua_set_cpp_compiler));
+    bridge.addFunction<void, const std::string&>("set_asm_compiler", TO_FUNCTION(lua_set_asm_compiler));
+    bridge.addFunction<void, const std::string&>("set_linker", TO_FUNCTION(lua_set_linker));
+    bridge.addFunction<void, const std::string&>("set_archiver", TO_FUNCTION(lua_set_archiver));
 
     bridge.addFunction<void, const std::string&>("set_namespace", TO_FUNCTION(lua_set_namespace));
 
-    bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/, const std::string& /*std*/>(
-        "set_c_compiler_known", TO_FUNCTION(lua_set_c_compiler_known));
-    bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/, const std::string& /*std*/>(
-        "set_cpp_compiler_known", TO_FUNCTION(lua_set_cpp_compiler_known));
-    bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/>("set_asm_compiler_known",
-                                                                                          TO_FUNCTION(lua_set_asm_compiler_known));
-    bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/>("set_linker_known",
-                                                                                          TO_FUNCTION(lua_set_linker_known));
-    bridge.addFunction<void, const std::string& /*version*/, const std::string& /*path*/>("set_archiver_known",
-                                                                                          TO_FUNCTION(lua_set_archiver_known));
+    bridge.addFunction<void, const std::string&, const std::string&, const std::string&>("set_c_compiler_known",
+                                                                                         TO_FUNCTION(lua_set_c_compiler_known));
+    bridge.addFunction<void, const std::string&, const std::string&, const std::string&>("set_cpp_compiler_known",
+                                                                                         TO_FUNCTION(lua_set_cpp_compiler_known));
+    bridge.addFunction<void, const std::string&, const std::string&>("set_asm_compiler_known", TO_FUNCTION(lua_set_asm_compiler_known));
+    bridge.addFunction<void, const std::string&, const std::string&>("set_linker_known", TO_FUNCTION(lua_set_linker_known));
+    bridge.addFunction<void, const std::string&, const std::string&>("set_archiver_known", TO_FUNCTION(lua_set_archiver_known));
 
     bridge.addFunction<void, const std::string&>("__cfxs_print", TO_FUNCTION(lua_cfxs_print));
     bridge.addFunction<bool, const std::string&>("exists", TO_FUNCTION(lua_exists));
