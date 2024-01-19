@@ -203,7 +203,13 @@ void Project::build(const std::vector<std::string>& components) {
     if (std::find(components.begin(), components.end(), "*") != components.end()) {
         // reverse iterate and build components (reverse will preserve linked/added dependency availability order)
         for (auto it = s_components.rbegin(); it != s_components.rend(); ++it) {
-            components_to_build.push_back(*it);
+            if ((*it)->get_type() == Component::Type::LIBRARY)
+                components_to_build.push_back(*it);
+        }
+        // normal order executables
+        for (auto it = s_components.begin(); it != s_components.end(); ++it) {
+            if ((*it)->get_type() == Component::Type::EXECUTABLE)
+                components_to_build.push_back(*it);
         }
     } else {
         for (auto& c : components) {
