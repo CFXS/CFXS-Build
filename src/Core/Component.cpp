@@ -805,6 +805,21 @@ std::vector<Component::SourceFilePath> Component::get_source_file_paths() {
     std::vector<SourceFilePath> source_file_paths;
     // Add requested paths
     for (auto& path : m_requested_sources) {
+        // remove filter entries
+        if (path[0] == '!') {
+            source_file_paths.erase(std::remove_if(source_file_paths.begin(),
+                                                   source_file_paths.end(),
+                                                   [&](const auto& sfp) {
+                                                       const bool filtered = sfp.path.string().contains(path);
+                                                       if (filtered) {
+                                                           Log.trace("Remove {} [filter = {}]", sfp.path, path);
+                                                       }
+                                                       return filtered;
+                                                   }),
+                                    source_file_paths.end());
+            continue;
+        }
+
         // if path is relative, convert to absolute from component root directory
         if (path[0] == '.')
             path = std::filesystem::weakly_canonical(get_root_path() / path).string();
@@ -871,20 +886,6 @@ std::vector<Component::SourceFilePath> Component::get_source_file_paths() {
         }
     }
 
-    // Remove source file paths that contain the strings in filter list
-    for (const auto& filter : m_requested_source_filters) {
-        source_file_paths.erase(std::remove_if(source_file_paths.begin(),
-                                               source_file_paths.end(),
-                                               [&](const auto& sfp) {
-                                                   const bool filtered = sfp.path.string().contains(filter);
-                                                   if (filtered) {
-                                                       Log.trace("Remove {} [filter = {}]", sfp.path, filter);
-                                                   }
-                                                   return filtered;
-                                               }),
-                                source_file_paths.end());
-    }
-
     return source_file_paths;
 }
 
@@ -892,7 +893,7 @@ void Component::lua_add_sources(lua_State* L) {
     const auto push_source = [&](const std::string& src) {
         if (src.length() && src[0] == '!') {
             // Log.trace("[{}] Add filter: {}", get_name(), src);
-            m_requested_source_filters.push_back(src.substr(1)); // remove ! prefix
+            m_requested_sources.push_back(src);
         } else {
             Log.trace("[{}] Add source: {}", get_name(), src);
             // convert to absolute path from s_script_path_stack if relative

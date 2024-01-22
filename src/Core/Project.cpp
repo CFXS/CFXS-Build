@@ -770,20 +770,36 @@ void Project::lua_add_global_compile_options(lua_State* L) {
 
     std::vector<std::string>* vec  = nullptr;
     std::vector<std::string>* vec2 = nullptr;
+    std::vector<std::string>* vec3 = nullptr;
     const auto val_str             = arg_language.tostring();
+    const bool is_any              = val_str == "*";
+    bool is_c                      = false;
+    bool is_cpp                    = false;
+    bool is_asm                    = false;
 
     if (val_str == "C") {
-        vec = &e_global_c_compile_options[s_current_namespace];
+        is_c = true;
     } else if (val_str == "C++") {
-        vec = &e_global_cpp_compile_options[s_current_namespace];
+        is_cpp = true;
     } else if (val_str == "C/C++") {
-        vec  = &e_global_c_compile_options[s_current_namespace];
-        vec2 = &e_global_cpp_compile_options[s_current_namespace];
+        is_c   = true;
+        is_cpp = true;
     } else if (val_str == "ASM") {
-        vec = &e_global_asm_compile_options[s_current_namespace];
+        is_asm = true;
+    } else if (is_any) {
+        is_c   = true;
+        is_cpp = true;
+        is_asm = true;
     }
 
-    if (!vec) {
+    if (is_c)
+        vec = &e_global_c_compile_options[s_current_namespace];
+    if (is_cpp)
+        vec2 = &e_global_cpp_compile_options[s_current_namespace];
+    if (is_asm)
+        vec3 = &e_global_asm_compile_options[s_current_namespace];
+
+    if (!vec && !vec2 && !vec3) {
         throw std::runtime_error("Add global compile definitions - invalid language");
     }
 
@@ -792,18 +808,24 @@ void Project::lua_add_global_compile_options(lua_State* L) {
         for (int i = 1; i <= arg_sources.length(); i++) {
             auto src = arg_sources.rawget(i);
             if (src.isString()) {
-                vec->emplace_back(src.tostring());
+                if (vec)
+                    vec->emplace_back(src.tostring());
                 if (vec2)
                     vec2->emplace_back(src.tostring());
+                if (vec3)
+                    vec3->emplace_back(src.tostring());
             } else {
                 luaL_error(L, "Compile option #%d is not a string [%s]", i, lua_typename(L, src.type()));
                 throw std::runtime_error("Compile option is not a string");
             }
         }
     } else if (arg_sources.isString()) {
-        vec->emplace_back(arg_sources.tostring());
+        if (vec)
+            vec->emplace_back(arg_sources.tostring());
         if (vec2)
             vec2->emplace_back(arg_sources.tostring());
+        if (vec3)
+            vec3->emplace_back(arg_sources.tostring());
     } else {
         luaL_error(L,
                    "Invalid compile options argument: type \"%s\"\n%s",

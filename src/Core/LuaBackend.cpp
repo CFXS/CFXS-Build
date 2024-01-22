@@ -16,7 +16,7 @@ bool LuaBackend::is_valid_visibility(const luabridge::LuaRef& arg) {
 bool LuaBackend::is_valid_language(const luabridge::LuaRef& arg) {
     if (arg.isString()) {
         const auto val = arg.tostring();
-        if (val == "C" || val == "C/C++" || val == "C++" || val == "ASM") {
+        if (val == "C" || val == "C/C++" || val == "C++" || val == "ASM" || val == "*") {
             return true;
         }
     }
