@@ -236,7 +236,7 @@ void Project::build(const std::vector<std::string>& components) {
 
     const auto t2 = std::chrono::high_resolution_clock::now();
     auto ms       = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    Log.info("Project build done in {}:{:.1f}", (ms / 1000) / 60, fmodf(ms / 1000.0f, 60));
+    Log.info("Project build done in {:.3f}s ({}m {}s) ", ms / 1000.0f, (ms / 1000) / 60, (ms / 1000) % 60);
     Log.info("File Modified Cache [{}/{}]", s_fmc_hits, s_fmc_misses);
 }
 
