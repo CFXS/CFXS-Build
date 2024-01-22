@@ -316,7 +316,7 @@ bool Component::process_source_file_path(const SourceFilePath& e,
     compiler->load_compile_and_output_flags(
         compile_entry->compile_args, source_entry.get_source_file_path(), output_path, source_entry.is_pch()); // compile and write object
 
-    compiler->load_dependency_flags(compile_entry->compile_args, output_path);                                 // dependency file output
+    compiler->load_dependency_flags(compile_entry->compile_args, output_path); // dependency file output
 
     // Compile option replacement setup
     const auto option_replacement = [&](const std::string_view& opt) -> std::string {
@@ -802,7 +802,7 @@ void Component::build() {
 
     const auto& post_build_commands = get_commands("after-build");
     if (!post_build_commands.empty()) {
-        for (int i = 0; const auto& commands : post_build_commands) {
+        for (const auto& commands : post_build_commands) {
             if (commands.list.empty())
                 continue;
 
@@ -817,7 +817,6 @@ void Component::build() {
                 Log.error("[{}] after-build command failed:\n{}\nCommand: {}", get_name(), msg, lstr);
                 throw std::runtime_error("after-build command failed");
             }
-            i++;
         }
     }
 
