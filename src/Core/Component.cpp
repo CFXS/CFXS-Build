@@ -807,12 +807,13 @@ std::vector<Component::SourceFilePath> Component::get_source_file_paths() {
     for (auto& path : m_requested_sources) {
         // remove filter entries
         if (path[0] == '!') {
+            const auto filt = path.substr(1);
             source_file_paths.erase(std::remove_if(source_file_paths.begin(),
                                                    source_file_paths.end(),
                                                    [&](const auto& sfp) {
-                                                       const bool filtered = sfp.path.string().contains(path);
+                                                       const bool filtered = sfp.path.string().contains(filt);
                                                        if (filtered) {
-                                                           Log.trace("Remove {} [filter = {}]", sfp.path, path);
+                                                           Log.trace("Remove {} [filter = {}]", sfp.path, filt);
                                                        }
                                                        return filtered;
                                                    }),
