@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include "Core/Archiver.hpp"
 #include "Core/Compiler.hpp"
+#include "Core/FunctionWorker.hpp"
 #include "Core/GIT.hpp"
 #include "Core/Linker.hpp"
 #include "Core/SourceEntry.hpp"
@@ -639,10 +640,28 @@ void Component::build() {
                 compile(compile_entries[0]);
 
             if (!error_reported) {
-                std::for_each(std::execution::par_unseq,
-                              have_pch ? (compile_entries.begin() + 1) : compile_entries.begin(),
-                              compile_entries.end(),
-                              compile);
+                auto workers          = FunctionWorker::create_workers(GlobalConfig::number_of_worker_threads());
+                auto compile_threaded = [&](const std::unique_ptr<CompileEntry>& ce) {
+                    while (1 < 2) {
+                        for (auto& w : workers) {
+                            if (!w->is_busy()) {
+                                w->execute([&]() {
+                                    compile(ce);
+                                });
+                                return;
+                            }
+                            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        }
+                    }
+                };
+
+                std::for_each(have_pch ? (compile_entries.begin() + 1) : compile_entries.begin(), compile_entries.end(), compile_threaded);
+                for (auto& w : workers) {
+                    while (w->is_busy()) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    }
+                    w->terminate();
+                }
             }
         } else {
             std::for_each(std::execution::seq, compile_entries.begin(), compile_entries.end(), compile);
