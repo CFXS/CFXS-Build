@@ -188,8 +188,8 @@ void Project::configure() {
     Log.info("Project configure done in {:.3f}s", ms / 1000.0f);
 }
 
-int e_total_project_source_count = 0;
-int e_current_abs_source_index   = 1;
+int e_total_project_source_count           = 0;
+std::atomic_int e_current_abs_source_index = 1;
 
 extern uint32_t s_fmc_hits;
 extern uint32_t s_fmc_misses;
@@ -236,7 +236,7 @@ void Project::build(const std::vector<std::string>& components) {
 
     const auto t2 = std::chrono::high_resolution_clock::now();
     auto ms       = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    Log.info("Project build done in {}:{:.1f}s", (ms / 1000) / 60, fmodf(ms / 1000.0f, 60));
+    Log.info("Project build done in {}:{:.1f}", (ms / 1000) / 60, fmodf(ms / 1000.0f, 60));
     Log.info("File Modified Cache [{}/{}]", s_fmc_hits, s_fmc_misses);
 }
 

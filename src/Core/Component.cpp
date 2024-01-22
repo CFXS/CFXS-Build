@@ -555,7 +555,7 @@ void Component::iterate_libs(const Component* comp, std::vector<std::string>& li
 }
 
 extern int e_total_project_source_count;
-extern int e_current_abs_source_index;
+extern std::atomic_int e_current_abs_source_index;
 void Component::build() {
     const auto build_t1 = std::chrono::high_resolution_clock::now();
 
@@ -579,8 +579,7 @@ void Component::build() {
     if (!compile_entries.empty()) {
         Log.trace("Build [{}]", get_name());
 
-        std::mutex mutex_compiled_index; // mutex for output ordering
-        bool error_reported = false;     // a source has reported a failed compilation
+        bool error_reported = false; // a source has reported a failed compilation
 
         const auto compile = [&](const std::unique_ptr<CompileEntry>& compile_entry) {
             if (error_reported)
@@ -601,12 +600,12 @@ void Component::build() {
             const auto compile_unit_path = success ? compile_entry->source_entry->get_source_file_path().filename().string() :
                                                      compile_entry->source_entry->get_source_file_path().string();
 
-            mutex_compiled_index.lock();
+            auto si = e_current_abs_source_index++;
             Log.info("[{}{}/{} ({}%) {:.03f}s{}] ({}{}{}) {} {}{}{}{}" ANSI_RESET,
                      success ? ANSI_GREEN : ANSI_RED,
-                     e_current_abs_source_index,
+                     si,
                      e_total_project_source_count,
-                     (int)(100.0f / e_total_project_source_count * e_current_abs_source_index),
+                     (int)(100.0f / e_total_project_source_count * si),
                      compile_time_ms / 1000.0f,
                      ANSI_RESET,
                      ANSI_LIGHT_GRAY,
@@ -625,9 +624,6 @@ void Component::build() {
             //     Log.critical("command: {}", cmd);
             // }
 
-            e_current_abs_source_index++;
-            mutex_compiled_index.unlock();
-
             if (!success) {
                 error_reported = true;
             }
@@ -640,27 +636,37 @@ void Component::build() {
                 compile(compile_entries[0]);
 
             if (!error_reported) {
-                auto workers          = FunctionWorker::create_workers(GlobalConfig::number_of_worker_threads());
-                auto compile_threaded = [&](const std::unique_ptr<CompileEntry>& ce) {
-                    while (1 < 2) {
-                        for (auto& w : workers) {
-                            if (!w->is_busy()) {
-                                w->execute([&]() {
-                                    compile(ce);
-                                });
-                                return;
+                static constexpr bool USE_PARALLEL_EXEC = true;
+
+                if (USE_PARALLEL_EXEC) {
+                    std::for_each(std::execution::par_unseq,
+                                  have_pch ? (compile_entries.begin() + 1) : compile_entries.begin(),
+                                  compile_entries.end(),
+                                  compile);
+                } else {
+                    auto workers          = FunctionWorker::create_workers(GlobalConfig::number_of_worker_threads());
+                    auto compile_threaded = [&](const std::unique_ptr<CompileEntry>& ce) {
+                        while (1 < 2) {
+                            for (auto& w : workers) {
+                                if (!w->is_busy()) {
+                                    w->execute([&]() {
+                                        compile(ce);
+                                    });
+                                    return;
+                                }
+                                std::this_thread::sleep_for(std::chrono::milliseconds(1));
                             }
+                        }
+                    };
+
+                    std::for_each(
+                        have_pch ? (compile_entries.begin() + 1) : compile_entries.begin(), compile_entries.end(), compile_threaded);
+                    for (auto& w : workers) {
+                        while (w->is_busy()) {
                             std::this_thread::sleep_for(std::chrono::milliseconds(1));
                         }
+                        w->terminate();
                     }
-                };
-
-                std::for_each(have_pch ? (compile_entries.begin() + 1) : compile_entries.begin(), compile_entries.end(), compile_threaded);
-                for (auto& w : workers) {
-                    while (w->is_busy()) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                    }
-                    w->terminate();
                 }
             }
         } else {
