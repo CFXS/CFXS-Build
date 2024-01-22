@@ -25,6 +25,8 @@ private: // .cfxs-build Lua bindings
 
     static void lua_set_namespace(const std::string& ns);
 
+    static bool lua_have_var(const std::string& var_name);
+
     // Import
     static void lua_import(lua_State* L);
     static void lua_import_git(lua_State* L);

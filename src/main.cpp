@@ -49,6 +49,8 @@ bool GlobalConfig::log_trace() { return s_log_trace; }
 static bool s_log_script_printf_locations = false;
 bool GlobalConfig::log_script_printf_locations() { return s_log_script_printf_locations; }
 
+std::vector<std::string> e_script_definitions;
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv) {
@@ -96,9 +98,11 @@ int main(int argc, char **argv) {
         .help("Print trace log messages")                                             //
         .flag();                                                                      //
 
-    args.add_argument("--printf-sources")    //
-        .help("Log script printf locations") //
-        .flag();                             //
+    args.add_argument("--printf-sources")                                             //
+        .help("Log script printf locations")                                          //
+        .flag();                                                                      //
+
+    args.add_argument("definitions").remaining();
 
     try {
         args.parse_args(argc, argv);
@@ -135,6 +139,12 @@ int main(int argc, char **argv) {
     if (!std::filesystem::exists(cfxs_build_file)) {
         Log.error("Project does not contain a \".cfxs-build\" file", project_path.string());
         return 1;
+    }
+
+    try {
+        e_script_definitions = args.get<std::vector<std::string>>("definitions");
+    } catch (std::logic_error &e) {
+        std::cout << "No files provided" << std::endl;
     }
 
     try {

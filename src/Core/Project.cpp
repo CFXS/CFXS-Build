@@ -22,6 +22,8 @@
 #define BUILD_TEMP_LOCATION    "components"
 #define EXTERNAL_TEMP_LOCATION "external"
 
+extern std::vector<std::string> e_script_definitions;
+
 std::string s_current_namespace = "";
 
 lua_State* s_MainLuaState;
@@ -334,6 +336,7 @@ void Project::initialize_lua() {
     bridge.addFunction<void, const std::string&>("set_archiver", TO_FUNCTION(lua_set_archiver));
 
     bridge.addFunction<void, const std::string&>("set_namespace", TO_FUNCTION(lua_set_namespace));
+    bridge.addFunction<bool, const std::string&>("have_var", TO_FUNCTION(lua_have_var));
 
     bridge.addFunction<void, const std::string&, const std::string&, const std::string&>("set_c_compiler_known",
                                                                                          TO_FUNCTION(lua_set_c_compiler_known));
@@ -403,6 +406,16 @@ std::string Project::lua_get_current_directory_path(lua_State*) { return s_scrip
 std::string Project::lua_get_current_script_path(lua_State*) { return s_source_location_stack.back().string(); }
 
 void Project::lua_set_namespace(const std::string& ns) { s_current_namespace = ns.empty() ? "" : (ns + "_"); }
+
+bool Project::lua_have_var(const std::string& name) {
+    const auto it = std::find_if(e_script_definitions.begin(), e_script_definitions.end(), [&](const auto& def) {
+        return def.starts_with(name);
+    });
+    if (it != e_script_definitions.end()) {
+        return true;
+    }
+    return false;
+}
 
 // Compiler config
 void Project::lua_set_c_compiler(const std::string& compiler, const std::string& standard) {
