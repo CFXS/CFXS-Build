@@ -166,8 +166,13 @@ void Compiler::load_dependency_flags(std::vector<std::string>& flags, const std:
         flags.push_back("/Fo");           // Write to specific file
         flags.push_back(FilesystemUtils::safe_path_string(out_path.string()));
     } else if (get_type() == Type::IAR) {
-        if (get_language() == Language::ASM)
+        if (get_language() == Language::ASM) {
+            if (!std::filesystem::exists(out_path.string() + ".dep")) {
+                std::ofstream fake_dep(out_path.string() + ".dep");
+                fake_dep.close();
+            }
             return;
+        }
         flags.push_back("--dependencies"); // Write to specific file
         flags.push_back(FilesystemUtils::safe_path_string(out_path.string() + ".dep"));
     } else {
