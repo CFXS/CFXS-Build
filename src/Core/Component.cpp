@@ -561,24 +561,28 @@ std::mutex s_source_index_mutex;
 void Component::build() {
     const auto build_t1 = std::chrono::high_resolution_clock::now();
 
+    bool lib_was_built = false;
+    for (auto& lib : get_libraries()) {
+        if (lib->did_build()) {
+            lib_was_built = true;
+            break;
+        }
+    }
+
     // return if have final build object and configure did not request source build
     if (get_type() == Type::LIBRARY) {
-        const auto library_path = get_local_output_directory() / (get_name() + std::string(m_archiver->get_archive_extension()));
-        if (std::filesystem::exists(library_path)) {
-            if (get_compile_entries().empty())
-                return;
-        }
-    } else {
-        bool lib_was_built = false;
-        for (auto& lib : get_libraries()) {
-            if (lib->did_build()) {
-                lib_was_built = true;
-                break;
+        if (!lib_was_built) {
+            const auto library_path = get_local_output_directory() / (get_name() + std::string(m_archiver->get_archive_extension()));
+            if (std::filesystem::exists(library_path)) {
+                if (get_compile_entries().empty())
+                    return;
             }
         }
-
-        // check if a library was built. If so, dont allow skip (for linking)
-        if (!lib_was_built) {
+        // mark self as built
+        set_did_build();
+    } else {
+            // check if a library was built. If so, dont allow skip (for linking)
+            if (!lib_was_built) {
             const auto exe_path = get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension()));
             if (std::filesystem::exists(exe_path)) {
                 if (get_compile_entries().empty())
