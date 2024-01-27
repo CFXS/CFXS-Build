@@ -37,13 +37,21 @@ bool GIT::is_git_root() const {
         throw std::runtime_error("git command error");
     }
 
-    if (output.find("fatal: not a git repository") != std::string::npos)
+    if (output.find("fatal: not a git repository") != std::string::npos) {
+        Log.error("fatal: not a git repository");
         return false;
+    }
 
     if (output.size())
         output.pop_back(); // remove last newline
 
-    return std::filesystem::equivalent(output, std::filesystem::absolute(get_working_directory()));
+    const bool equiv = std::filesystem::equivalent(output, std::filesystem::absolute(get_working_directory()));
+
+    if (!equiv) {
+        Log.error("is_git_root paths not equivalent:\n{}\n{}", output, std::filesystem::absolute(get_working_directory()));
+    }
+
+    return equiv;
 }
 
 bool GIT::have_changes() const {
