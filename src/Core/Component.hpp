@@ -124,6 +124,9 @@ public:
 
     const std::vector<CommandEntry>& get_commands(const std::string& type) { return m_commands[type]; }
 
+    void set_did_build() { m_did_build = true; }
+    bool did_build() const { return m_did_build; }
+
 private:
     /// Get vector of processed source file paths
     std::vector<SourceFilePath> get_source_file_paths();
@@ -150,6 +153,8 @@ private:
     std::filesystem::path m_script_path;
     std::filesystem::path m_root_path;
     std::filesystem::path m_local_output_directory;
+
+    bool m_did_build = false;
 
     std::string m_namespace; // namespace this component was created in
 

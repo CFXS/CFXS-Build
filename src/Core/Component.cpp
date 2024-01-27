@@ -569,10 +569,21 @@ void Component::build() {
                 return;
         }
     } else {
-        const auto exe_path = get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension()));
-        if (std::filesystem::exists(exe_path)) {
-            if (get_compile_entries().empty())
-                return;
+        bool lib_was_built = false;
+        for (auto& lib : get_libraries()) {
+            if (lib->did_build()) {
+                lib_was_built = true;
+                break;
+            }
+        }
+
+        // check if a library was built. If so, dont allow skip (for linking)
+        if (!lib_was_built) {
+            const auto exe_path = get_local_output_directory() / (get_name() + std::string(m_linker->get_executable_extension()));
+            if (std::filesystem::exists(exe_path)) {
+                if (get_compile_entries().empty())
+                    return;
+            }
         }
     }
 
@@ -619,6 +630,10 @@ void Component::build() {
                      compile_unit_path,
                      msg.empty() ? (ANSI_RESET "") : (ANSI_RESET "\n"),
                      msg);
+
+            if (success) {
+                set_did_build();
+            }
             s_source_index_mutex.unlock();
 
             // if (!success) {
