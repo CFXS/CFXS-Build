@@ -811,7 +811,7 @@ void Component::build() {
                 continue;
 
             Log.info("[{}] after-build \"{}\"", get_name(), commands.name);
-            const auto [ret, msg] = execute_with_args("", commands.list);
+            const auto [ret, msg] = execute_with_args("", commands.list, true);
 
             if (ret != 0) {
                 std::string lstr;
