@@ -80,6 +80,7 @@ public:
     luabridge::LuaRef lua_get_git_info(lua_State* L);
     std::string lua_get_root_path();
     std::string lua_get_output_path();
+    std::string lua_get_name();
 
     void configure(std::shared_ptr<Compiler> c_compiler,
                    std::shared_ptr<Compiler> cpp_compiler,

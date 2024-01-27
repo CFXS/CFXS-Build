@@ -191,7 +191,7 @@ void Project::configure() {
 }
 
 int e_total_project_source_count           = 0;
-std::atomic_int e_current_abs_source_index = 1;
+int e_current_abs_source_index             = 1;
 
 extern uint32_t s_fmc_hits;
 extern uint32_t s_fmc_misses;
@@ -375,6 +375,7 @@ void Project::initialize_lua() {
         .addFunction("get_git_info", /********************/ &Component::lua_get_git_info)
         .addFunction("get_root_path", /*******************/ &Component::lua_get_root_path)
         .addFunction("get_output_path", /*****************/ &Component::lua_get_output_path)
+        .addFunction("get_name", /************************/ &Component::lua_get_name)
         .addFunction("add_command", /*********************/ &Component::lua_add_command)
         .endClass();
 }

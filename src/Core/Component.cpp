@@ -555,7 +555,9 @@ void Component::iterate_libs(const Component* comp, std::vector<std::string>& li
 }
 
 extern int e_total_project_source_count;
-extern std::atomic_int e_current_abs_source_index;
+extern int e_current_abs_source_index;
+std::mutex s_source_index_mutex;
+
 void Component::build() {
     const auto build_t1 = std::chrono::high_resolution_clock::now();
 
@@ -600,6 +602,7 @@ void Component::build() {
             const auto compile_unit_path = success ? compile_entry->source_entry->get_source_file_path().filename().string() :
                                                      compile_entry->source_entry->get_source_file_path().string();
 
+            s_source_index_mutex.lock();
             auto si = e_current_abs_source_index++;
             Log.info("[{}{}/{} ({}%) {:.03f}s{}] ({}{}{}) {} {}{}{}{}" ANSI_RESET,
                      success ? ANSI_GREEN : ANSI_RED,
@@ -616,6 +619,7 @@ void Component::build() {
                      compile_unit_path,
                      msg.empty() ? (ANSI_RESET "") : (ANSI_RESET "\n"),
                      msg);
+            s_source_index_mutex.unlock();
 
             // if (!success) {
             //     std::string cmd;
@@ -1233,6 +1237,8 @@ luabridge::LuaRef Component::lua_get_git_info(lua_State* L) {
 
 std::string Component::lua_get_root_path() { return get_root_path().string(); }
 std::string Component::lua_get_output_path() { return get_local_output_directory().string(); }
+
+std::string Component::lua_get_name() { return get_name(); }
 
 void Component::lua_create_precompiled_header(lua_State* L) {
     if (!m_precompiled_header.empty()) {
