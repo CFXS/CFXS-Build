@@ -117,12 +117,12 @@ inline std::pair<int, std::string> execute_with_args(const std::string& cmd, con
     std::string result;
 
     int t_diff = 0;
-    while (subprocess_alive(&process)) {
+    char buf[256];
+    do {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         t_diff++;
 
-        char buf[256];
         while (fgets(buf, sizeof(buf), p_stdout) != NULL) {
             result += buf;
         }
@@ -130,6 +130,10 @@ inline std::pair<int, std::string> execute_with_args(const std::string& cmd, con
         if (!result.empty() && t_diff > 2000) {
             break;
         }
+    } while (subprocess_alive(&process));
+
+    while (fgets(buf, sizeof(buf), p_stdout) != NULL) {
+        result += buf;
     }
 
     int process_ret = -1;
